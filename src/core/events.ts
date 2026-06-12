@@ -28,6 +28,7 @@ export type GameEvent =
   | { type: 'CONTACT_REMOVED'; contactId: Id; tick: Tick }
   | { type: 'REPORT_QUEUED'; report: ContactReport }
   | { type: 'REPORT_DELIVERED'; reportId: Id; tick: Tick }
+  | { type: 'REPORT_EDITED'; reportId: Id; text: string }   // M5: GM noise injection
   | { type: 'REPORTS_LOST'; reportIds: Id[]; reason: string }
   | { type: 'NET_CHANGED'; formationId: Id; onNet: boolean;
       netNodeId: Id | null; renetAtTick: Tick | null }
@@ -206,6 +207,12 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
       if (c && (!c.delivered || r.snapshot.asOfTick >= c.delivered.asOfTick)) {
         c.delivered = r.snapshot;
       }
+      break;
+    }
+
+    case 'REPORT_EDITED': {
+      const r = s.reports[e.reportId];
+      if (r) r.text = e.text; // the GM is the radio static (core §13.1)
       break;
     }
 

@@ -13,7 +13,8 @@ import { DEEPSKY, LADDER_NAMES } from '../rules.js';
 import { isNight } from '../engine/clock.js';
 import { isFlight, jokerBingo, minFp } from '../engine/air.js';
 import { burnDaysRemaining, transitDays } from '../engine/space.js';
-import type { ContactView, OwnFormationView, ReportView, ScoutedHexView, SystemView,
+import type { ContactView, OwnFacilityView, OwnFormationView, OwnSatelliteView,
+              ReportView, ScoutedHexView, SystemView, TheaterBoundsView,
               ViewState } from './viewTypes.js';
 
 export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
@@ -141,6 +142,31 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
     };
   }
 
+  // M5: own infrastructure & eyes — always visible to their owner, never to others
+  const ownFacilities: OwnFacilityView[] = Object.values(truth.facilities)
+    .filter(f => f.sideId === sideId && f.pos.kind === 'ground')
+    .map(f => ({ id: f.id, name: f.name, pos: { ...(f.pos as GroundPos) },
+                 tags: [...f.tags], fuelFarmTons: f.fuelFarmTons,
+                 supplyPoints: f.supplyPoints, isCommandNode: f.isCommandNode }));
+  // own satellites plus any whose launch was witnessed (core §8.6: schedule around them)
+  const ownSatellites: OwnSatelliteView[] = Object.values(truth.satellites)
+    .filter(s => s.sideId === sideId || s.knownTo.includes(sideId))
+    .map(s => ({ id: s.id, kind: s.kind, theaterId: s.theaterId,
+                 corridor: s.corridor.map(c => ({ ...c })),
+                 periodPulses: s.periodPulses, nextPassTick: s.nextPassTick,
+                 alive: s.alive }));
+  // grid extent is public geography (paper maps exist); terrain stays scouted-only
+  const theaters: TheaterBoundsView[] = Object.values(truth.theaters).map(t => {
+    let cols = 0, rows = 0;
+    for (const key of Object.keys(t.hexes)) {
+      const [q, r] = key.split(',').map(Number);
+      cols = Math.max(cols, q + 1);
+      rows = Math.max(rows, r + 1);
+    }
+    return { id: t.id, name: t.name, cols, rows,
+             airHex: truth.config.airHexByTheater?.[t.id] ?? { q: 0, r: 0 } };
+  });
+
   return {
     sideId,
     now,
@@ -152,5 +178,8 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
     reports,
     scoutedTerrain,
     ...(system ? { system } : {}),
+    ownFacilities,
+    ownSatellites,
+    theaters,
   };
 }

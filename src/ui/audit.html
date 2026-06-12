@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>OVERRIDE — Audit</title>
+<link rel="stylesheet" href="/ui/style.css">
+</head>
+<body>
+<h1>OVERRIDE — Post-campaign audit <small style="float:right"><a href="/gm">← GM screen</a></small></h1>
+<div class="panel" style="margin-bottom:12px">
+  <div class="bar">
+    <button onclick="play()" id="playbtn">▶ replay</button>
+    <input type="range" id="slider" min="0" max="0" value="0" style="flex:1"
+           oninput="seek(+this.value)">
+    <span class="kv">event <b id="idx">0</b>/<b id="max">0</b> · <span id="when" class="tick"></span></span>
+  </div>
+  <small>Every roll, every silent detection, every held report — the whole campaign with
+  the fog lifted. The Table Covenant, honored (core §13.3).</small>
+</div>
+<div class="cols">
+  <div class="col" style="flex:1.8;min-width:520px">
+    <div class="panel"><h2>The truth, then</h2><svg id="map" class="map"></svg></div>
+    <div class="panel" id="sys-panel" style="display:none">
+      <h2>The sky, then</h2><svg id="sysmap" class="map"></svg></div>
+  </div>
+  <div class="col">
+    <div class="panel"><h2>What was happening</h2><pre id="feed" style="max-height:74vh"></pre></div>
+  </div>
+</div>
+
+<script src="/ui/hexmap.js"></script>
+<script src="/ui/sysmap.js"></script>
+<script src="/ui/mapmodel.js"></script>
+<script>
+let max = 0, timer = null;
+
+async function seek(n) {
+  const s = await (await fetch('/api/gm/audit?index=' + n)).json();
+  max = s.eventCount - 1;
+  const slider = document.getElementById('slider');
+  slider.max = max;
+  slider.value = n;
+  document.getElementById('idx').textContent = n;
+  document.getElementById('max').textContent = max;
+  const t = s.truth;
+  document.getElementById('when').textContent =
+    `t${t.tick} · day ${Math.floor(t.tick / 240)} ${String(Math.floor((t.tick % 240) / 10)).padStart(2, '0')}00`;
+
+  const theaterId = Object.keys(t.theaters)[0];
+  const model = buildTruthHexModel(t, theaterId, {});
+  if (model) renderHexMap(document.getElementById('map'), model, { showCoords: true });
+  const sysModel = buildTruthSysModel(t);
+  document.getElementById('sys-panel').style.display = sysModel ? '' : 'none';
+  if (sysModel) renderSysMap(document.getElementById('sysmap'), sysModel);
+
+  document.getElementById('feed').textContent = s.window.map(l =>
+    `${l.index === +n ? '▶' : ' '} #${l.index} ${l.event.type} ${summ(l.event)}`).join('\n');
+}
+
+function summ(e) {
+  if (e.type === 'DIE_ROLLED') return `${e.roll.result} — ${e.roll.purpose}`;
+  if (e.type === 'FORMATION_MOVED') return `${e.formationId} → ${e.to.q},${e.to.r}`;
+  if (e.type === 'CONTACT_UPGRADED') return `${e.contact.id} → L${e.contact.level}`;
+  if (e.type === 'REPORT_QUEUED') return e.report.text;
+  if (e.type === 'REPORT_DELIVERED') return e.reportId;
+  if (e.type === 'GM_NOTE') return e.text;
+  if (e.type === 'STEP_BEGAN') return `t${e.tick} ${e.mode}`;
+  if (e.type === 'CLOCK_ADVANCED') return `→ t${e.tick}`;
+  return JSON.stringify(e).slice(0, 100);
+}
+
+function play() {
+  if (timer) { clearInterval(timer); timer = null;
+    document.getElementById('playbtn').textContent = '▶ replay'; return; }
+  document.getElementById('playbtn').textContent = '⏸ pause';
+  timer = setInterval(() => {
+    const n = +document.getElementById('slider').value;
+    if (n >= max) { play(); return; }
+    seek(Math.min(max, n + Math.max(1, Math.floor(max / 400))));
+  }, 120);
+}
+
+seek(0).then(() => seek(max));
+</script>
+</body>
+</html>

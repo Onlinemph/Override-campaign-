@@ -73,6 +73,11 @@ returns to the command net, original timestamp preserved.
       *Acceptance passed: Operation SKEAN — the flash lands planetside 83 minutes after
       a 10 AU jump, the cold detachment stays SIG 11 until the gas-giant picket's active
       sweep, and the classifier returns MATCHED with ~2.1 burn-days of margin.*
-- [ ] **M5 — Polish**: map UIs, noise-injection editor, MegaMek export, audit viewer.
+- [x] **M5 — Polish**: SVG hex map (terrain, fog of war, units, contacts with staleness,
+      satellite tracks, click-to-plot order paths) and the system graph on every screen;
+      GM belief overlays (truth beside what each side has been *told*); the
+      noise-injection editor (edit reports in transit, conjure phantom contacts);
+      best-effort MegaMek `.mul` export per side from any handoff; and the audit viewer
+      at `/audit` — scrub the entire campaign with the fog lifted.
 
 *Fan project; BattleTech © The Topps Company, Inc., published by Catalyst Game Labs.*

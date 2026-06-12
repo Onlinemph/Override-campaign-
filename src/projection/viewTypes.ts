@@ -47,6 +47,22 @@ export interface SystemView {
   lanes: Array<{ id: Id; a: Id; b: Id; distanceAU: number; transitDays1G: number }>;
 }
 
+// M5: what the map renderer needs that the text views didn't carry
+export interface OwnFacilityView {
+  id: Id; name: string; pos: GroundPos; tags: string[];
+  fuelFarmTons: number; supplyPoints: number; isCommandNode: boolean;
+}
+export interface OwnSatelliteView {
+  id: Id; kind: 'RECON' | 'COMM'; theaterId: Id;
+  corridor: Array<{ q: number; r: number }>;
+  periodPulses: number; nextPassTick: Tick; alive: boolean;
+}
+/** Grid extent is public geography; terrain content stays scouted-only (D-012). */
+export interface TheaterBoundsView {
+  id: Id; name: string; cols: number; rows: number;
+  airHex: { q: number; r: number };
+}
+
 export interface ContactView {
   id: Id;                       // contact id only — never the target formation id
   level: LadderLevel;
@@ -82,4 +98,7 @@ export interface ViewState {
   reports: ReportView[];
   scoutedTerrain: ScoutedHexView[];
   system?: SystemView;
+  ownFacilities: OwnFacilityView[];
+  ownSatellites: OwnSatelliteView[];
+  theaters: TheaterBoundsView[];
 }

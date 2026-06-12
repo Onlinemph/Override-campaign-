@@ -3,167 +3,222 @@
 <head>
 <meta charset="utf-8">
 <title>OVERRIDE — GM</title>
-<style>
-  body { font: 13px/1.4 monospace; background: #111; color: #cfcfcf; margin: 0; padding: 12px; }
-  h1 { font-size: 16px; color: #7fd4ff; } h2 { font-size: 13px; color: #7fd4ff; margin: 8px 0 4px; }
-  .cols { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
-  .col { flex: 1; min-width: 360px; background: #1a1a1a; border: 1px solid #333; padding: 8px; }
-  pre { white-space: pre-wrap; word-break: break-all; margin: 0; max-height: 70vh; overflow: auto; }
-  button { background: #234; color: #cfe; border: 1px solid #468; padding: 4px 10px; cursor: pointer; margin-right: 6px; }
-  button:hover { background: #345; }
-  .bar { margin-bottom: 10px; }
-  .tick { color: #ffd479; }
-  textarea, input, select { background: #222; color: #cfe; border: 1px solid #444; font: inherit; }
-  #engagement { background: #3a1f1f; border: 1px solid #a44; padding: 8px; margin: 8px 0; display: none; }
-  #engagement.active { display: block; }
-  #engagement h2 { color: #ff9f9f; }
-  .salv { display: inline-block; margin: 2px 6px 2px 0; }
-</style>
+<link rel="stylesheet" href="/ui/style.css">
 </head>
 <body>
-<h1>OVERRIDE — GM SCREEN <span id="clock" class="tick"></span></h1>
+<h1>OVERRIDE — GM <span id="clock" class="tick"></span>
+  <small style="float:right"><a href="/audit">audit viewer →</a></small></h1>
+
 <div class="bar">
   <button onclick="advance(false)">Step</button>
   <button onclick="advance(true)">Run until event</button>
-  <span>Inject report → side: <select id="inj-side"></select>
-    <input id="inj-text" size="50" placeholder="PULSE 1400 — FLASH — ...">
-    <button onclick="inject()">Inject</button></span>
+  <span class="kv">belief overlay:
+    <select id="belief" onchange="refresh()"><option value="">truth only</option></select></span>
+  <span id="vp-bar" class="kv"></span>
 </div>
-<div id="engagement">
-  <h2>⚔ PENDING ENGAGEMENT — campaign frozen</h2>
-  <pre id="eng-detail"></pre>
-  <button onclick="evade()">Resolve evasion (2d6)</button>
-  <button onclick="exportHandoff()">Export handoff →</button>
-  <pre id="handoff-out"></pre>
-  <div>Paste BattleResult JSON then Ingest:</div>
-  <textarea id="battle-result" rows="6" cols="90" placeholder='{"handoffId":"...","victorSideId":"blue","hexControlSideId":"blue","unitOutcomes":[...],"ejections":[],"turnsElapsed":9,"notes":""}'></textarea><br>
-  <button onclick="ingest()">Ingest BattleResult</button>
-  <span id="ingest-msg"></span>
+
+<div id="engagement" class="banner" style="display:none">
+  <h2>⚔ Pending engagement — campaign frozen</h2>
+  <pre id="eng-detail" style="max-height:18vh"></pre>
+  <div class="bar">
+    <button onclick="evade()">Resolve evasion (2d6)</button>
+    <button onclick="exportHandoff()">Export handoff</button>
+    <span id="mul-links"></span>
+  </div>
+  <pre id="handoff-out" style="max-height:22vh"></pre>
+  <div class="kv">BattleResult JSON:</div>
+  <textarea id="battle-result" rows="5" style="width:100%"></textarea>
+  <div class="bar"><button onclick="ingest()">Ingest BattleResult</button>
+    <span id="ingest-msg" class="kv"></span></div>
 </div>
-<div id="salvage-bar"></div>
-<div id="air-board"></div>
+
 <div class="cols">
-  <div class="col"><h2>TRUTH</h2><pre id="truth"></pre></div>
-  <div class="col" id="views"></div>
-  <div class="col"><h2>EVENT LOG (latest 200)</h2><pre id="log"></pre></div>
+  <div class="col" style="flex:1.8;min-width:520px">
+    <div class="panel">
+      <h2>Truth map <small id="map-sub"></small></h2>
+      <svg id="map" class="map"></svg>
+      <div class="legend"><b>◯</b> formations · <b>▢</b> facilities · <b>◇</b> belief
+        overlay (what the selected side has been told) · <b>★</b> objectives
+        (purple = fake) · <b>⚒</b> salvage · <b>☂</b> downed crew · click a hex to inspect</div>
+      <pre id="inspect" style="max-height:12vh"></pre>
+    </div>
+    <div class="panel" id="sys-panel" style="display:none">
+      <h2>System map <small>— the whole sky, fog lifted</small></h2>
+      <svg id="sysmap" class="map"></svg>
+    </div>
+    <div class="panel"><h2>Air board</h2><div id="air-board"></div></div>
+    <div class="panel" id="salvage-panel" style="display:none">
+      <h2>Salvage</h2><div id="salvage-bar"></div></div>
+  </div>
+
+  <div class="col">
+    <div class="panel">
+      <h2>Noise injection <small>— sparingly. cruelly.</small></h2>
+      <div class="kv">free-text report → <select id="inj-side"></select>
+        <input id="inj-text" size="34" placeholder="PULSE 1400 — FLASH — …">
+        <button onclick="inject()">Send</button></div>
+      <div class="kv" style="margin-top:4px">phantom contact → side <select id="ph-side"></select>
+        level <select id="ph-level"><option value="1">GHOST</option><option value="2">SHADOW</option>
+          <option value="3">CONTACT</option></select>
+        hex <input id="ph-hex" size="6" placeholder="q,r">
+        size <input id="ph-size" size="10" placeholder="company">
+        <button onclick="phantom()">Conjure</button></div>
+      <h2 style="margin-top:10px">Pending reports <small>(editable until delivered)</small></h2>
+      <div id="pending" style="max-height:24vh;overflow:auto"></div>
+    </div>
+    <div class="panel"><h2>Side views</h2><div id="views"></div></div>
+  </div>
+
+  <div class="col">
+    <div class="panel"><h2>Event log <small>(latest 200)</small></h2>
+      <pre id="log" style="max-height:78vh"></pre></div>
+  </div>
 </div>
+
+<script src="/ui/hexmap.js"></script>
+<script src="/ui/sysmap.js"></script>
+<script src="/ui/mapmodel.js"></script>
 <script>
+let lastState = null;
+
 async function refresh() {
   const s = await (await fetch('/api/gm/state')).json();
+  lastState = s;
   const t = s.truth;
   document.getElementById('clock').textContent =
-    `tick ${t.tick} · ${t.clockMode} · day ${Math.floor(t.tick / 240)} ${String(Math.floor((t.tick % 240) / 10)).padStart(2, '0')}00`;
-  document.getElementById('truth').textContent = JSON.stringify({
-    seed: t.seed, tick: t.tick, mode: t.clockMode, seedCursor: t.seedCursor,
-    formations: Object.values(t.formations).map(f => ({
-      id: f.id, side: f.sideId, pos: f.pos.kind === 'ground' ? `${f.pos.q},${f.pos.r}` : f.pos.kind,
-      emcon: f.emcon, posture: f.posture, rdy: f.rdy, onNet: f.onNet,
-      order: f.currentOrderId, dead: f.destroyed || undefined,
-    })),
-    contacts: Object.values(t.contacts).map(c => ({
-      id: c.id, lvl: c.level, est: c.estPos.q + ',' + c.estPos.r,
-      confirmed: c.lastConfirmedTick, delivered: c.delivered?.level ?? null,
-    })),
-    reports: Object.values(t.reports).map(r => ({
-      id: r.id, gen: r.generatedTick, del: r.deliveredTick, lost: r.lost || undefined,
-    })),
-  }, null, 1);
-  const sideSel = document.getElementById('inj-side');
-  const sides = Object.keys(s.views);
-  if (sideSel.options.length === 0) {
-    for (const side of sides) sideSel.add(new Option(side, side));
-  }
-  document.getElementById('views').innerHTML = sides.map(side =>
-    `<h2>VIEW: ${side}</h2><pre>${JSON.stringify(s.views[side], null, 1)}</pre>`).join('');
-  document.getElementById('log').textContent = s.eventLog.map(l =>
-    `#${l.index} ${l.event.type} ${summ(l.event)}`).join('\n');
+    `t${t.tick} · ${t.clockMode} · day ${Math.floor(t.tick / 240)} ` +
+    `${String(Math.floor((t.tick % 240) / 10)).padStart(2, '0')}00`;
+  document.getElementById('vp-bar').innerHTML = Object.values(t.sides).map(side =>
+    `<span class="pill">${side.name}: <b>${side.vp} VP</b>${side.reprisalsOwed ? ' · reprisal owed' : ''}</span>`).join('');
 
-  // pending engagement banner
+  // selectors (once)
+  const sides = Object.keys(s.views);
+  for (const id of ['belief', 'inj-side', 'ph-side']) {
+    const sel = document.getElementById(id);
+    if (sel.options.length <= (id === 'belief' ? 1 : 0)) {
+      sides.forEach(x => sel.add(new Option(x, x)));
+    }
+  }
+
+  // maps
+  const belief = document.getElementById('belief').value || undefined;
+  const theaterId = Object.keys(t.theaters)[0];
+  document.getElementById('map-sub').textContent =
+    `— ${t.theaters[theaterId]?.name ?? ''}${belief ? ' · belief: ' + belief : ''}`;
+  const model = buildTruthHexModel(t, theaterId, { beliefSide: belief });
+  if (model) renderHexMap(document.getElementById('map'), model,
+    { onHexClick: inspectHex, showCoords: true });
+  const sysModel = buildTruthSysModel(t);
+  document.getElementById('sys-panel').style.display = sysModel ? '' : 'none';
+  if (sysModel) renderSysMap(document.getElementById('sysmap'), sysModel);
+
+  // engagement banner
   const engDiv = document.getElementById('engagement');
   if (s.pendingEngagement) {
-    engDiv.classList.add('active');
+    engDiv.style.display = '';
     const e = s.pendingEngagement;
     document.getElementById('eng-detail').textContent = JSON.stringify({
-      id: e.id, trigger: e.trigger, hex: `${e.hex.q},${e.hex.r}`, status: e.status,
-      attacker: e.attackerSideId, attackerForces: e.attackerFormationIds,
-      defender: e.defenderSideId, defenderForces: e.defenderFormationIds,
+      id: e.id, trigger: e.trigger, domain: e.domain || 'GROUND', status: e.status,
+      at: e.hex ? `${e.hex.q},${e.hex.r}` : e.airPos ? `air ${e.airPos.gridQ},${e.airPos.gridR}` :
+          (e.classification && e.classification.nodeId) || 'deep space',
+      attacker: `${e.attackerSideId}: ${e.attackerFormationIds.join(', ')}`,
+      defender: `${e.defenderSideId}: ${e.defenderFormationIds.join(', ')}`,
+      classification: e.classification,
     }, null, 1);
+    document.getElementById('mul-links').innerHTML = e.handoffId
+      ? sides.map(x => `<a href="/api/gm/handoff/${encodeURIComponent(e.handoffId)}/mul/${x}" download="${x}.mul">⤓ ${x}.mul</a>`).join(' · ')
+      : '';
   } else {
-    engDiv.classList.remove('active');
+    engDiv.style.display = 'none';
     document.getElementById('handoff-out').textContent = '';
   }
 
-  // salvage tokens awaiting recovery
-  document.getElementById('salvage-bar').innerHTML = (s.salvage || []).length
-    ? '<b>Salvage:</b> ' + s.salvage.map(t =>
-        `<span class="salv">${t.sourceUnitId} (held ${t.heldBy || '—'}) ` +
-        `<button onclick="resolveSalvage('${t.id}')">recover</button></span>`).join('')
-    : '';
-
-  // the air board (M3): every flight, its ledger and alert state
+  // air board
   const flights = Object.values(t.formations).filter(f => f.air && !f.destroyed);
-  document.getElementById('air-board').innerHTML = flights.length
-    ? '<b>Air board:</b> ' + flights.map(f => {
-        const where = f.pos.kind === 'air'
-          ? `air(${f.pos.gridQ},${f.pos.gridR}) ${f.pos.band} ${f.air.phase}`
-          : `grounded ${f.alertState || '—'}`;
-        return `<span class="salv">${f.id} [${f.sideId}] ${where} ` +
-          (f.pos.kind === 'ground'
-            ? `<select onchange="setAlert('${f.id}', this.value)">
-                 <option value="">alert…</option><option>ALERT5</option><option>ALERT15</option>
-                 <option>ALERT60</option><option>STAND_DOWN</option></select>
-               <button onclick="turnaround('${f.id}','HOT_PIT')">hot-pit</button>
-               <button onclick="turnaround('${f.id}','STANDARD')">turnaround</button>`
-            : '') + '</span>';
-      }).join('')
-    : '';
+  document.getElementById('air-board').innerHTML = flights.length ? flights.map(f => {
+    const fp = Math.min(...f.unitIds.map(u => t.units[u]?.fuel?.fp ?? Infinity));
+    const where = f.pos.kind === 'air'
+      ? `✈ air ${f.pos.gridQ},${f.pos.gridR} ${f.pos.band} · ${f.air.phase} ${f.air.speed}`
+      : `▢ grounded · ${f.alertState || 'no alert'}`;
+    return `<div class="report">${f.name} <small>[${f.sideId}]</small> · ${where} · FP ${isFinite(fp) ? fp : '—'}` +
+      (f.pos.kind === 'ground'
+        ? ` <select onchange="setAlert('${f.id}', this.value)"><option value="">alert…</option>
+            <option>ALERT5</option><option>ALERT15</option><option>ALERT60</option><option>STAND_DOWN</option></select>
+           <button onclick="turnaround('${f.id}','HOT_PIT')">hot-pit</button>
+           <button onclick="turnaround('${f.id}','STANDARD')">turnaround</button>` : '') +
+      '</div>';
+  }).join('') : '<small>(no flights)</small>';
+
+  // salvage
+  document.getElementById('salvage-panel').style.display = (s.salvage || []).length ? '' : 'none';
+  document.getElementById('salvage-bar').innerHTML = (s.salvage || []).map(tok =>
+    `<div class="report">${tok.sourceUnitId} <small>(held ${tok.heldBy || '—'})</small>
+     <button onclick="resolveSalvage('${tok.id}')">recover (2d6)</button></div>`).join('');
+
+  // pending reports — the noise editor
+  const pending = Object.values(t.reports).filter(r => r.deliveredTick === null && !r.lost);
+  document.getElementById('pending').innerHTML = pending.length ? pending.map(r =>
+    `<div class="report"><small>${r.sideId} · gen t${r.generatedTick} · via ${r.sourceFormationId}</small><br>
+     <input style="width:78%" id="rt-${r.id}" value="${r.text.replace(/"/g, '&quot;')}">
+     <button onclick="editReport('${r.id}')">save</button></div>`).join('')
+    : '<small>(nothing in transit)</small>';
+
+  // side views
+  document.getElementById('views').innerHTML = sides.map(x => {
+    const v = s.views[x];
+    return `<details><summary>${x} — ${v.contacts.length} contacts · ${v.reports.length} reports</summary>
+      <pre style="max-height:30vh">${JSON.stringify({ contacts: v.contacts, reports: v.reports.slice(-6) }, null, 1)
+        .replace(/</g, '&lt;')}</pre></details>`;
+  }).join('');
+
+  // event log
+  document.getElementById('log').textContent = s.eventLog.map(l =>
+    `#${l.index} ${l.event.type} ${summ(l.event)}`).join('\n');
 }
-async function setAlert(formationId, state) {
-  if (!state) return;
-  const r = await post('/api/gm/alert', { formationId, state });
-  if (!r.ok) alert(r.reason);
-  refresh();
+
+function inspectHex(q, r) {
+  if (!lastState) return;
+  const t = lastState.truth;
+  const theaterId = Object.keys(t.theaters)[0];
+  const hex = t.theaters[theaterId].hexes[q + ',' + r];
+  const here = Object.values(t.formations).filter(f =>
+    f.pos.kind === 'ground' && f.pos.q === q && f.pos.r === r);
+  const fac = Object.values(t.facilities).filter(f =>
+    f.pos.kind === 'ground' && f.pos.q === q && f.pos.r === r);
+  document.getElementById('inspect').textContent =
+    `[${q},${r}] ${hex ? hex.terrain : '?'} ${hex && hex.infra.length ? hex.infra.join(',') : ''}` +
+    (hex && hex.objective ? ` ★${hex.objective.vpPerDay}VP${hex.objective.hidden ? ' (hidden)' : ''}${hex.objective.fake ? ' (FAKE)' : ''}` : '') +
+    here.map(f => `\n  ${f.name} [${f.sideId}] RDY ${f.rdy} ${f.emcon}/${f.posture}${f.destroyed ? ' ✕' : ''}`).join('') +
+    fac.map(f => `\n  ${f.name} [${f.sideId}] farm ${f.fuelFarmTons}t · ${f.supplyPoints} SP`).join('');
 }
-async function turnaround(formationId, mode) {
-  const r = await post('/api/gm/turnaround', { formationId, mode });
-  alert(r.ok ? `turnaround started, ready t${r.readyTick}${r.mishap ? ' — MISHAP on the pad!' : ''}`
-             : r.reason);
-  refresh();
-}
+
 function summ(e) {
   if (e.type === 'DIE_ROLLED') return `${e.roll.result} (${e.roll.purpose})`;
   if (e.type === 'FORMATION_MOVED') return `${e.formationId} → ${e.to.q},${e.to.r}`;
+  if (e.type === 'AIR_MOVED') return `${e.formationId} → air ${e.pos.gridQ},${e.pos.gridR} (−${e.fpPaid} FP)`;
+  if (e.type === 'LANE_PROGRESS') return `${e.formationId} ${e.pos.progressAU.toFixed(2)} AU @ ${Math.round(e.pos.velocityKps)} kps`;
   if (e.type === 'CONTACT_UPGRADED') return `${e.contact.id} → L${e.contact.level}`;
   if (e.type === 'REPORT_DELIVERED') return e.reportId;
   if (e.type === 'STEP_BEGAN') return `t${e.tick} ${e.mode}`;
   if (e.type === 'CLOCK_ADVANCED') return `→ t${e.tick}`;
-  return JSON.stringify(e).slice(0, 120);
+  if (e.type === 'GM_NOTE') return e.text;
+  return JSON.stringify(e).slice(0, 110);
 }
-async function advance(untilEvent) {
-  await fetch('/api/gm/advance', { method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ untilEvent }) });
-  refresh();
-}
-async function inject() {
-  await fetch('/api/gm/inject-report', { method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ sideId: document.getElementById('inj-side').value,
-                           text: document.getElementById('inj-text').value }) });
-  document.getElementById('inj-text').value = '';
-  refresh();
-}
+
 async function post(path, body) {
   return (await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body || {}) })).json();
 }
+async function advance(untilEvent) { await post('/api/gm/advance', { untilEvent }); refresh(); }
 async function evade() {
   const r = await post('/api/gm/evade', {});
-  alert('Evasion ' + (r.success ? 'SUCCEEDED — defender slipped away' : 'failed — proceed to battle'));
+  alert(r.success ? 'Evasion SUCCEEDED — defender slipped away'
+                  : 'Evasion failed' + (r.reason ? ` (${r.reason})` : '') + ' — to the table');
   refresh();
 }
 async function exportHandoff() {
   const pkg = await post('/api/gm/export-handoff', {});
   document.getElementById('handoff-out').textContent = JSON.stringify(pkg, null, 1);
-  // prefill the battle-result skeleton
   const skel = { handoffId: pkg.id, victorSideId: '', hexControlSideId: '',
     unitOutcomes: pkg.perSide.flatMap(p => p.units.map(u =>
       ({ unitId: u.unitId, damage: 'OK', ammoState: u.ammoState, pilotOutcomes: [] }))),
@@ -174,16 +229,49 @@ async function exportHandoff() {
 async function ingest() {
   let body;
   try { body = JSON.parse(document.getElementById('battle-result').value); }
-  catch (e) { document.getElementById('ingest-msg').textContent = 'invalid JSON'; return; }
+  catch { document.getElementById('ingest-msg').textContent = 'invalid JSON'; return; }
   const r = await post('/api/gm/battle-result', body);
-  document.getElementById('ingest-msg').textContent = r.ok ? 'ingested ✓' : ('error: ' + r.reason);
+  document.getElementById('ingest-msg').textContent = r.ok ? 'ingested ✓' : ('✗ ' + r.reason);
+  refresh();
+}
+async function inject() {
+  await post('/api/gm/inject-report', { sideId: document.getElementById('inj-side').value,
+    text: document.getElementById('inj-text').value });
+  document.getElementById('inj-text').value = '';
+  refresh();
+}
+async function phantom() {
+  const hex = document.getElementById('ph-hex').value.split(',');
+  await post('/api/gm/inject-contact', {
+    sideId: document.getElementById('ph-side').value,
+    level: +document.getElementById('ph-level').value,
+    q: +hex[0], r: +hex[1],
+    sizeClass: document.getElementById('ph-size').value || undefined,
+  });
+  refresh();
+}
+async function editReport(id) {
+  await post('/api/gm/report-edit', { reportId: id,
+    text: document.getElementById('rt-' + id).value });
+  refresh();
+}
+async function setAlert(formationId, state) {
+  if (!state) return;
+  const r = await post('/api/gm/alert', { formationId, state });
+  if (!r.ok) alert(r.reason);
+  refresh();
+}
+async function turnaround(formationId, mode) {
+  const r = await post('/api/gm/turnaround', { formationId, mode });
+  alert(r.ok ? `turnaround started, ready t${r.readyTick}${r.mishap ? ' — MISHAP on the pad!' : ''}` : r.reason);
   refresh();
 }
 async function resolveSalvage(tokenId) {
   const r = await post('/api/gm/salvage', { tokenId });
-  alert('Salvage recovered as: ' + (r.outcome || r.error));
+  alert('Recovered as: ' + (r.outcome || r.error));
   refresh();
 }
+
 const ws = new WebSocket(`ws://${location.host}`);
 ws.onmessage = refresh;
 refresh();

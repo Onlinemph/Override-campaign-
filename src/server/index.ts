@@ -12,11 +12,12 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
-import { Campaign } from '../core/truth.js';
+import { Campaign, replay } from '../core/truth.js';
 import { MemoryEventStore } from '../core/log.js';
 import { project } from '../projection/project.js';
 import { loadCampaignFixture } from '../demo.js';
-import type { GroundPos, Order } from '../core/types.js';
+import { buildMul } from '../handoff/mul.js';
+import type { Contact, ContactReport, GroundPos, Order } from '../core/types.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixturePath = process.argv[2] ?? join(here, '../../demo/campaign.json');
@@ -63,9 +64,15 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', 'http://localhost');
   const path = url.pathname;
   try {
-    // pages
+    // pages & static assets
     if (path === '/' || path === '/gm') return page(res, 'gm.html');
+    if (path === '/audit') return page(res, 'audit.html');
     if (path.startsWith('/player/')) return page(res, 'player.html');
+    const asset = path.match(/^\/ui\/([\w.-]+\.(js|css))$/);
+    if (asset) {
+      res.writeHead(200, { 'content-type': asset[2] === 'css' ? 'text/css' : 'text/javascript' });
+      return res.end(readFileSync(join(here, '../ui', asset[1])));
+    }
 
     // GM API
     if (path === '/api/gm/state') return json(res, 200, gmState());
@@ -126,6 +133,67 @@ const server = createServer(async (req, res) => {
       const r = campaign.resolveSalvage(b.tokenId);
       broadcast();
       return json(res, 'error' in r ? 400 : 200, r);
+    }
+
+    // ── M5: noise editor, phantom contacts, the audit viewer, MegaMek export ──
+    if (path === '/api/gm/report-edit' && req.method === 'POST') {
+      const b = await readBody(req);
+      const r = campaign.truth.reports[b.reportId];
+      if (!r) return json(res, 400, { ok: false, reason: 'no such report' });
+      if (r.deliveredTick !== null) return json(res, 400, { ok: false, reason: 'already delivered' });
+      campaign.inject({ type: 'REPORT_EDITED', reportId: b.reportId, text: String(b.text ?? '') });
+      broadcast();
+      return json(res, 200, { ok: true });
+    }
+    if (path === '/api/gm/inject-contact' && req.method === 'POST') {
+      // a phantom on the player map: false positive, migrating fauna, chaff (core §6.6)
+      const b = await readBody(req);
+      const theaterId = Object.keys(campaign.truth.theaters)[0];
+      const id = `phantom:${b.sideId}:${campaign.truth.tick}:${b.q},${b.r}`;
+      const level = Math.max(1, Math.min(3, Number(b.level) || 1)) as 1 | 2 | 3;
+      const estPos: GroundPos = { kind: 'ground', theaterId, q: Number(b.q), r: Number(b.r) };
+      const snapshot = {
+        level, estPos, posErrorHexes: level === 1 ? 1 : 0,
+        ...(level >= 2 ? { estSizeClass: b.sizeClass || 'unknown' } : {}),
+        ...(level >= 3 && b.composition ? { estComposition: b.composition } : {}),
+        asOfTick: campaign.truth.tick,
+      };
+      const contact: Contact = {
+        id, observerSideId: b.sideId, targetFormationId: id, kind: 'STANDARD',
+        level, lastConfirmedTick: campaign.truth.tick, lastFadeTick: campaign.truth.tick,
+        estPos, posErrorHexes: snapshot.posErrorHexes, staleAsOfTick: campaign.truth.tick,
+        delivered: snapshot,
+      };
+      const report: ContactReport = {
+        id: `report:${id}`, sideId: b.sideId, generatedTick: campaign.truth.tick,
+        deliveredTick: null, sourceFormationId: 'gm', contactId: id,
+        text: b.text || `T+${campaign.truth.tick} — sensor anomaly, ` +
+          `${b.sizeClass ? b.sizeClass + '-strength ' : ''}return at hex ${b.q},${b.r}`,
+        snapshot,
+      };
+      campaign.inject({ type: 'CONTACT_UPGRADED', contact, tick: campaign.truth.tick });
+      campaign.inject({ type: 'REPORT_QUEUED', report });
+      campaign.inject({ type: 'REPORT_DELIVERED', reportId: report.id, tick: campaign.truth.tick });
+      broadcast();
+      return json(res, 200, { ok: true, contactId: id });
+    }
+    if (path === '/api/gm/audit') {
+      // the victory lap: truth as of event N, replayed from the log
+      const all = campaign.store.all();
+      const n = Math.max(0, Math.min(all.length - 1, Number(url.searchParams.get('index') ?? all.length - 1)));
+      const truthAt = replay(all.slice(0, n + 1));
+      const lo = Math.max(0, n - 14);
+      return json(res, 200, {
+        eventCount: all.length, index: n, truth: truthAt,
+        window: all.slice(lo, Math.min(all.length, n + 6)),
+      });
+    }
+    const mul = path.match(/^\/api\/gm\/handoff\/([^/]+)\/mul\/([^/]+)$/);
+    if (mul) {
+      const pkg = campaign.truth.handoffs[decodeURIComponent(mul[1])];
+      if (!pkg) return json(res, 404, { error: 'no such handoff' });
+      res.writeHead(200, { 'content-type': 'application/xml' });
+      return res.end(buildMul(campaign.truth, pkg, mul[2]));
     }
 
     // ── M3: the air board ──

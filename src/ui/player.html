@@ -3,115 +3,147 @@
 <head>
 <meta charset="utf-8">
 <title>OVERRIDE — Player</title>
-<style>
-  body { font: 13px/1.4 monospace; background: #0b0e13; color: #cfcfcf; margin: 0; padding: 12px; }
-  h1 { font-size: 16px; color: #9fdf9f; } h2 { font-size: 13px; color: #9fdf9f; margin: 8px 0 4px; }
-  .cols { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
-  .col { flex: 1; min-width: 320px; background: #131720; border: 1px solid #2a3142; padding: 8px; }
-  pre { white-space: pre-wrap; margin: 0; max-height: 60vh; overflow: auto; }
-  .stale { color: #d9a55a; } .report { border-bottom: 1px dotted #333; padding: 3px 0; }
-  button { background: #1d3324; color: #cfe; border: 1px solid #3c6648; padding: 4px 10px; cursor: pointer; }
-  input, select { background: #1a1f2b; color: #cfe; border: 1px solid #344; font: inherit; }
-</style>
+<link rel="stylesheet" href="/ui/style.css">
 </head>
 <body>
-<h1 id="title">OVERRIDE — PLAYER</h1>
+<h1 id="title">OVERRIDE</h1>
 <div class="cols">
-  <div class="col"><h2>OWN FORCES</h2><pre id="own"></pre></div>
-  <div class="col"><h2>CONTACTS <small>(staleness in ticks)</small></h2><pre id="contacts"></pre>
-    <h2>SYSTEM MAP <small>(light-cones, not truths)</small></h2><pre id="system"></pre>
-    <h2>SCOUTED TERRAIN</h2><pre id="terrain"></pre></div>
-  <div class="col"><h2>REPORT INBOX</h2><div id="inbox"></div>
-    <h2>ORDER ENTRY</h2>
-    <div>
-      formation <select id="o-formation"></select>
-      kind <select id="o-kind">
-        <option>MOVE</option><option>FORCED_MARCH</option><option>MOVE_CAUTIOUS</option>
-        <option>HIDE</option><option>DIG_IN</option><option>PATROL</option>
-        <option>SCREEN</option><option>STRIKE</option><option>REST</option>
-        <option>CAP</option><option>SWEEP</option><option>RECON</option><option>FERRY</option>
-      </select><br>
-      <small>air missions:</small> station q,r <input id="o-station" size="6" placeholder="2,0">
-      speed <select id="o-airspeed"><option value="">—</option><option>CRUISE</option><option>DASH</option></select>
-      loiter CT <input id="o-loiter" size="3"><br>
-      path (q,r;q,r;…) <input id="o-path" size="28" placeholder="12,5;11,5;10,6">
-      <small>(SCREEN: hexes to hold · STRIKE: leave blank, pick target)</small><br>
-      strike target <select id="o-target"><option value="">—</option></select>
-      EMCON <select id="o-emcon"><option value="">keep</option><option>DARK</option>
-        <option>PASSIVE</option><option>ACTIVE</option></select><br>
-      <fieldset style="border:1px solid #344;margin-top:4px">
-        <legend>conditional (optional)</legend>
-        if <select id="c-when"><option value="">—none—</option>
-          <option>CONTACT_WITHIN</option><option>DETECTED_SELF</option>
-          <option>RDY_BELOW</option><option>TICK_REACHED</option><option>HEX_REACHED</option>
-          <option>ALLY_ENGAGED</option></select>
-        param <input id="c-param" size="6" placeholder="4">
-        then <select id="c-kind"><option>STRIKE</option><option>HIDE</option>
-          <option>MOVE</option><option>FORCED_MARCH</option><option>DIG_IN</option><option>REST</option></select>
-        target <select id="c-target"><option value="">—</option></select>
-        path <input id="c-path" size="14" placeholder="10,6;9,6">
-      </fieldset>
-      <button onclick="sendOrder()">Issue</button>
-      <div id="o-result"></div>
-    </div></div>
+  <div class="col" style="flex:1.7;min-width:480px">
+    <div class="panel">
+      <h2>Theater map <small>— your intelligence picture, not the territory</small></h2>
+      <svg id="map" class="map"></svg>
+      <div class="legend">
+        <b>◯</b> your formations (dashed ring = EMCON DARK) · <b>▢</b> facilities ·
+        <b>◇</b> contacts <b>G/S/C/L</b> (dimmer = staler; dashed circle = ±1) ·
+        <b>★</b> objective · <b>⌁</b> satellite track ·
+        click hexes to plot a path
+      </div>
+    </div>
+    <div class="panel" id="sys-panel" style="display:none">
+      <h2>System map <small>— light-cones, not truths</small></h2>
+      <svg id="sysmap" class="map"></svg>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="panel"><h2>Own forces</h2><pre id="own"></pre></div>
+    <div class="panel"><h2>Contacts <small>(staleness in ticks)</small></h2><pre id="contacts"></pre></div>
+  </div>
+
+  <div class="col">
+    <div class="panel"><h2>Report inbox</h2><div id="inbox" style="max-height:34vh;overflow:auto"></div></div>
+    <div class="panel">
+      <h2>Order entry</h2>
+      <div class="kv">formation <select id="o-formation"></select>
+        kind <select id="o-kind">
+          <option>MOVE</option><option>FORCED_MARCH</option><option>MOVE_CAUTIOUS</option>
+          <option>HIDE</option><option>DIG_IN</option><option>PATROL</option>
+          <option>SCREEN</option><option>STRIKE</option><option>REST</option>
+          <option>CAP</option><option>SWEEP</option><option>RECON</option><option>FERRY</option>
+        </select></div>
+      <div class="kv">path <input id="o-path" size="26" placeholder="click the map, or q,r;q,r">
+        <button onclick="clearPath()">✕</button></div>
+      <div class="kv">strike/intercept target <select id="o-target"><option value="">—</option></select>
+        EMCON <select id="o-emcon"><option value="">keep</option><option>DARK</option>
+          <option>PASSIVE</option><option>ACTIVE</option></select></div>
+      <div class="kv">air: station q,r <input id="o-station" size="5">
+        speed <select id="o-airspeed"><option value="">—</option><option>CRUISE</option><option>DASH</option></select>
+        loiter CT <input id="o-loiter" size="3"></div>
+      <details><summary class="kv">conditional (optional)</summary>
+        <div class="kv">if <select id="c-when"><option value="">—none—</option>
+            <option>CONTACT_WITHIN</option><option>DETECTED_SELF</option>
+            <option>RDY_BELOW</option><option>TICK_REACHED</option><option>HEX_REACHED</option>
+            <option>ALLY_ENGAGED</option></select>
+          param <input id="c-param" size="5">
+          then <select id="c-kind"><option>STRIKE</option><option>HIDE</option>
+            <option>MOVE</option><option>FORCED_MARCH</option><option>DIG_IN</option>
+            <option>REST</option><option>SWEEP</option></select>
+          target <select id="c-target"><option value="">—</option></select>
+          path <input id="c-path" size="12"></div>
+      </details>
+      <div style="margin-top:6px"><button onclick="sendOrder()">Issue order</button>
+        <span id="o-result" class="kv"></span></div>
+    </div>
+    <div class="panel"><h2>Scouted terrain notes</h2><pre id="terrain" style="max-height:18vh"></pre></div>
+  </div>
 </div>
+
+<script src="/ui/hexmap.js"></script>
+<script src="/ui/sysmap.js"></script>
+<script src="/ui/mapmodel.js"></script>
 <script>
 const sideId = location.pathname.split('/').pop();
-document.getElementById('title').textContent = `OVERRIDE — ${sideId.toUpperCase()}`;
+let plotted = [];
+
 async function refresh() {
   const v = await (await fetch(`/api/side/${sideId}/view`)).json();
   document.getElementById('title').textContent =
-    `OVERRIDE — ${sideId.toUpperCase()} · tick ${v.now} · ${v.clockMode} · ${v.isNight ? 'NIGHT' : 'DAY'} · VP ${v.vp}`;
+    `OVERRIDE — ${sideId.toUpperCase()} · t${v.now} · ${v.clockMode} · ${v.isNight ? 'NIGHT' : 'DAY'} · ${v.vp} VP`;
+
+  // the map
+  const model = buildPlayerHexModel(v, v.theaters[0] && v.theaters[0].id);
+  if (model) {
+    model.highlight = plotted;
+    model.paths = plotted.length > 1 ? [{ points: plotted }] : [];
+    renderHexMap(document.getElementById('map'), model,
+      { onHexClick: (q, r) => { plotted.push({ q, r });
+          document.getElementById('o-path').value = plotted.map(p => p.q + ',' + p.r).join(';');
+          refresh(); },
+        showCoords: true });
+  }
+  const sysModel = buildPlayerSysModel(v);
+  document.getElementById('sys-panel').style.display = sysModel ? '' : 'none';
+  if (sysModel) renderSysMap(document.getElementById('sysmap'), sysModel);
+
+  // panels
   document.getElementById('own').textContent = v.ownFormations.map(f => {
     const where = f.flight?.airPos
-      ? `AIR ${f.flight.airPos.q},${f.flight.airPos.r} ${f.flight.airPos.band} L${f.flight.airPos.altLevel}`
+      ? `AIR ${f.flight.airPos.q},${f.flight.airPos.r} ${f.flight.airPos.band}`
+      : f.vessel?.spacePos
+      ? (f.vessel.spacePos.kind === 'node' ? f.vessel.spacePos.nodeId
+         : `${f.vessel.spacePos.laneId} ${f.vessel.spacePos.progressAU.toFixed(1)}AU`)
       : (f.pos ? f.pos.q + ',' + f.pos.r : '?');
-    const ledger = f.flight
-      ? `\n   ✈ ${f.flight.phase} ${f.flight.speed}  FP ${f.flight.fpMin}` +
-        `  JOKER ${f.flight.jokerFp}  BINGO ${f.flight.bingoFp}` +
-        `  fatigue ${f.flight.fatigueMax}${f.alertState ? '  ' + f.alertState : ''}`
+    const extra = f.flight
+      ? `\n   ✈ ${f.flight.phase} ${f.flight.speed} · FP ${f.flight.fpMin} · JOKER ${f.flight.jokerFp} · BINGO ${f.flight.bingoFp} · fatigue ${f.flight.fatigueMax}${f.alertState ? ' · ' + f.alertState : ''}`
       : f.vessel
-      ? `\n   ⛁ ${f.vessel.spacePos?.kind === 'node' ? 'at ' + f.vessel.spacePos.nodeId
-            : f.vessel.spacePos?.kind === 'lane'
-              ? f.vessel.spacePos.laneId + ' ' + f.vessel.spacePos.progressAU.toFixed(2) + ' AU, '
-                + Math.round(f.vessel.spacePos.velocityKps) + ' kps'
-              : '?'}  ${f.vessel.fuelTons} t (${f.vessel.burnDaysRemaining} burn-days)` +
-        f.vessel.drives.map(d => `\n   ⚡ KF ${d.chargePct}% sail:${d.sail} ${d.kfDamage !== 'NONE' ? 'KF-DMG:' + d.kfDamage : ''}`).join('')
+      ? `\n   ⛁ ${f.vessel.fuelTons} t (${f.vessel.burnDaysRemaining} burn-days)` +
+        f.vessel.drives.map(d => ` · KF ${d.chargePct}% sail:${d.sail}`).join('')
       : '';
-    return `${f.name} @ ${where}  RDY ${f.rdy}  ${f.emcon}/${f.posture}` +
-      `  ${f.onNet ? 'ON-NET' : 'OFF-NET'}${f.currentOrder ? '  [' + f.currentOrder.kind + ']' : ''}` +
-      ledger + '\n' +
-      f.units.map(u => `   ${u.name} (${u.model}) ${u.damage} ammo:${u.ammoState}`).join('\n');
+    return `${f.name} @ ${where} · RDY ${f.rdy} · ${f.emcon}/${f.posture} · ${f.onNet ? 'ON-NET' : 'OFF-NET'}` +
+      (f.currentOrder ? ` · [${f.currentOrder.kind}]` : '') + extra;
   }).join('\n\n') || '(none)';
-  document.getElementById('contacts').textContent = v.contacts.map(c =>
-    `${c.levelName} @ ${c.estPos.kind === 'air'
-        ? 'AIR ' + c.estPos.gridQ + ',' + c.estPos.gridR + ' ' + c.estPos.band
-        : c.estPos.q + ',' + c.estPos.r}${c.posErrorHexes ? ' ±' + c.posErrorHexes : ''}` +
-    (c.estSizeClass ? `  ${c.estSizeClass}` : '') +
-    (c.estVector !== undefined ? `  hdg ${c.estVector}°` : '') +
-    (c.estComposition ? `\n   ${c.estComposition}` : '') +
-    (c.toe ? '\n   ' + c.toe.map(t => `${t.name} (${t.model}) ${t.damage}`).join('\n   ') : '') +
-    `\n   as of t${c.staleAsOfTick} (${c.ageTicks} ticks stale)`
-  ).join('\n\n') || '(no contacts)';
-  document.getElementById('system').textContent = v.system
-    ? v.system.nodes.map(n => `● ${n.name} [${n.type}]`).join('\n') + '\n' +
-      v.system.lanes.map(l => `  ${l.a} ↔ ${l.b}: ${l.distanceAU} AU (~${l.transitDays1G} d @1G)`).join('\n')
-    : '(no system layer)';
-  document.getElementById('terrain').textContent =
-    v.scoutedTerrain.filter(h => h.terrain !== 'CLEAR' || h.infra.length || h.objective)
-      .map(h => `${h.q},${h.r} ${h.terrain}${h.infra.length ? ' [' + h.infra.join(',') + ']' : ''}` +
-                `${h.objective ? ' ★' + h.objective.vpPerDay + 'VP/day' : ''}`).join('\n') || '(nothing notable scouted)';
+
+  document.getElementById('contacts').textContent = v.contacts.map(c => {
+    const at = c.estPos.kind === 'air' ? `AIR ${c.estPos.gridQ},${c.estPos.gridR}`
+      : c.estPos.kind === 'node' ? c.estPos.nodeId
+      : c.estPos.kind === 'lane' ? `${c.estPos.laneId} ${c.estPos.progressAU.toFixed(1)}AU`
+      : `${c.estPos.q},${c.estPos.r}`;
+    return `${c.levelName} @ ${at}${c.posErrorHexes ? ' ±' + c.posErrorHexes : ''}` +
+      (c.estSizeClass ? ` · ${c.estSizeClass}` : '') +
+      (c.estVector !== undefined ? ` · hdg ${c.estVector}°` : '') +
+      (c.estComposition ? `\n   ${c.estComposition}` : '') +
+      (c.toe ? '\n   ' + c.toe.map(u => `${u.name} (${u.model}) ${u.damage}`).join('\n   ') : '') +
+      `\n   as of t${c.staleAsOfTick} (${c.ageTicks} stale)`;
+  }).join('\n\n') || '(no contacts — the silence is information too)';
+
   document.getElementById('inbox').innerHTML = v.reports.slice().reverse().map(r =>
-    `<div class="report">${r.text} <span class="stale">(received t${r.deliveredTick})</span></div>`
-  ).join('') || '(inbox empty)';
+    `<div class="report">${r.text}<div class="meta">received t${r.deliveredTick}` +
+    (r.deliveredTick > r.generatedTick ? ` · <span class="stale">${r.deliveredTick - r.generatedTick} ticks late</span>` : '') +
+    `</div></div>`).join('') || '<small>(inbox empty)</small>';
+
+  document.getElementById('terrain').textContent =
+    v.scoutedTerrain.filter(hx => hx.infra.length || hx.objective)
+      .map(hx => `${hx.q},${hx.r} ${hx.terrain}${hx.infra.length ? ' [' + hx.infra.join(',') + ']' : ''}` +
+                `${hx.objective ? ' ★' + hx.objective.vpPerDay + 'VP/day' : ''}`).join('\n')
+    || '(nothing notable scouted yet)';
+
+  // selectors
   const sel = document.getElementById('o-formation');
   const cur = sel.value;
   sel.innerHTML = v.ownFormations.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
   if (cur) sel.value = cur;
-  // target-contact pickers (STRIKE / conditional STRIKE) — contacts at CONTACT+ are targetable
   const opts = '<option value="">—</option>' + v.contacts.map(c => {
-    const at = c.estPos.kind === 'air'
-      ? `AIR ${c.estPos.gridQ},${c.estPos.gridR}` : `${c.estPos.q},${c.estPos.r}`;
+    const at = c.estPos.kind === 'ground' ? `${c.estPos.q},${c.estPos.r}` : c.estPos.kind;
     return `<option value="${c.id}">${c.levelName} @ ${at}</option>`;
   }).join('');
   for (const id of ['o-target', 'c-target']) {
@@ -119,8 +151,11 @@ async function refresh() {
     t.innerHTML = opts; if (tv) t.value = tv;
   }
 }
+
+function clearPath() { plotted = []; document.getElementById('o-path').value = ''; refresh(); }
 const parsePath = s => s.trim() ? s.trim().split(';').map(p =>
   ({ q: +p.split(',')[0], r: +p.split(',')[1] })) : [];
+
 async function sendOrder() {
   const body = {
     formationId: document.getElementById('o-formation').value,
@@ -147,9 +182,11 @@ async function sendOrder() {
   }
   const r = await (await fetch(`/api/side/${sideId}/order`, { method: 'POST',
     headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })).json();
-  document.getElementById('o-result').textContent = r.ok ? 'order accepted' : `REFUSED: ${r.reason}`;
+  document.getElementById('o-result').textContent = r.ok ? '✓ order accepted' : `✗ ${r.reason}`;
+  if (r.ok) { plotted = []; document.getElementById('o-path').value = ''; }
   refresh();
 }
+
 const ws = new WebSocket(`ws://${location.host}`);
 ws.onmessage = refresh;
 refresh();

@@ -331,3 +331,29 @@ approach broken by the picket's sweep, and a MATCHED classification at ~2.1 burn
     water cracking, station fuel transfer order flow, convoy/blockade SP pipelines,
     squadron thirst-grouping (fleets move as separate formations for now), hard-burn
     daily medical rolls, orbital fire support.
+
+---
+
+## D-012 ✅ Milestone 5 (Polish) decisions
+1. **Map UIs are dependency-free SVG** (`src/ui/hexmap.js`, `src/ui/sysmap.js`) with one
+   shared view-model module (`mapmodel.js`) so the fog rules live in exactly one place
+   per audience: player models are built from ViewStates (already fogged by
+   `project()`), GM/audit models from raw truth. The renderers never see anything the
+   projection didn't approve.
+2. **Grid extent is public geography** (paper maps of the planet exist); terrain
+   *content* stays scouted-only. ViewState gains `theaters` (bounds), `ownFacilities`,
+   and `ownSatellites` (own + `knownTo` — core §8.6's "schedule around your eyes"),
+   all leak-tested.
+3. **The GM belief overlay**: the truth map can superimpose what any chosen side has
+   been *told* (delivered snapshots) — the heart of running a double-blind game is
+   seeing the gap between the two.
+4. **Noise editor**: undelivered reports are editable via `REPORT_EDITED` (in the log,
+   so the lie is auditable — the Table Covenant survives the GM's cruelty); phantom
+   contacts are injected as delivered snapshots against a synthetic target id and fade
+   naturally through the normal ladder. Core §6.6: sparingly, cruelly.
+5. **MegaMek export is best-effort** (.mul v1.0): chassis/model split heuristically from
+   `Unit.model`, crew skills carried, campaign state (fuel, ammo, setup rights) as XML
+   comments. Names must match MegaMek's cache to autoload.
+6. **Audit viewer** replays the log server-side (`replay(events[0..n])`) per request —
+   the event-sourced core makes "truth at any moment" a pure function, which IS the
+   victory-lap feature. No state is kept; the log remains the only authority.
