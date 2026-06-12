@@ -19,6 +19,7 @@
 <div class="cols">
   <div class="col"><h2>OWN FORCES</h2><pre id="own"></pre></div>
   <div class="col"><h2>CONTACTS <small>(staleness in ticks)</small></h2><pre id="contacts"></pre>
+    <h2>SYSTEM MAP <small>(light-cones, not truths)</small></h2><pre id="system"></pre>
     <h2>SCOUTED TERRAIN</h2><pre id="terrain"></pre></div>
   <div class="col"><h2>REPORT INBOX</h2><div id="inbox"></div>
     <h2>ORDER ENTRY</h2>
@@ -69,6 +70,13 @@ async function refresh() {
       ? `\n   ✈ ${f.flight.phase} ${f.flight.speed}  FP ${f.flight.fpMin}` +
         `  JOKER ${f.flight.jokerFp}  BINGO ${f.flight.bingoFp}` +
         `  fatigue ${f.flight.fatigueMax}${f.alertState ? '  ' + f.alertState : ''}`
+      : f.vessel
+      ? `\n   ⛁ ${f.vessel.spacePos?.kind === 'node' ? 'at ' + f.vessel.spacePos.nodeId
+            : f.vessel.spacePos?.kind === 'lane'
+              ? f.vessel.spacePos.laneId + ' ' + f.vessel.spacePos.progressAU.toFixed(2) + ' AU, '
+                + Math.round(f.vessel.spacePos.velocityKps) + ' kps'
+              : '?'}  ${f.vessel.fuelTons} t (${f.vessel.burnDaysRemaining} burn-days)` +
+        f.vessel.drives.map(d => `\n   ⚡ KF ${d.chargePct}% sail:${d.sail} ${d.kfDamage !== 'NONE' ? 'KF-DMG:' + d.kfDamage : ''}`).join('')
       : '';
     return `${f.name} @ ${where}  RDY ${f.rdy}  ${f.emcon}/${f.posture}` +
       `  ${f.onNet ? 'ON-NET' : 'OFF-NET'}${f.currentOrder ? '  [' + f.currentOrder.kind + ']' : ''}` +
@@ -85,6 +93,10 @@ async function refresh() {
     (c.toe ? '\n   ' + c.toe.map(t => `${t.name} (${t.model}) ${t.damage}`).join('\n   ') : '') +
     `\n   as of t${c.staleAsOfTick} (${c.ageTicks} ticks stale)`
   ).join('\n\n') || '(no contacts)';
+  document.getElementById('system').textContent = v.system
+    ? v.system.nodes.map(n => `● ${n.name} [${n.type}]`).join('\n') + '\n' +
+      v.system.lanes.map(l => `  ${l.a} ↔ ${l.b}: ${l.distanceAU} AU (~${l.transitDays1G} d @1G)`).join('\n')
+    : '(no system layer)';
   document.getElementById('terrain').textContent =
     v.scoutedTerrain.filter(h => h.terrain !== 'CLEAR' || h.infra.length || h.objective)
       .map(h => `${h.q},${h.r} ${h.terrain}${h.infra.length ? ' [' + h.infra.join(',') + ']' : ''}` +

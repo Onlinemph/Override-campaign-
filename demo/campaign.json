@@ -104,8 +104,27 @@
       "units": [
         { "name": "Tengu 1", "model": "SL-17 Shilone", "class": "ASF",
           "safeThrust": 6, "fuelFp": 400, "pilot": "Chu-i Okabe" }
+      ] },
+    { "id": "blue-picket", "sideId": "blue", "name": "Picket Vigilant",
+      "sigBase": 8, "nodeId": "mistral", "emcon": "ACTIVE",
+      "units": [
+        { "name": "Vigilant", "model": "Achilles (pocket WarShip)", "class": "DROPSHIP",
+          "maxThrust": 4, "fuelTons": 60, "tonsPerBurnDay": 1.84 }
       ] }
   ],
+  "system": {
+    "nodes": [
+      { "id": "zenith", "type": "JUMP_ZENITH", "name": "Zenith Point" },
+      { "id": "cavanaugh-ii", "type": "PLANET", "name": "Cavanaugh II", "theaterId": "cavanaugh" },
+      { "id": "mistral", "type": "GAS_GIANT", "name": "Mistral" },
+      { "id": "cavanaugh-l1", "type": "PIRATE_POINT", "name": "Cavanaugh L1", "secret": true }
+    ],
+    "lanes": [
+      { "a": "zenith", "b": "cavanaugh-ii", "distanceAU": 10 },
+      { "a": "zenith", "b": "mistral", "distanceAU": 4 },
+      { "a": "mistral", "b": "cavanaugh-ii", "distanceAU": 8 }
+    ]
+  },
   "commandNodes": { "blue": ["blue-spaceport", "blue-line-co"], "red": ["red-probe-co"] },
   "orders": [
     { "id": "order-red-1", "sideId": "red", "formationId": "red-recon-1",

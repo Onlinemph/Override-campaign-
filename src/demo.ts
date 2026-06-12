@@ -10,7 +10,8 @@ import {
 
 interface FixtureJson {
   seed: string;
-  config: { name: string; dawnTick: number; duskTick: number; weather: 'CLEAR' | 'RAIN' | 'STORM' };
+  config: { name: string; dawnTick: number; duskTick: number; weather: 'CLEAR' | 'RAIN' | 'STORM';
+            airHexByTheater?: Record<string, { q: number; r: number }> };
   theaters: Array<{ id: string; name: string; width: number; height: number;
                     defaultTerrain: string; overrides: HexOverride[] }>;
   sides: Array<{ id: string; name: string }>;
@@ -19,6 +20,7 @@ interface FixtureJson {
   formations: Array<Record<string, any>>;
   commandNodes: Record<string, string[]>;
   orders: Array<Record<string, any>>;
+  system?: { nodes: Array<Record<string, any>>; lanes: Array<Record<string, any>> };
 }
 
 export function loadCampaignFixture(path: string): TruthState {
@@ -52,8 +54,21 @@ export function loadCampaignFixture(path: string): TruthState {
       nextPassTick: sat.nextPassTick ?? 0,
     });
   }
+  for (const n of j.system?.nodes ?? []) {
+    truth.system.nodes[n.id] = {
+      id: n.id, type: n.type, name: n.name ?? n.id,
+      surveyedBy: n.surveyedBy ?? [], secret: n.secret ?? false,
+      ...(n.theaterId ? { theaterId: n.theaterId } : {}),
+    };
+  }
+  for (const l of j.system?.lanes ?? []) {
+    const id = l.id ?? `${l.a}--${l.b}`;
+    truth.system.lanes[id] = { id, a: l.a, b: l.b, distanceAU: l.distanceAU };
+  }
   for (const f of j.formations) {
-    const pos = f.airPos
+    const pos = f.nodeId
+      ? { kind: 'node' as const, nodeId: f.nodeId }
+      : f.airPos
       ? { kind: 'air' as const, gridQ: f.airPos.q, gridR: f.airPos.r,
           band: (f.airPos.band ?? 'HIGH') as 'HIGH', altLevel: f.airPos.altLevel ?? 6,
           velocity: 2, vectorDeg: 0 }
@@ -73,7 +88,10 @@ export function loadCampaignFixture(path: string): TruthState {
         id: `${f.id}-u${i + 1}`,
         sideId: f.sideId, name: u.name, model: u.model, class: u.class, tags: u.tags ?? [],
         safeThrust: u.safeThrust,
-        fuel: u.fuelFp ? { fp: u.fuelFp, fpPerTon: 80, tons: u.fuelTons ?? u.fuelFp / 80 } : undefined,
+        fuel: u.fuelFp ? { fp: u.fuelFp, fpPerTon: 80, tons: u.fuelTons ?? u.fuelFp / 80 }
+          : u.fuelTons ? { fp: 0, fpPerTon: 30, tons: u.fuelTons,
+                           tonsPerBurnDay: u.tonsPerBurnDay ?? 1.84 } : undefined,
+        maxThrust: u.maxThrust,
       });
       if (u.pilot) {
         const pilot = { id: `${f.id}-pilot-${i + 1}`, name: u.pilot, gunnery: 4, piloting: 5,

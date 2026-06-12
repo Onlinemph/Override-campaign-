@@ -362,8 +362,73 @@ export const SKYWATCH = {
 } as const;
 
 // ════════════════════════════════════════════════════════════════════════════
-// §M2 — DEEP SKY (Module 2) — constants land here at Milestone 4.
-// (Brachistochrone constant 2.835, light lag 10 min/AU, burn-day rates, jump board,
-//  encounter classifier thresholds — per the DEEP SKY quick reference.)
+// §M2 — DEEP SKY (Module 2) — mirrors the DEEP SKY quick-reference appendix.
 // ════════════════════════════════════════════════════════════════════════════
-export const DEEPSKY = {} as const;
+export const DEEPSKY = {
+  // ── §2 transit: the burn ──
+  BRACHISTOCHRONE_COEFF: 2.835,     // T(days) = 2.835 × √(AU ÷ G); flip at midpoint
+  // physics anchors for the integrator (NOT house-ruleable without breaking the math)
+  KPS_PER_BURN_DAY_1G: 847.3,       // 9.80665 m/s² × 86400 s
+  AU_PER_DAY_PER_KPS: 86400 / 1.496e8,
+  // ⚙ crew costs of riding the torch (DEEP SKY §2)
+  BURN_RDY: {
+    MIL_1_5G_DAYS_PER_RDY: 2,       // −1 formation RDY per 2 days at 1.5G
+    MIL_2G_DAYS_PER_RDY: 1,         // −1 per day at 2G
+    HARD_BURN_MIN_G: 3,             // 3G+ requires acceleration couches
+    HARD_BURN_EMBARKED_RDY: -2,     // ground troops arrive at −2 RDY
+    HARD_BURN_MEDICAL_TN: 4,        // daily 2d6 ≥ 4 or a medical casualty
+  },
+  STATION_KEEPING_G: 0.1,           // the best a JumpShip can do
+
+  // ── §3 strategic fuel: the burn-day ledger ──
+  TONS_PER_BURN_DAY_DEFAULT: 1.84,  // most military DropShips at 1G
+  TACTICAL_FP_PER_TON_LARGE: 30,    // large DropShips/WarShips at handoff
+  STATION_TRANSFER_TONS_PER_WATCH: 100,
+  SKIM: { D6_X_TONS_PER_WATCH: 10, PILOTING_TN: 7 },  // gas giant scooping (TN: D-011)
+  WATER_CRACK_2D6_TONS_PER_WATCH: true,
+
+  // ── §4 seeing the system ──
+  // ⚙ D-011.1: §4.2 says 10 min/AU but §9.1 (and the M4 acceptance) demand the flash
+  // at 10 AU land 83 minutes later — real light, 8.3 min/AU. The worked example wins.
+  LIGHT_LAG_MIN_PER_AU: 8.3,
+  WATCH_STALE_AU: 6,                // at Watch scale, ≥6 AU is one Watch stale
+  COLD_COAST_SIG: 11,               // per watch per searcher
+  BELT_SECTOR_SIG_MOD: 1,           // +1 drifting through a belt
+  STATION_KEEPING_SIG: 8,
+  PICKET_ACTIVE_TN_MOD: -2,         // active sweep resolves coasters at TN −2 near its node
+  PICKET_RANGE_AU: 1,               // "within its node" (D-011)
+  FALSE_FLAG_TN: 9,                 // hold the lie per close inspection
+  SENTINEL_DRONE: { TONS: 5, TRIGGER_AU: 0.05, SIG: 12 },
+  PASSIVE_ARRAY_STALENESS_FACTOR: 0.5,
+  BURN_DETECT_MIN_G: 1,             // 1G+ drives are automatic, after light lag
+  EMISSION_CONTACT_LEVEL: 2,        // flash/burn reveal position+vector+mass class (SHADOW)
+
+  // ── §5 the encounter classifier ──
+  CLASSIFIER: {
+    MATCHED_MM_FACTOR: 2,           // MATCHED if interceptor MM ≥ 2 × gap
+    SLASH_TURNS_BASE: 4,            // slashing pass: 1d6 + 4 tabletop turns
+    BLOCKADE_REST_KPS: 10,          // "both effectively at rest" tolerance
+  },
+
+  // ── §7 jump operations: the door ──
+  JUMP: {
+    RECHARGE_HRS_BY_CLASS: { M: 200, K: 190, G: 180, F: 170, A: 155 } as Record<string, number>,
+    RECHARGE_HRS_RANGE: [151, 210] as [number, number],
+    STATION_TRANSFER_HRS: 150,
+    QUICK_CHARGE: { TN: 8, WATCHES: 5, KF_DAMAGE_MAX: 3 },
+    EMERGENCY_FURL: { WATCHES: 2, LOSE_CHARGE_MAX: 5 },  // 2d6 ≤5 ⇒ charge to 0
+    PIRATE_POINT: { TN: 9, SURVEYED_TN: 7, MISJUMP_MAX: 4 },
+  },
+  TABOO: { JUMPSHIP_KILL_VP: -10, JUMPSHIP_CAPTURE_VP: 15 },  // + a Reprisal event
+
+  // ── §6 the capital handoff ──
+  FRESHER_LIGHT_INIT_BONUS: 1,      // lower staleness at commit ⇒ +1 init for 3 turns
+  FRESHER_LIGHT_INIT_TURNS: 3,
+
+  // ── §9 the system campaign: objective menu (VP/day or one-shot) ──
+  VP: {
+    JUMP_POINT_PER_DAY: 2, RECHARGE_STATION_PER_DAY: 2, GAS_GIANT_REFINERY_PER_DAY: 1,
+    SHIPYARD_PER_DAY: 3, CONVOY_DELIVERED: 3, CONVOY_DESTROYED: 3,
+    WARSHIP_CRIPPLED: 5, JUMPSHIP_CAPTURED: 15, SURVEY_STOLEN: 5,
+  },
+} as const;

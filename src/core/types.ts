@@ -128,6 +128,11 @@ export interface Formation {
   routUntilTick?: Tick | null;    // RDY≤1: uncommandable until this tick (core §3.2/§7.4)
   digInPulseAcc?: number;         // accumulates pulses toward DUG_IN (core §4.1)
   lastBattleTick?: Tick;          // a fighting day costs ×2 supply (core §10.1)
+  // ext (M4): space bookkeeping (DEEP SKY) — present on vessels in transit
+  space?: {
+    burnStartTick?: Tick | null;    // emitting since (1G+ drives are automatic after lag)
+    rdyDayAcc?: number;             // crew G-limit fatigue accumulator (days at high G)
+  };
   // ext (M3): flight state (SKYWATCH) — present on air-capable formations
   air?: {
     homeFacilityId?: Id;
@@ -233,6 +238,9 @@ export interface Order {
   airSpeed?: 'CRUISE' | 'DASH';
   loiterTicks?: number;            // time on station (CAP/RECON) in contact turns
   lean?: boolean;                  // lean loiter
+  // ext (M4): space transit (DEEP SKY §2)
+  laneId?: Id;                     // lane to ride (TRANSIT/COLD_COAST)
+  destinationNodeId?: Id;          // which end of the lane we are burning for
 }
 export interface ATO { id: Id; sideId: Id; pulse: number; orderIds: Id[] }
 
@@ -274,10 +282,14 @@ export interface BattleResult {
  */
 export interface Engagement {
   id: Id; tick: Tick;
-  hex?: GroundPos;                  // ground engagements (absent for AIR domain)
-  trigger: 'SAME_HEX' | 'SCREEN' | 'STRIKE' | 'AIR_INTERCEPT';
-  domain?: 'GROUND' | 'AIR';        // ext (M3); absent = GROUND
+  hex?: GroundPos;                  // ground engagements (absent for AIR/SPACE domains)
+  trigger: 'SAME_HEX' | 'SCREEN' | 'STRIKE' | 'AIR_INTERCEPT' | 'SPACE_INTERCEPT';
+  domain?: 'GROUND' | 'AIR' | 'SPACE';
   airPos?: AirPos;                  // ext (M3): merge location for air engagements
+  // ext (M4): the geometry solution that justified this battle (DEEP SKY §5)
+  classification?: { type: 'MATCHED' | 'SLASH' | 'STERN_CHASE' | 'BLOCKADE';
+                     mm: number; gapBurnDays: number; marginBurnDays: number;
+                     slashTurns?: number; nodeId?: Id };
   attackerSideId: Id; defenderSideId: Id;
   attackerFormationIds: Id[]; defenderFormationIds: Id[];
   status: 'PENDING' | 'EVADED' | 'EXPORTED' | 'RESOLVED';
@@ -329,6 +341,24 @@ export interface TruthState {
   engagements: Record<Id, Engagement>;       // M2
   pendingEngagementId?: Id | null;           // M2: set ⇒ campaign frozen awaiting GM
   handoffs: Record<Id, HandoffPackage>;      // M2: exported packages, by id
+  // M4 (DEEP SKY): the system layer
+  system: { nodes: Record<Id, SysNode>; lanes: Record<Id, SysLane>;
+            lastSweepTick: Tick };           // watch-cadence anchor for space detection
+  emissions: Record<Id, Emission>;           // jump flashes & drive burns in flight
+  jumpDrives: Record<Id, JumpDrive>;         // keyed by vessel unit id
+}
+
+/** Something bright happened in space; every observer sees it `lag` later (DEEP SKY §4). */
+export interface Emission {
+  id: Id;
+  kind: 'JUMP_FLASH' | 'DRIVE_BURN';
+  sourceFormationId: Id;
+  sourceSideId: Id;
+  pos: Position;                    // where it happened (NodePos / LanePos snapshot)
+  tick: Tick;                       // when it was TRUE
+  massClass: string;                // what the light carries: a rough mass class
+  vectorNote?: string;              // burns: "the enemy knows where you're going"
+  observedBy: Id[];                 // sides whose light cone has caught up
 }
 
 export const hexKey = (q: number, r: number) => `${q},${r}`;

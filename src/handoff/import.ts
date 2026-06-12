@@ -6,7 +6,7 @@
  * salvage for the hex-controller, formation destruction, withdrawal displacement, and
  * rout for broken formations. The final BATTLE_RESULT_INGESTED unfreezes the campaign.
  */
-import { CLOCK, ENGAGEMENT, LADDER, RDY } from '../rules.js';
+import { CLOCK, DEEPSKY, ENGAGEMENT, LADDER, RDY } from '../rules.js';
 import type {
   BattleResult, Contact, ContactSnapshot, Engagement, GroundPos, Id, LadderLevel,
   Marker, TruthState,
@@ -147,6 +147,21 @@ export function ingestBattleResult(
                     untilTick: s.tick + ENGAGEMENT.ROUT_UNCOMMANDABLE_PULSES * CLOCK.TICKS_PER_PULSE,
                     tick: s.tick });
     }
+  }
+
+  // 9a-bis. the JumpShip taboo (DEEP SKY §7.4): killing one costs the killer −10 VP
+  //         and hands the wronged side a Reprisal
+  for (const o of result.unitOutcomes) {
+    const u = s.units[o.unitId];
+    if (!u || u.class !== 'JUMPSHIP') continue;
+    if (o.damage !== 'DESTROYED') continue;
+    const killerSideId = u.sideId === eng.attackerSideId ? eng.defenderSideId : eng.attackerSideId;
+    events.push({ type: 'VP_CHANGED', sideId: killerSideId,
+                  delta: DEEPSKY.TABOO.JUMPSHIP_KILL_VP,
+                  reason: 'JumpShip destroyed — the taboo holds (DEEP SKY 7.4)' });
+    events.push({ type: 'REPRISAL_OWED', sideId: u.sideId,
+                  reason: 'JumpShip killed: off-map reinforcement or intel windfall due',
+                  tick: s.tick });
   }
 
   // 9b. air engagements (M3): the merge consumed the mission — surviving flights exit

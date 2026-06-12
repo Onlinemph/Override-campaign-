@@ -64,9 +64,15 @@ returns to the command net, original timestamp preserved.
       (map by band, entry velocity, Energy State, surprise, per-fighter FP/joker/bingo),
       turnaround & fuel farms. *Acceptance passed: the §12 Shilone day tick-for-tick —
       400→240→179→159 FP, the 0901 scramble, the farm down to 11 tons, Fatigue 3.*
-- [ ] **M4 — DEEP SKY**: system graph, brachistochrone solver, burn-day ledgers,
-      light-lag staleness, encounter classifier, jump board.
-      *Acceptance: Operation SKEAN incl. 83-min light lag and MATCHED intercept.*
+- [x] **M4 — DEEP SKY**: node-and-lane system graph, brachistochrone integrator with
+      burn-day ledgers & gas-giant skimming, the light-lag intelligence layer
+      (jump flashes & drive plumes as delayed automatic contacts; cold coast / station-
+      keeping rolled per watch), the encounter classifier (MATCHED/SLASH/STERN_CHASE/
+      BLOCKADE) feeding the capital handoff, and the jump board (sail recharge,
+      emergency furl, quick-charge, pirate points, the JumpShip taboo).
+      *Acceptance passed: Operation SKEAN — the flash lands planetside 83 minutes after
+      a 10 AU jump, the cold detachment stays SIG 11 until the gas-giant picket's active
+      sweep, and the classifier returns MATCHED with ~2.1 burn-days of margin.*
 - [ ] **M5 — Polish**: map UIs, noise-injection editor, MegaMek export, audit viewer.
 
 *Fan project; BattleTech © The Topps Company, Inc., published by Catalyst Game Labs.*

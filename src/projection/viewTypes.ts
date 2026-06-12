@@ -4,7 +4,7 @@
  * no RNG state, no other side's anything. Never persisted (spec §4).
  */
 import type { AirPos, ClockMode, DamageState, Emcon, GroundPos, Id, LadderLevel,
-              Posture, TerrainType, Tick } from '../core/types.js';
+              LanePos, NodePos, Posture, TerrainType, Tick } from '../core/types.js';
 
 export interface OwnUnitView {
   id: Id; name: string; model: string; class: string;
@@ -31,6 +31,20 @@ export interface OwnFormationView {
     fatigueMax: number;
     turnaroundReadyTick?: Tick | null;
   };
+  // M4: the vessel board — your own burn-day ledger (DEEP SKY §3)
+  vessel?: {
+    spacePos: NodePos | LanePos | null;
+    burnDaysRemaining: number;
+    fuelTons: number;
+    drives: Array<{ unitId: Id; chargePct: number; sail: string; kfDamage: string;
+                    lfBatteryCharged?: boolean }>;
+  };
+}
+
+/** The subway-style system diagram: public geometry, secret points withheld (M4). */
+export interface SystemView {
+  nodes: Array<{ id: Id; type: string; name: string; theaterId?: Id }>;
+  lanes: Array<{ id: Id; a: Id; b: Id; distanceAU: number; transitDays1G: number }>;
 }
 
 export interface ContactView {
@@ -38,7 +52,7 @@ export interface ContactView {
   level: LadderLevel;
   levelName: string;
   kind: 'STANDARD' | 'ECM_HAZE';
-  estPos: GroundPos | AirPos; posErrorHexes: number;
+  estPos: GroundPos | AirPos | NodePos | LanePos; posErrorHexes: number;
   estVector?: number;           // SHADOW+
   estSizeClass?: string;        // SHADOW+
   estComposition?: string;      // CONTACT+
@@ -67,4 +81,5 @@ export interface ViewState {
   contacts: ContactView[];
   reports: ReportView[];
   scoutedTerrain: ScoutedHexView[];
+  system?: SystemView;
 }

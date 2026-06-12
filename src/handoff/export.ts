@@ -5,7 +5,7 @@
  * approach vectors, intel→initiative, posture→hidden/fortified, RDY→TN penalty, plus
  * in-range off-board artillery and on-net reinforcements. No combat is computed here.
  */
-import { ARTILLERY_TAG_RANGE, COMBAT, ENGAGEMENT, RDY, SKYWATCH } from '../rules.js';
+import { ARTILLERY_TAG_RANGE, COMBAT, DEEPSKY, ENGAGEMENT, RDY, SKYWATCH } from '../rules.js';
 import type {
   AirPos, Engagement, Formation, GroundPos, HandoffPackage, Id, TruthState,
 } from '../core/types.js';
@@ -113,6 +113,7 @@ function sideBlock(
 
 export function buildHandoff(s: TruthState, eng: Engagement): HandoffPackage {
   if (eng.domain === 'AIR') return buildAirHandoff(s, eng);
+  if (eng.domain === 'SPACE') return buildSpaceHandoff(s, eng);
   const hex = eng.hex!;
   const terrain = s.theaters[hex.theaterId]?.hexes[hexKey(hex.q, hex.r)]?.terrain ?? 'CLEAR';
   const neighborTerrain = neighbors(hex)
@@ -259,6 +260,93 @@ export function buildAirHandoff(s: TruthState, eng: Engagement): HandoffPackage 
     table: mergeTable(pos.band),
     mapSpec: { sheetsHint: [`${pos.band} band merge at air hex ${pos.gridQ},${pos.gridR}`] },
     perSide: sides,
+    specialRules,
+  };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// THE CAPITAL HANDOFF — space engagements (DEEP SKY §6)
+// Map, vectors & velocities, tactical FP from the burn-day ledger, intel = initiative.
+// ════════════════════════════════════════════════════════════════════════════
+
+function spaceSideBlock(
+  s: TruthState, formationIds: Id[], sideId: Id,
+  deploysFirst: boolean, initiativeBonus: number,
+): HandoffPackage['perSide'][number] {
+  const formations = formationIds.map(id => s.formations[id]).filter(Boolean);
+  const units = formations.flatMap(f => {
+    const vel = f.pos.kind === 'lane' ? Math.round(f.pos.velocityKps) : 0;
+    return f.unitIds.map(uid => {
+      const u = s.units[uid];
+      // tactical FP from the burn-day ledger: tons × the sheet's tactical rate (§3)
+      const fpPerTon = u.fuel?.fpPerTon ?? DEEPSKY.TACTICAL_FP_PER_TON_LARGE;
+      return {
+        unitId: uid,
+        velocity: vel,
+        fpOnTable: u.fuel ? Math.round(u.fuel.tons * fpPerTon) : undefined,
+        ammoState: u.ammoState, damage: u.damage,
+        pilotSkills: pilotSkills(s, uid),
+      };
+    });
+  });
+  const worstRdy = Math.min(10, ...formations.map(f => f.rdy));
+  return {
+    sideId,
+    entryEdge: 'ANY_HALF',
+    deploysFirst,
+    initiativeBonus,
+    initiativeBonusTurns: initiativeBonus > 0 ? DEEPSKY.FRESHER_LIGHT_INIT_TURNS : 0,
+    hiddenSetup: false, fortified: false,
+    rdyTnPenalty: rdyPenalty(worstRdy),
+    units,
+    offboard: { artillery: [], airOnStation: [], reinforcements: [] },
+  };
+}
+
+/** Staleness of a side's freshest contact on the enemy force, in ticks (∞ if blind). */
+function lightFreshness(s: TruthState, sideId: Id, enemyIds: Id[]): number {
+  let best = Infinity;
+  for (const c of Object.values(s.contacts)) {
+    if (c.observerSideId === sideId && enemyIds.includes(c.targetFormationId) && c.level >= 1) {
+      best = Math.min(best, s.tick - c.staleAsOfTick);
+    }
+  }
+  return best;
+}
+
+export function buildSpaceHandoff(s: TruthState, eng: Engagement): HandoffPackage {
+  const cls = eng.classification;
+  // intel = initiative (§6): the side with fresher light at commit gets +1 init, 3 turns
+  const atkStale = lightFreshness(s, eng.attackerSideId, eng.defenderFormationIds);
+  const defStale = lightFreshness(s, eng.defenderSideId, eng.attackerFormationIds);
+  const atkBonus = atkStale < defStale ? DEEPSKY.FRESHER_LIGHT_INIT_BONUS : 0;
+  const defBonus = defStale < atkStale ? DEEPSKY.FRESHER_LIGHT_INIT_BONUS : 0;
+  // total surprise: an undetected attacker opening fire uses the bounce rules (§6)
+  const defBlind = !Number.isFinite(defStale);
+
+  const specialRules: string[] = [];
+  if (cls) {
+    specialRules.push(cls.type === 'SLASH'
+      ? `SLASH:${cls.slashTurns}_TURNS`
+      : cls.type);
+    specialRules.push(`MM:${cls.mm.toFixed(2)}_BURN_DAYS`,
+                      `VELOCITY_GAP:${cls.gapBurnDays.toFixed(2)}_BURN_DAYS`,
+                      `MARGIN:${cls.marginBurnDays.toFixed(2)}_BURN_DAYS`);
+    if (cls.type === 'MATCHED') specialRules.push('BOARDING_POSSIBLE_IF_CRIPPLED');
+    if (cls.type === 'BLOCKADE') specialRules.push('DEFENDER_PICKS_RANGE_BRACKET');
+  }
+  if (defBlind) specialRules.push(`BOUNCE:${eng.defenderSideId} deploys first (total surprise)`);
+
+  const nodeName = cls?.nodeId ? s.system.nodes[cls.nodeId]?.name : undefined;
+  return {
+    id: `handoff:${eng.id}`,
+    tick: s.tick,
+    table: 'SPACE',
+    mapSpec: { sheetsHint: ['space map, SO capital rules'], nodeName },
+    perSide: [
+      spaceSideBlock(s, eng.attackerFormationIds, eng.attackerSideId, defBlind ? false : defBonus > atkBonus, atkBonus),
+      spaceSideBlock(s, eng.defenderFormationIds, eng.defenderSideId, defBlind || atkBonus > defBonus, defBonus),
+    ],
     specialRules,
   };
 }

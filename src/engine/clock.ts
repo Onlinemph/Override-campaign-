@@ -72,8 +72,15 @@ export function chooseClockMode(s: TruthState): ClockMode {
     }
   }
 
-  const activeOps =
-    Object.values(s.orders).some(o => !o.completed && !s.formations[o.formationId]?.destroyed) ||
-    Object.values(s.contacts).some(c => c.level >= 1);
-  return activeOps ? 'PULSE' : 'WATCH';
+  // PULSE if any theater has active ground/air ops; pure system-scale activity runs
+  // in Watches ("the GM tool runs Watches until an event demands finer time",
+  // DEEP SKY §1.1) — space contacts and transits do not by themselves tighten the clock.
+  const SPACE_KINDS = new Set(['TRANSIT', 'COLD_COAST', 'STATION_KEEP', 'INTERCEPT',
+    'SKIM_FUEL', 'RECHARGE_SAIL', 'QUICK_CHARGE', 'JUMP', 'INSPECT', 'BLOCKADE', 'BOARD']);
+  const groundAirOps =
+    Object.values(s.orders).some(o => !o.completed && !SPACE_KINDS.has(o.kind) &&
+      !s.formations[o.formationId]?.destroyed) ||
+    Object.values(s.contacts).some(c => c.level >= 1 &&
+      (c.estPos.kind === 'ground' || c.estPos.kind === 'air'));
+  return groundAirOps ? 'PULSE' : 'WATCH';
 }

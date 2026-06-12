@@ -4,9 +4,9 @@
  * it never touches state directly.
  */
 import type {
-  AirPos, ClockMode, Contact, ContactReport, DamageState, DieRoll, Engagement,
-  Formation, GroundPos, HandoffPackage, Id, Marker, Order, Pilot, Posture,
-  SalvageToken, TruthState, Tick, Unit,
+  AirPos, ClockMode, Contact, ContactReport, DamageState, DieRoll, Emcon, Emission,
+  Engagement, Formation, GroundPos, HandoffPackage, Id, JumpDrive, LanePos, Marker,
+  NodePos, Order, Pilot, Posture, SalvageToken, TruthState, Tick, Unit,
 } from './types.js';
 import { SKYWATCH } from '../rules.js';
 
@@ -56,10 +56,11 @@ export type GameEvent =
   // ── replay-safe engine bookkeeping (fractional accumulators, anchors) ──
   | { type: 'FORMATION_BOOKKEEPING'; formationId: Id;
       patch: Partial<Pick<Formation, 'forcedMarchPulseAcc' | 'digInPulseAcc'>> &
-             { air?: Partial<NonNullable<Formation['air']>> } }
+             { air?: Partial<NonNullable<Formation['air']>>;
+               space?: Partial<NonNullable<Formation['space']>> } }
   // ── M3: SKYWATCH — flights, ledgers, alerts, turnaround ──
   | { type: 'FORMATION_SPAWNED'; formation: Formation; units: Unit[];
-      pilots: Pilot[]; tick: Tick }
+      pilots: Pilot[]; jumpDrives?: JumpDrive[]; tick: Tick }
   | { type: 'ALERT_CHANGED'; formationId: Id; alertState: NonNullable<Formation['alertState']>;
       tick: Tick }
   | { type: 'AIR_LAUNCHED'; formationId: Id; pos: AirPos; fpPaid: number; tick: Tick }
@@ -76,6 +77,23 @@ export type GameEvent =
   | { type: 'TURNAROUND_STARTED'; formationId: Id; facilityId: Id;
       mode: 'STANDARD' | 'HOT_PIT'; readyTick: Tick; tonsDrawn: number;
       mishapFarmFpLoss?: number; tick: Tick }
+  // ── M4: DEEP SKY — lanes, light, fuel tonnage, the jump board ──
+  | { type: 'LANE_PROGRESS'; formationId: Id; pos: LanePos; tick: Tick }
+  | { type: 'ARRIVED_AT_NODE'; formationId: Id; pos: NodePos; tick: Tick }
+  | { type: 'TONS_BURNED'; formationId: Id; tons: number; reason: string; tick: Tick }
+  | { type: 'TONS_GAINED'; formationId: Id; tons: number; reason: string; tick: Tick }
+  | { type: 'EMISSION_CREATED'; emission: Emission }
+  | { type: 'EMISSION_OBSERVED'; emissionId: Id; sideId: Id; tick: Tick }
+  | { type: 'EMCON_CHANGED'; formationId: Id; emcon: Emcon; tick: Tick }
+  | { type: 'SPACE_SWEEP'; tick: Tick }                 // watch-cadence anchor
+  | { type: 'JUMP_CHARGE'; unitId: Id; chargePct: number }
+  | { type: 'SAIL_CHANGED'; unitId: Id; sail: JumpDrive['sail']; tick: Tick }
+  | { type: 'KF_DAMAGE'; unitId: Id; kfDamage: JumpDrive['kfDamage']; tick: Tick }
+  | { type: 'JUMP_EXECUTED'; formationId: Id; toNodeId: Id; usedLfBattery: boolean;
+      tick: Tick }
+  | { type: 'MISJUMP'; formationId: Id; targetNodeId: Id; roll: number; tick: Tick }
+  | { type: 'NODE_SURVEYED'; nodeId: Id; sideId: Id; tick: Tick }
+  | { type: 'REPRISAL_OWED'; sideId: Id; reason: string; tick: Tick }
   | { type: 'CLOCK_ADVANCED'; dt: number; tick: Tick }; // tick = NEW absolute tick
 
 export interface LoggedEvent { index: number; event: GameEvent }
@@ -286,7 +304,13 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
       if (u) {
         u.damage = e.damage;
         u.ammoState = e.ammoState as typeof u.ammoState;
-        if (e.fpRemaining !== undefined && u.fuel) u.fuel.fp = e.fpRemaining;
+        if (e.fpRemaining !== undefined && u.fuel) {
+          u.fuel.fp = e.fpRemaining;
+          // strategic-ledger hulls (DEEP SKY §3): tabletop FP converts back to tonnage
+          if (u.fuel.tonsPerBurnDay !== undefined && u.fuel.fpPerTon > 0) {
+            u.fuel.tons = e.fpRemaining / u.fuel.fpPerTon;
+          }
+        }
       }
       break;
     }
@@ -328,9 +352,10 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
     case 'FORMATION_BOOKKEEPING': {
       const f = s.formations[e.formationId];
       if (!f) break;
-      const { air, ...rest } = e.patch;
+      const { air, space, ...rest } = e.patch;
       Object.assign(f, rest);
       if (air) f.air = { phase: 'GROUNDED', speed: 'CRUISE', ...f.air, ...air };
+      if (space) f.space = { ...f.space, ...space };
       break;
     }
 
@@ -338,6 +363,7 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
     case 'FORMATION_SPAWNED': {
       for (const u of e.units) s.units[u.id] = u;
       for (const p of e.pilots) s.pilots[p.id] = p;
+      for (const d of e.jumpDrives ?? []) s.jumpDrives[d.vesselUnitId] = d;
       s.formations[e.formation.id] = e.formation;
       break;
     }
@@ -428,6 +454,94 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
       break;
     }
 
+    // ── M4: DEEP SKY ────────────────────────────────────────────────────────
+    case 'LANE_PROGRESS':
+      s.formations[e.formationId].pos = e.pos;
+      break;
+
+    case 'ARRIVED_AT_NODE':
+      s.formations[e.formationId].pos = e.pos;
+      break;
+
+    case 'TONS_BURNED': {
+      const f = s.formations[e.formationId];
+      for (const uid of f.unitIds) {
+        const u = s.units[uid];
+        if (u?.fuel) u.fuel.tons = Math.max(0, u.fuel.tons - e.tons);
+      }
+      break;
+    }
+
+    case 'TONS_GAINED': {
+      const f = s.formations[e.formationId];
+      for (const uid of f.unitIds) {
+        const u = s.units[uid];
+        if (u?.fuel) u.fuel.tons += e.tons;
+      }
+      break;
+    }
+
+    case 'EMISSION_CREATED':
+      s.emissions[e.emission.id] = e.emission;
+      break;
+
+    case 'EMISSION_OBSERVED': {
+      const em = s.emissions[e.emissionId];
+      if (em && !em.observedBy.includes(e.sideId)) em.observedBy.push(e.sideId);
+      break;
+    }
+
+    case 'EMCON_CHANGED':
+      s.formations[e.formationId].emcon = e.emcon;
+      break;
+
+    case 'SPACE_SWEEP':
+      s.system.lastSweepTick = e.tick;
+      break;
+
+    case 'JUMP_CHARGE': {
+      const d = s.jumpDrives[e.unitId];
+      if (d) d.chargePct = Math.max(0, Math.min(100, e.chargePct));
+      break;
+    }
+
+    case 'SAIL_CHANGED': {
+      const d = s.jumpDrives[e.unitId];
+      if (d) d.sail = e.sail;
+      break;
+    }
+
+    case 'KF_DAMAGE': {
+      const d = s.jumpDrives[e.unitId];
+      if (d) d.kfDamage = e.kfDamage;
+      break;
+    }
+
+    case 'JUMP_EXECUTED': {
+      const f = s.formations[e.formationId];
+      f.pos = { kind: 'node', nodeId: e.toNodeId };
+      for (const uid of f.unitIds) {
+        const d = s.jumpDrives[uid];
+        if (!d) continue;
+        if (e.usedLfBattery && d.lfBatteryCharged) d.lfBatteryCharged = false;
+        else d.chargePct = 0;
+      }
+      break;
+    }
+
+    case 'MISJUMP':
+      break; // placement & severity are the GM's misjump table; the log records the throw
+
+    case 'NODE_SURVEYED': {
+      const n = s.system.nodes[e.nodeId];
+      if (n && !n.surveyedBy.includes(e.sideId)) n.surveyedBy.push(e.sideId);
+      break;
+    }
+
+    case 'REPRISAL_OWED':
+      s.sides[e.sideId].reprisalsOwed += 1;
+      break;
+
     case 'CLOCK_ADVANCED':
       s.tick = e.tick;
       break;
@@ -450,6 +564,10 @@ export function isInterestingEvent(e: GameEvent): boolean {
     case 'AIR_LAUNCHED':
     case 'AIR_LANDED':
     case 'FORMATION_SPAWNED':
+    case 'ARRIVED_AT_NODE':
+    case 'EMISSION_OBSERVED':
+    case 'JUMP_EXECUTED':
+    case 'MISJUMP':
       return true;
     default:
       return false;

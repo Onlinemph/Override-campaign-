@@ -272,3 +272,62 @@ anchoring on §12, the same precedent as D-006 (the worked example is the law):
     later): the capturable ATO artifact, ORBITAL_STANDBY & the orbit-climb gauntlet,
     drop-corridor interception, Skyeye, ESCORT/INTERDICTION/TANKER/SAR mission specials,
     AA flak ceilings, FUMES gliding & dead-stick landings, automatic ace kill-tracking.
+
+---
+
+## D-011 ✅ Milestone 4 (DEEP SKY) interpretive calls & conflicts
+The acceptance contract is Operation SKEAN (§9.1): the 83-minute flash, the SIG-11 dark
+approach broken by the picket's sweep, and a MATCHED classification at ~2.1 burn-days.
+
+1. **Light lag: 8.3 min/AU, not 10.** §4.2 states the rule as "10 minutes per AU", but
+   §9.1 (and the spec's M4 acceptance) demand the 10 AU flash land planetside after
+   **83 minutes** — real light speed. Worked example wins (the D-006 precedent):
+   `LIGHT_LAG_MIN_PER_AU = 8.3`, house-rule it back to 10 if you prefer round numbers.
+   Lag rounds to the engine's native 6-minute tick (≥1), not "the nearest pulse" —
+   pulse-rounding 83 min down to 60 would deliver information faster than light.
+   §4.2's "at Watch scale ≥6 AU is one Watch stale" emerges naturally from Watch-pace
+   delivery and is asserted in the acceptance.
+2. **Geometry is the lane metric, not Euclidean space.** Distances (light lag, picket
+   range, classifier) run over the node-and-lane graph via shortest path, with lane
+   positions interpolated. The map "lies to you" less than a hex grid would (§1).
+3. **The classifier's units:** MM = burnDaysRemaining × g_max × crewGLimitFactor
+   (g > 2 discounts to 2/g — sustained intercepts at hard-burn G don't get full
+   credit); gap = |Δv| ÷ 847.3 kps (one 1G burn-day of ΔV). Margin = MM − 2×gap.
+   "Can reach the path in time" (SLASH) is simplified to MM ≥ gap/2 — the deliberate
+   simplicity §5 asks for; the GM sanity-checks the geometry on the system map.
+4. **Sub-1G burns are quiet.** §4.1's automatic detection applies to "fusion drive at
+   1G+"; a cold-coast kick at 0.5G stays under the line (how SKEAN's detachment
+   "detached cold" without lighting up every scope). Station-keeping (≤0.1G) likewise.
+5. **Emissions are a floor, not a climb:** flash/burn auto-detections set the contact to
+   SHADOW (position+vector+mass class, stale by light lag) without ladder inflation;
+   rolled detections (cold coast SIG 11/watch/searcher, station-keeping SIG 8) climb
+   normally. Space detection rolls at watch cadence regardless of clock mode.
+6. **Picket sweep:** modeled as the picket formation on EMCON ACTIVE, granting −2 TN
+   against targets within `PICKET_RANGE_AU = 1` of its node ("within its node", §4.4).
+7. **Clock:** pure system-scale activity (space orders, space contacts) runs at WATCH;
+   ground/air ops or contacts tighten to PULSE/CONTACT as before. Brachistochrone
+   integration sub-steps at tick grain inside coarse steps so the flip lands where the
+   physics says (a watch-grain flip overshoots the midpoint and arrives hot).
+8. **Burn-profile semantics** (spec BurnProfile): thrust at g until `coastFromAU` ⇒
+   ballistic (SLASH-only if still hot at arrival); otherwise brake by stopping-distance
+   (never earlier than `flipAtAU`), arriving at rest. Mid-course re-plots = a new order.
+9. **Space intercepts are GM-committed** (`classifyEncounter` to look, `create
+   SpaceEngagement` to commit) rather than auto-triggered: §5 says the tool classifies
+   "when two forces' paths could cross" and refusing battle is a real choice — the
+   GM-in-the-loop owns the commit. NO_ENGAGEMENT near-misses go to the GM log only.
+10. **Tactical conversion at the capital handoff:** fpOnTable = tons × fpPerTon (30 for
+    big hulls); BattleResult fpRemaining converts back to tonnage for strategic-ledger
+    hulls. STERN_CHASE reports the overtake estimate; the battle fires when the GM says
+    the overtake completed.
+11. **Jump board:** misjump (≤4 on a pirate-point throw) logs the roll and emits a
+    MISJUMP event; placement and severity stay with the GM's misjump table. Quick-charge
+    failure severity beyond the first escalation is likewise the GM's. The capture
+    +15 VP is a GM VP adjustment (capture mechanics are tabletop boarding outcomes);
+    the kill −10 VP + Reprisal is automatic on BattleResult ingestion.
+12. **Skim piloting TN = 7** (§3 calls for "a Piloting check" without a number);
+    failure marks minor structural damage (OK → DAMAGED) and tries again next watch.
+13. **Deferred Module-2 mechanics** (constants parked & table-tested): transponders &
+    false flags, customs inspection, sentinel drones, passive arrays (staleness halving),
+    water cracking, station fuel transfer order flow, convoy/blockade SP pipelines,
+    squadron thirst-grouping (fleets move as separate formations for now), hard-burn
+    daily medical rolls, orbital fire support.

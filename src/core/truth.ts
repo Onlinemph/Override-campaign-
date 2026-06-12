@@ -2,7 +2,7 @@
  * core/truth.ts — campaign lifecycle: genesis, replay, the run loop with compression.
  */
 import type {
-  BattleResult, GroundPos, HandoffPackage, Id, Order, TruthState,
+  BattleResult, Emcon, Engagement, GroundPos, HandoffPackage, Id, Order, TruthState,
 } from './types.js';
 import { applyEvent, type GameEvent, type LoggedEvent } from './events.js';
 import type { EventStore } from './log.js';
@@ -12,7 +12,8 @@ import { isFormationOnNet, netPass, scoutPass } from '../engine/net.js';
 import { buildHandoff } from '../handoff/export.js';
 import { ingestBattleResult } from '../handoff/import.js';
 import { rollDice } from './rng.js';
-import { CLOCK, ENGAGEMENT, LADDER, SKYWATCH, SUPPLY } from '../rules.js';
+import { CLOCK, DEEPSKY, ENGAGEMENT, LADDER, SKYWATCH, SUPPLY } from '../rules.js';
+import { classifyEncounter, emitJumpFlash, type Classification } from '../engine/space.js';
 
 /** Rebuild truth purely from the log: truth = fold(applyEvent, genesis, events). */
 export function replay(events: LoggedEvent[]): TruthState {
@@ -257,6 +258,154 @@ export class Campaign {
                   pos: { ...f.pos, gridQ, gridR, vectorDeg }, fpPaid: 0,
                   speed: f.air?.speed ?? 'CRUISE', tick: this.truth.tick });
     return { ok: true };
+  }
+
+  // ── M4: DEEP SKY GM/player actions ─────────────────────────────────────────
+
+  /** GM/player: EMCON posture change for a vessel (pickets light their radar here). */
+  setEmcon(formationId: Id, emcon: Emcon): { ok: boolean; reason?: string } {
+    const f = this.truth.formations[formationId];
+    if (!f || f.destroyed) return { ok: false, reason: 'no such formation' };
+    this.inject({ type: 'EMCON_CHANGED', formationId, emcon, tick: this.truth.tick });
+    return { ok: true };
+  }
+
+  /** Deploy the solar sail: charging begins; the vessel cannot thrust (DEEP SKY §7.2). */
+  deploySail(unitId: Id): { ok: boolean; reason?: string } {
+    const d = this.truth.jumpDrives[unitId];
+    if (!d) return { ok: false, reason: 'no jump drive' };
+    if (d.sail === 'DESTROYED') return { ok: false, reason: 'sail destroyed' };
+    this.inject({ type: 'SAIL_CHANGED', unitId, sail: 'DEPLOYED', tick: this.truth.tick });
+    return { ok: true };
+  }
+
+  /** Emergency furl: 2 watches; on 2d6 ≤5 the accumulated charge is lost (§7.2). */
+  emergencyFurlSail(unitId: Id): { ok: boolean; chargeLost?: boolean; reason?: string } {
+    const d = this.truth.jumpDrives[unitId];
+    if (!d || d.sail !== 'DEPLOYED') return { ok: false, reason: 'sail is not deployed' };
+    const roll = this.rollLogged('2d6', `emergency sail furl ${unitId}`);
+    const chargeLost = roll <= DEEPSKY.JUMP.EMERGENCY_FURL.LOSE_CHARGE_MAX;
+    this.inject({ type: 'SAIL_CHANGED', unitId, sail: 'STOWED', tick: this.truth.tick });
+    if (chargeLost) this.inject({ type: 'JUMP_CHARGE', unitId, chargePct: 0 });
+    return { ok: true, chargeLost };
+  }
+
+  /** Quick-charge at a recharge station: 2d6 ≥8 fills in 5 watches; ≤3 hurts the drive. */
+  quickCharge(unitId: Id): { ok: boolean; success?: boolean; kfDamaged?: boolean; reason?: string } {
+    const d = this.truth.jumpDrives[unitId];
+    if (!d) return { ok: false, reason: 'no jump drive' };
+    if (d.kfDamage === 'DEAD') return { ok: false, reason: 'K-F drive is dead' };
+    const roll = this.rollLogged('2d6', `quick-charge ${unitId}`);
+    if (roll >= DEEPSKY.JUMP.QUICK_CHARGE.TN) {
+      this.inject({ type: 'JUMP_CHARGE', unitId, chargePct: 100 });
+      this.inject({ type: 'GM_NOTE', tick: this.truth.tick,
+        text: `quick-charge succeeds: ${unitId} charged in ${DEEPSKY.JUMP.QUICK_CHARGE.WATCHES} watches` });
+      return { ok: true, success: true, kfDamaged: false };
+    }
+    if (roll <= DEEPSKY.JUMP.QUICK_CHARGE.KF_DAMAGE_MAX) {
+      const next = d.kfDamage === 'NONE' ? 'MINOR' : d.kfDamage === 'MINOR' ? 'MAJOR' : 'DEAD';
+      this.inject({ type: 'KF_DAMAGE', unitId, kfDamage: next, tick: this.truth.tick });
+      return { ok: true, success: false, kfDamaged: true };
+    }
+    return { ok: true, success: false, kfDamaged: false };
+  }
+
+  /**
+   * Jump a vessel formation to a node (DEEP SKY §7). Needs 100% charge or a banked
+   * L-F battery; pirate points gate on the survey and roll 2d6 ≥9 (≥7 surveyed),
+   * ≤4 = misjump (GM's table — the throw is logged, placement is the GM's).
+   */
+  executeJump(formationId: Id, toNodeId: Id):
+      { ok: boolean; misjump?: boolean; reason?: string } {
+    const f = this.truth.formations[formationId];
+    const node = this.truth.system.nodes[toNodeId];
+    if (!f || f.destroyed) return { ok: false, reason: 'no such formation' };
+    if (!node) return { ok: false, reason: 'no such node' };
+
+    const drives = f.unitIds.map(uid => this.truth.jumpDrives[uid]).filter(Boolean);
+    if (drives.length === 0) return { ok: false, reason: 'no K-F drive in formation' };
+    for (const d of drives) {
+      if (d.kfDamage === 'DEAD') return { ok: false, reason: 'K-F drive is dead' };
+      if (d.sail === 'DEPLOYED') return { ok: false, reason: 'sail is deployed (furl first)' };
+      if (d.chargePct < 100 && !d.lfBatteryCharged) {
+        return { ok: false, reason: `drive at ${Math.floor(d.chargePct)}% and no L-F battery` };
+      }
+    }
+
+    if (node.type === 'PIRATE_POINT') {
+      if (node.secret && !node.surveyedBy.includes(f.sideId)) {
+        return { ok: false, reason: 'pirate point solution unknown (acquire a survey)' };
+      }
+      const tn = node.surveyedBy.includes(f.sideId)
+        ? DEEPSKY.JUMP.PIRATE_POINT.SURVEYED_TN : DEEPSKY.JUMP.PIRATE_POINT.TN;
+      const roll = this.rollLogged('2d6', `pirate point jump ${formationId} → ${toNodeId} (TN ${tn})`);
+      if (roll <= DEEPSKY.JUMP.PIRATE_POINT.MISJUMP_MAX) {
+        this.inject({ type: 'MISJUMP', formationId, targetNodeId: toNodeId, roll,
+                      tick: this.truth.tick });
+        return { ok: true, misjump: true };
+      }
+      if (roll < tn) return { ok: false, reason: `pirate point solution failed (rolled ${roll} vs ${tn})` };
+    }
+
+    const usedLf = drives.some(d => d.chargePct < 100 && d.lfBatteryCharged);
+    this.inject({ type: 'JUMP_EXECUTED', formationId, toNodeId, usedLfBattery: usedLf,
+                  tick: this.truth.tick });
+    // the flash announces you, system-wide, after light lag (§4.1/§7.1)
+    const events: GameEvent[] = [];
+    emitJumpFlash(this.truth, e => events.push(e), this.truth.formations[formationId], toNodeId);
+    for (const e of events) this.inject(e);
+    return { ok: true, misjump: false };
+  }
+
+  /** The geometry solution for a prospective intercept (DEEP SKY §5). */
+  classifyEncounter(interceptorId: Id, targetId: Id): Classification | { error: string } {
+    const interceptor = this.truth.formations[interceptorId];
+    const target = this.truth.formations[targetId];
+    if (!interceptor || !target) return { error: 'no such formation' };
+    return classifyEncounter(this.truth, interceptor, target);
+  }
+
+  /**
+   * Commit to the intercept: classify, roll SLASH duration if applicable (logged), and
+   * freeze the campaign on a SPACE engagement for the capital handoff.
+   */
+  createSpaceEngagement(interceptorId: Id, targetId: Id):
+      { ok: boolean; classification?: Classification; reason?: string } {
+    if (this.truth.pendingEngagementId) return { ok: false, reason: 'an engagement is already pending' };
+    const interceptor = this.truth.formations[interceptorId];
+    const target = this.truth.formations[targetId];
+    if (!interceptor || !target || interceptor.sideId === target.sideId) {
+      return { ok: false, reason: 'need two opposing formations' };
+    }
+    const c = classifyEncounter(this.truth, interceptor, target);
+    if (c.type === 'NO_ENGAGEMENT') {
+      this.inject({ type: 'GM_NOTE', tick: this.truth.tick,
+        text: `near-miss: ${interceptor.name} cannot reach ${target.name} (MM ${c.mm.toFixed(2)} vs gap ${c.gapBurnDays.toFixed(2)} burn-days) — GM eyes only` });
+      return { ok: false, classification: c, reason: 'no engagement geometry' };
+    }
+    let slashTurns: number | undefined;
+    if (c.type === 'SLASH') {
+      slashTurns = DEEPSKY.CLASSIFIER.SLASH_TURNS_BASE +
+        this.rollLogged('1d6', `slashing pass duration ${interceptorId} vs ${targetId}`);
+    }
+    const nodeId = target.pos.kind === 'node' ? target.pos.nodeId
+      : interceptor.pos.kind === 'node' ? interceptor.pos.nodeId : undefined;
+    const eng: Engagement = {
+      id: `eng:${this.truth.tick}:space:${interceptorId}-${targetId}`,
+      tick: this.truth.tick, trigger: 'SPACE_INTERCEPT', domain: 'SPACE',
+      attackerSideId: interceptor.sideId, defenderSideId: target.sideId,
+      attackerFormationIds: [interceptorId], defenderFormationIds: [targetId],
+      status: 'PENDING',
+      classification: { type: c.type, mm: c.mm, gapBurnDays: c.gapBurnDays,
+                        marginBurnDays: c.marginBurnDays, slashTurns, nodeId },
+    };
+    this.inject({ type: 'ENGAGEMENT_TRIGGERED', engagement: eng });
+    return { ok: true, classification: c };
+  }
+
+  /** A side acquires the pirate-point survey (espionage, captured nav data...). */
+  surveyNode(nodeId: Id, sideId: Id): void {
+    this.inject({ type: 'NODE_SURVEYED', nodeId, sideId, tick: this.truth.tick });
   }
 
   /** Resolve one hauled salvage token at a depot: 2d6 ≥8 ⇒ unit, else parts (core §10.4). */

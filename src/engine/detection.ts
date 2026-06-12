@@ -235,6 +235,8 @@ function reportText(snap: ContactSnapshot, sourceName: string, tick: number): st
   const p = snap.estPos;
   const where = p.kind === 'ground' ? `hex ${p.q},${p.r}`
     : p.kind === 'air' ? `air hex ${p.gridQ},${p.gridR} ${p.band}`
+    : p.kind === 'node' ? `at ${p.nodeId}`
+    : p.kind === 'lane' ? `on lane ${p.laneId}, ${p.progressAU.toFixed(2)} AU out, ${Math.round(p.velocityKps)} kps`
     : 'position unknown';
   const bits = [
     `T+${tick} — ${sourceName}: ${lvl}`,
@@ -255,16 +257,25 @@ function nextReportId(s: TruthState, tick: number, cid: string, sourceId: string
   return `report:${tick}:${cid}:${sourceId}:${n}`;
 }
 
-/** Shared by the ground pass, satellites, and the air pass (M3). */
+/** Shared by the ground pass, satellites, the air pass (M3), and the light-lag layer (M4). */
 export function registerDetection(
   s: TruthState, emit: (e: GameEvent) => void,
   observerSideId: string, target: Formation, by: number,
   source: { id: string; name: string; alwaysOnNet: boolean },
+  opts?: {
+    staleAsOfTick?: number;  // light lag: when this information was TRUE (DEEP SKY §4.2)
+    note?: string;           // narrative payload (mass class, vector readability)
+    setLevel?: boolean;      // `by` is a floor (auto-detections), not a ladder climb
+  },
 ): void {
   const cid = contactId(observerSideId, target.id);
   const existing = s.contacts[cid];
-  const newLevel = Math.min(LADDER.MAX_LEVEL, (existing?.level ?? 0) + by) as LadderLevel;
+  const newLevel = (opts?.setLevel
+    ? Math.max(existing?.level ?? 0, Math.min(LADDER.MAX_LEVEL, by))
+    : Math.min(LADDER.MAX_LEVEL, (existing?.level ?? 0) + by)) as LadderLevel;
+  const asOf = opts?.staleAsOfTick ?? s.tick;
   const snap = buildSnapshot(s, cid, target, newLevel, s.tick);
+  snap.asOfTick = asOf;
 
   const contact: Contact = {
     id: cid, observerSideId, targetFormationId: target.id, kind: 'STANDARD',
@@ -272,7 +283,7 @@ export function registerDetection(
     estPos: snap.estPos, posErrorHexes: snap.posErrorHexes,
     estVector: snap.estVector, estSizeClass: snap.estSizeClass,
     estComposition: snap.estComposition,
-    staleAsOfTick: s.tick,
+    staleAsOfTick: asOf,
     delivered: existing?.delivered,
   };
   emit({ type: 'CONTACT_UPGRADED', contact, tick: s.tick });
@@ -288,7 +299,7 @@ export function registerDetection(
     id: nextReportId(s, s.tick, cid, source.id),
     sideId: observerSideId, generatedTick: s.tick, deliveredTick: null,
     sourceFormationId: source.id, contactId: cid,
-    text: reportText(snap, source.name, s.tick),
+    text: reportText(snap, source.name, s.tick) + (opts?.note ? ` — ${opts.note}` : ''),
     snapshot: snap,
   };
   emit({ type: 'REPORT_QUEUED', report });

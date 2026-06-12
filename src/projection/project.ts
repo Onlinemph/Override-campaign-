@@ -9,10 +9,11 @@
  * Per-level reveal follows the spec §4 table exactly. Nothing here is ever persisted.
  */
 import type { GroundPos, Id, Tick, TruthState } from '../core/types.js';
-import { LADDER_NAMES } from '../rules.js';
+import { DEEPSKY, LADDER_NAMES } from '../rules.js';
 import { isNight } from '../engine/clock.js';
 import { isFlight, jokerBingo, minFp } from '../engine/air.js';
-import type { ContactView, OwnFormationView, ReportView, ScoutedHexView,
+import { burnDaysRemaining, transitDays } from '../engine/space.js';
+import type { ContactView, OwnFormationView, ReportView, ScoutedHexView, SystemView,
               ViewState } from './viewTypes.js';
 
 export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
@@ -40,6 +41,22 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
         inSupply: f.supply.inSupply,
       };
       if (f.alertState) view.alertState = f.alertState;
+      // M4: a vessel's burn-day ledger is its own side's information, always
+      if (f.pos.kind === 'node' || f.pos.kind === 'lane') {
+        view.vessel = {
+          spacePos: structuredClone(f.pos),
+          burnDaysRemaining: Math.round(burnDaysRemaining(truth, f) * 100) / 100,
+          fuelTons: Math.round(f.unitIds.reduce((sum, uid) =>
+            sum + (truth.units[uid]?.fuel?.tons ?? 0), 0) * 100) / 100,
+          drives: f.unitIds.filter(uid => truth.jumpDrives[uid]).map(uid => {
+            const d = truth.jumpDrives[uid];
+            return { unitId: uid, chargePct: Math.round(d.chargePct * 10) / 10,
+                     sail: d.sail, kfDamage: d.kfDamage,
+                     ...(d.lfBatteryCharged !== undefined
+                       ? { lfBatteryCharged: d.lfBatteryCharged } : {}) };
+          }),
+        };
+      }
       // M3: a flight's live ledger is its own side's information, always (SKYWATCH §2)
       if (isFlight(truth, f)) {
         const { joker, bingo } = jokerBingo(truth, f);
@@ -107,6 +124,23 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
     })
     .filter((v): v is ScoutedHexView => v !== null);
 
+  // M4: the subway-style system diagram — public geometry; secret pirate points stay
+  // off the map until surveyed or revealed (DEEP SKY §1, §7.3)
+  let system: SystemView | undefined;
+  const nodeList = Object.values(truth.system.nodes);
+  if (nodeList.length > 0) {
+    const visible = nodeList.filter(n => !n.secret || n.surveyedBy.includes(sideId));
+    const visibleIds = new Set(visible.map(n => n.id));
+    system = {
+      nodes: visible.map(n => ({ id: n.id, type: n.type, name: n.name,
+                                 ...(n.theaterId ? { theaterId: n.theaterId } : {}) })),
+      lanes: Object.values(truth.system.lanes)
+        .filter(l => visibleIds.has(l.a) && visibleIds.has(l.b))
+        .map(l => ({ id: l.id, a: l.a, b: l.b, distanceAU: l.distanceAU,
+                     transitDays1G: Math.round(transitDays(l.distanceAU, 1) * 10) / 10 })),
+    };
+  }
+
   return {
     sideId,
     now,
@@ -117,5 +151,6 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
     contacts,
     reports,
     scoutedTerrain,
+    ...(system ? { system } : {}),
   };
 }
