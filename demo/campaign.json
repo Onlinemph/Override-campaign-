@@ -1,0 +1,98 @@
+{
+  "seed": "OVERRIDE-DEMO-1",
+  "config": { "name": "The Cavanaugh Salient (demo)", "dawnTick": 60, "duskTick": 180, "weather": "CLEAR" },
+  "theaters": [
+    {
+      "id": "cavanaugh", "name": "Cavanaugh Valley", "width": 24, "height": 16,
+      "defaultTerrain": "CLEAR",
+      "overrides": [
+        { "q": 4,  "r": 4,  "terrain": "URBAN", "infra": ["TOWN", "ROAD"] },
+        { "q": 5,  "r": 4,  "infra": ["ROAD"] },
+        { "q": 6,  "r": 4,  "infra": ["ROAD"] },
+        { "q": 7,  "r": 4,  "infra": ["ROAD"] },
+        { "q": 8,  "r": 4,  "infra": ["ROAD"] },
+        { "q": 9,  "r": 4,  "infra": ["ROAD"] },
+        { "q": 10, "r": 4,  "infra": ["ROAD"] },
+        { "q": 11, "r": 4,  "infra": ["ROAD"] },
+        { "q": 12, "r": 4,  "infra": ["ROAD"], "terrain": "URBAN" },
+        { "q": 10, "r": 8,  "terrain": "WOODS" },
+        { "q": 11, "r": 8,  "terrain": "WOODS" },
+        { "q": 12, "r": 8,  "terrain": "WOODS" },
+        { "q": 10, "r": 9,  "terrain": "WOODS" },
+        { "q": 11, "r": 9,  "terrain": "WOODS" },
+        { "q": 14, "r": 6,  "terrain": "HILLS" },
+        { "q": 15, "r": 6,  "terrain": "HILLS" },
+        { "q": 3,  "r": 10, "infra": ["SPACEPORT", "DEPOT"], "objective": { "vpPerDay": 3, "hidden": false } },
+        { "q": 18, "r": 11, "terrain": "WOODS", "objective": { "vpPerDay": 2, "hidden": true } },
+        { "q": 6,  "r": 7,  "infra": ["SENSOR_STATION"] },
+        { "q": 4,  "r": 9,  "infra": ["AIRSTRIP"] }
+      ]
+    }
+  ],
+  "sides": [
+    { "id": "blue", "name": "Cavanaugh Defense Force" },
+    { "id": "red", "name": "3rd Sword of Light (elements)" }
+  ],
+  "facilities": [
+    { "id": "blue-spaceport", "sideId": "blue", "name": "Port Cavanaugh",
+      "theaterId": "cavanaugh", "q": 3, "r": 10,
+      "tags": ["SPACEPORT", "DEPOT"], "supplyPoints": 40, "isCommandNode": true },
+    { "id": "blue-airbase", "sideId": "blue", "name": "Airstrip Anvil",
+      "theaterId": "cavanaugh", "q": 4, "r": 9,
+      "tags": ["AIRSTRIP"], "fuelFarmTons": 25, "turnaroundCrews": 2 },
+    { "id": "blue-sensor-1", "sideId": "blue", "name": "Sensor Station Echo",
+      "theaterId": "cavanaugh", "q": 6, "r": 7,
+      "tags": ["SENSOR_STATION"], "sensorStation": { "passive": 6, "active": 12 } }
+  ],
+  "satellites": [
+    { "id": "blue-sat-1", "sideId": "blue", "kind": "RECON", "theaterId": "cavanaugh",
+      "corridor": [ { "q": 0, "r": 8 }, { "q": 23, "r": 8 } ], "periodPulses": 4, "nextPassTick": 20 }
+  ],
+  "formations": [
+    { "id": "blue-recon-1", "sideId": "blue", "name": "Recon Lance Vixen",
+      "theaterId": "cavanaugh", "q": 8, "r": 6, "omp": 8, "sigBase": 7,
+      "sns": { "passive": 4, "active": 8 },
+      "units": [
+        { "name": "Vixen 1", "model": "Stinger STG-3R", "class": "MECH" },
+        { "name": "Vixen 2", "model": "Stinger STG-3R", "class": "MECH" },
+        { "name": "Vixen 3", "model": "Ferret VTOL", "class": "VTOL", "tags": ["RECON"] },
+        { "name": "Vixen 4", "model": "Ferret VTOL", "class": "VTOL", "tags": ["RECON"] }
+      ] },
+    { "id": "blue-line-co", "sideId": "blue", "name": "Castle Company",
+      "theaterId": "cavanaugh", "q": 5, "r": 8, "omp": 4, "sigBase": 6,
+      "units": [
+        { "name": "Castle Actual", "model": "Cyclops CP-10-Z", "class": "MECH", "tags": ["HQ"] },
+        { "name": "Castle 2", "model": "Warhammer WHM-6R", "class": "MECH" },
+        { "name": "Castle 3", "model": "Phoenix Hawk PXH-1", "class": "MECH" },
+        { "name": "Castle 4", "model": "Archer ARC-2R", "class": "MECH" }
+      ] },
+    { "id": "blue-convoy-1", "sideId": "blue", "name": "Supply Convoy Mule",
+      "theaterId": "cavanaugh", "q": 4, "r": 4, "omp": 3, "sigBase": 5,
+      "units": [
+        { "name": "Mule 1", "model": "Flatbed Truck", "class": "SUPPORT", "tags": ["WHEELED"] },
+        { "name": "Mule 2", "model": "Flatbed Truck", "class": "SUPPORT", "tags": ["WHEELED"] },
+        { "name": "Mule 3", "model": "Flatbed Truck", "class": "SUPPORT", "tags": ["WHEELED"] }
+      ] },
+    { "id": "red-probe-co", "sideId": "red", "name": "Probe Company",
+      "theaterId": "cavanaugh", "q": 21, "r": 7, "omp": 5, "sigBase": 6, "emcon": "DARK",
+      "units": [
+        { "name": "Probe Actual", "model": "Dragon DRG-1N", "class": "MECH", "tags": ["HQ"] },
+        { "name": "Probe 2", "model": "Panther PNT-9R", "class": "MECH" },
+        { "name": "Probe 3", "model": "Jenner JR7-D", "class": "MECH" },
+        { "name": "Probe 4", "model": "Jenner JR7-D", "class": "MECH" }
+      ] },
+    { "id": "red-recon-1", "sideId": "red", "name": "Recon Star Kasai",
+      "theaterId": "cavanaugh", "q": 22, "r": 5, "omp": 8, "sigBase": 7,
+      "sns": { "passive": 4, "active": 8 },
+      "units": [
+        { "name": "Kasai 1", "model": "Spider SDR-5V", "class": "MECH" },
+        { "name": "Kasai 2", "model": "Spider SDR-5V", "class": "MECH" }
+      ] }
+  ],
+  "commandNodes": { "blue": ["blue-spaceport", "blue-line-co"], "red": ["red-probe-co"] },
+  "orders": [
+    { "id": "order-red-1", "sideId": "red", "formationId": "red-recon-1",
+      "kind": "MOVE", "effectiveTick": 0,
+      "path": [ { "q": 20, "r": 6 }, { "q": 18, "r": 7 }, { "q": 16, "r": 7 }, { "q": 14, "r": 7 }, { "q": 12, "r": 8 } ] }
+  ]
+}

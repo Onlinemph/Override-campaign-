@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>OVERRIDE — GM</title>
+<style>
+  body { font: 13px/1.4 monospace; background: #111; color: #cfcfcf; margin: 0; padding: 12px; }
+  h1 { font-size: 16px; color: #7fd4ff; } h2 { font-size: 13px; color: #7fd4ff; margin: 8px 0 4px; }
+  .cols { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+  .col { flex: 1; min-width: 360px; background: #1a1a1a; border: 1px solid #333; padding: 8px; }
+  pre { white-space: pre-wrap; word-break: break-all; margin: 0; max-height: 70vh; overflow: auto; }
+  button { background: #234; color: #cfe; border: 1px solid #468; padding: 4px 10px; cursor: pointer; margin-right: 6px; }
+  button:hover { background: #345; }
+  .bar { margin-bottom: 10px; }
+  .tick { color: #ffd479; }
+  textarea, input, select { background: #222; color: #cfe; border: 1px solid #444; font: inherit; }
+</style>
+</head>
+<body>
+<h1>OVERRIDE — GM SCREEN <span id="clock" class="tick"></span></h1>
+<div class="bar">
+  <button onclick="advance(false)">Step</button>
+  <button onclick="advance(true)">Run until event</button>
+  <span>Inject report → side: <select id="inj-side"></select>
+    <input id="inj-text" size="50" placeholder="PULSE 1400 — FLASH — ...">
+    <button onclick="inject()">Inject</button></span>
+</div>
+<div class="cols">
+  <div class="col"><h2>TRUTH</h2><pre id="truth"></pre></div>
+  <div class="col" id="views"></div>
+  <div class="col"><h2>EVENT LOG (latest 200)</h2><pre id="log"></pre></div>
+</div>
+<script>
+async function refresh() {
+  const s = await (await fetch('/api/gm/state')).json();
+  const t = s.truth;
+  document.getElementById('clock').textContent =
+    `tick ${t.tick} · ${t.clockMode} · day ${Math.floor(t.tick / 240)} ${String(Math.floor((t.tick % 240) / 10)).padStart(2, '0')}00`;
+  document.getElementById('truth').textContent = JSON.stringify({
+    seed: t.seed, tick: t.tick, mode: t.clockMode, seedCursor: t.seedCursor,
+    formations: Object.values(t.formations).map(f => ({
+      id: f.id, side: f.sideId, pos: f.pos.kind === 'ground' ? `${f.pos.q},${f.pos.r}` : f.pos.kind,
+      emcon: f.emcon, posture: f.posture, rdy: f.rdy, onNet: f.onNet,
+      order: f.currentOrderId, dead: f.destroyed || undefined,
+    })),
+    contacts: Object.values(t.contacts).map(c => ({
+      id: c.id, lvl: c.level, est: c.estPos.q + ',' + c.estPos.r,
+      confirmed: c.lastConfirmedTick, delivered: c.delivered?.level ?? null,
+    })),
+    reports: Object.values(t.reports).map(r => ({
+      id: r.id, gen: r.generatedTick, del: r.deliveredTick, lost: r.lost || undefined,
+    })),
+  }, null, 1);
+  const sideSel = document.getElementById('inj-side');
+  const sides = Object.keys(s.views);
+  if (sideSel.options.length === 0) {
+    for (const side of sides) sideSel.add(new Option(side, side));
+  }
+  document.getElementById('views').innerHTML = sides.map(side =>
+    `<h2>VIEW: ${side}</h2><pre>${JSON.stringify(s.views[side], null, 1)}</pre>`).join('');
+  document.getElementById('log').textContent = s.eventLog.map(l =>
+    `#${l.index} ${l.event.type} ${summ(l.event)}`).join('\n');
+}
+function summ(e) {
+  if (e.type === 'DIE_ROLLED') return `${e.roll.result} (${e.roll.purpose})`;
+  if (e.type === 'FORMATION_MOVED') return `${e.formationId} → ${e.to.q},${e.to.r}`;
+  if (e.type === 'CONTACT_UPGRADED') return `${e.contact.id} → L${e.contact.level}`;
+  if (e.type === 'REPORT_DELIVERED') return e.reportId;
+  if (e.type === 'STEP_BEGAN') return `t${e.tick} ${e.mode}`;
+  if (e.type === 'CLOCK_ADVANCED') return `→ t${e.tick}`;
+  return JSON.stringify(e).slice(0, 120);
+}
+async function advance(untilEvent) {
+  await fetch('/api/gm/advance', { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ untilEvent }) });
+  refresh();
+}
+async function inject() {
+  await fetch('/api/gm/inject-report', { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ sideId: document.getElementById('inj-side').value,
+                           text: document.getElementById('inj-text').value }) });
+  document.getElementById('inj-text').value = '';
+  refresh();
+}
+const ws = new WebSocket(`ws://${location.host}`);
+ws.onmessage = refresh;
+refresh();
+</script>
+</body>
+</html>

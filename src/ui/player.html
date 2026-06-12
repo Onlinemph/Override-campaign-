@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>OVERRIDE — Player</title>
+<style>
+  body { font: 13px/1.4 monospace; background: #0b0e13; color: #cfcfcf; margin: 0; padding: 12px; }
+  h1 { font-size: 16px; color: #9fdf9f; } h2 { font-size: 13px; color: #9fdf9f; margin: 8px 0 4px; }
+  .cols { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+  .col { flex: 1; min-width: 320px; background: #131720; border: 1px solid #2a3142; padding: 8px; }
+  pre { white-space: pre-wrap; margin: 0; max-height: 60vh; overflow: auto; }
+  .stale { color: #d9a55a; } .report { border-bottom: 1px dotted #333; padding: 3px 0; }
+  button { background: #1d3324; color: #cfe; border: 1px solid #3c6648; padding: 4px 10px; cursor: pointer; }
+  input, select { background: #1a1f2b; color: #cfe; border: 1px solid #344; font: inherit; }
+</style>
+</head>
+<body>
+<h1 id="title">OVERRIDE — PLAYER</h1>
+<div class="cols">
+  <div class="col"><h2>OWN FORCES</h2><pre id="own"></pre></div>
+  <div class="col"><h2>CONTACTS <small>(staleness in ticks)</small></h2><pre id="contacts"></pre>
+    <h2>SCOUTED TERRAIN</h2><pre id="terrain"></pre></div>
+  <div class="col"><h2>REPORT INBOX</h2><div id="inbox"></div>
+    <h2>ORDER ENTRY</h2>
+    <div>
+      formation <select id="o-formation"></select>
+      kind <select id="o-kind">
+        <option>MOVE</option><option>FORCED_MARCH</option><option>MOVE_CAUTIOUS</option>
+        <option>HIDE</option><option>DIG_IN</option><option>PATROL</option><option>REST</option>
+      </select><br>
+      path (q,r;q,r;…) <input id="o-path" size="28" placeholder="12,5;11,5;10,6"><br>
+      EMCON <select id="o-emcon"><option value="">keep</option><option>DARK</option>
+        <option>PASSIVE</option><option>ACTIVE</option></select>
+      <button onclick="sendOrder()">Issue</button>
+      <div id="o-result"></div>
+    </div></div>
+</div>
+<script>
+const sideId = location.pathname.split('/').pop();
+document.getElementById('title').textContent = `OVERRIDE — ${sideId.toUpperCase()}`;
+async function refresh() {
+  const v = await (await fetch(`/api/side/${sideId}/view`)).json();
+  document.getElementById('title').textContent =
+    `OVERRIDE — ${sideId.toUpperCase()} · tick ${v.now} · ${v.clockMode} · ${v.isNight ? 'NIGHT' : 'DAY'} · VP ${v.vp}`;
+  document.getElementById('own').textContent = v.ownFormations.map(f =>
+    `${f.name} @ ${f.pos ? f.pos.q + ',' + f.pos.r : '?'}  RDY ${f.rdy}  ${f.emcon}/${f.posture}` +
+    `  ${f.onNet ? 'ON-NET' : 'OFF-NET'}${f.currentOrder ? '  [' + f.currentOrder.kind + ']' : ''}\n` +
+    f.units.map(u => `   ${u.name} (${u.model}) ${u.damage} ammo:${u.ammoState}`).join('\n')
+  ).join('\n\n') || '(none)';
+  document.getElementById('contacts').textContent = v.contacts.map(c =>
+    `${c.levelName} @ ${c.estPos.q},${c.estPos.r}${c.posErrorHexes ? ' ±' + c.posErrorHexes : ''}` +
+    (c.estSizeClass ? `  ${c.estSizeClass}` : '') +
+    (c.estVector !== undefined ? `  hdg ${c.estVector}°` : '') +
+    (c.estComposition ? `\n   ${c.estComposition}` : '') +
+    (c.toe ? '\n   ' + c.toe.map(t => `${t.name} (${t.model}) ${t.damage}`).join('\n   ') : '') +
+    `\n   as of t${c.staleAsOfTick} (${c.ageTicks} ticks stale)`
+  ).join('\n\n') || '(no contacts)';
+  document.getElementById('terrain').textContent =
+    v.scoutedTerrain.filter(h => h.terrain !== 'CLEAR' || h.infra.length || h.objective)
+      .map(h => `${h.q},${h.r} ${h.terrain}${h.infra.length ? ' [' + h.infra.join(',') + ']' : ''}` +
+                `${h.objective ? ' ★' + h.objective.vpPerDay + 'VP/day' : ''}`).join('\n') || '(nothing notable scouted)';
+  document.getElementById('inbox').innerHTML = v.reports.slice().reverse().map(r =>
+    `<div class="report">${r.text} <span class="stale">(received t${r.deliveredTick})</span></div>`
+  ).join('') || '(inbox empty)';
+  const sel = document.getElementById('o-formation');
+  const cur = sel.value;
+  sel.innerHTML = v.ownFormations.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+async function sendOrder() {
+  const path = document.getElementById('o-path').value.trim();
+  const body = {
+    formationId: document.getElementById('o-formation').value,
+    kind: document.getElementById('o-kind').value,
+    path: path ? path.split(';').map(p => ({ q: +p.split(',')[0], r: +p.split(',')[1] })) : [],
+  };
+  const emcon = document.getElementById('o-emcon').value;
+  if (emcon) body.emconOverride = emcon;
+  const r = await (await fetch(`/api/side/${sideId}/order`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })).json();
+  document.getElementById('o-result').textContent = r.ok ? 'order accepted' : `REFUSED: ${r.reason}`;
+  refresh();
+}
+const ws = new WebSocket(`ws://${location.host}`);
+ws.onmessage = refresh;
+refresh();
+</script>
+</body>
+</html>
