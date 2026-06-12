@@ -4,7 +4,8 @@
  * it never touches state directly.
  */
 import type {
-  ClockMode, Contact, ContactReport, DieRoll, GroundPos, Id, Order, TruthState, Tick,
+  ClockMode, Contact, ContactReport, DamageState, DieRoll, Engagement, GroundPos,
+  HandoffPackage, Id, Marker, Order, Pilot, Posture, SalvageToken, TruthState, Tick,
 } from './types.js';
 
 export type GameEvent =
@@ -32,6 +33,23 @@ export type GameEvent =
   | { type: 'SAT_PASS'; satelliteId: Id; tick: Tick; nextPassTick: Tick }
   | { type: 'FORMATION_DESTROYED'; formationId: Id; reason: string; tick: Tick }
   | { type: 'GM_NOTE'; text: string; tick: Tick }
+  // ── M2: triggers, engagement, handoff round-trip, logistics ──
+  | { type: 'TRIGGER_FIRED'; orderId: Id; formationId: Id; triggerIndex: number;
+      newOrder: Order; tick: Tick }
+  | { type: 'POSTURE_CHANGED'; formationId: Id; posture: Posture; tick: Tick }
+  | { type: 'ENGAGEMENT_TRIGGERED'; engagement: Engagement }
+  | { type: 'EVASION_RESOLVED'; engagementId: Id; success: boolean;
+      slipTo: GroundPos | null; tick: Tick }
+  | { type: 'HANDOFF_EXPORTED'; engagementId: Id; pkg: HandoffPackage; tick: Tick }
+  | { type: 'BATTLE_RESULT_INGESTED'; engagementId: Id; handoffId: Id; tick: Tick }
+  | { type: 'UNIT_STATE_CHANGED'; unitId: Id; damage: DamageState; ammoState: string }
+  | { type: 'PILOT_STATE_CHANGED'; pilotId: Id; status: Pilot['status'] }
+  | { type: 'MARKER_ADDED'; marker: Marker }
+  | { type: 'VP_CHANGED'; sideId: Id; delta: number; reason: string }
+  | { type: 'ROUT_STARTED'; formationId: Id; untilTick: Tick; tick: Tick }
+  | { type: 'SALVAGE_CREATED'; token: SalvageToken }
+  | { type: 'SALVAGE_RESOLVED'; tokenId: Id; outcome: 'UNIT' | 'PARTS'; tick: Tick }
+  | { type: 'SUPPLY_CHANGED'; formationId: Id; inSupply: boolean; lastSuppliedTick: Tick }
   | { type: 'CLOCK_ADVANCED'; dt: number; tick: Tick }; // tick = NEW absolute tick
 
 export interface LoggedEvent { index: number; event: GameEvent }
@@ -181,6 +199,96 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
     case 'GM_NOTE':
       break;
 
+    // ── M2 ──────────────────────────────────────────────────────────────────
+    case 'TRIGGER_FIRED': {
+      // record the spawned order; activation happens via the normal ORDER_ACTIVATED path
+      s.orders[e.newOrder.id] = e.newOrder;
+      // mark the conditional consumed so it cannot re-fire
+      const order = s.orders[e.orderId];
+      if (order?.conditionals?.[e.triggerIndex]) {
+        (order.conditionals[e.triggerIndex] as { fired?: boolean }).fired = true;
+      }
+      break;
+    }
+
+    case 'POSTURE_CHANGED':
+      s.formations[e.formationId].posture = e.posture;
+      break;
+
+    case 'ENGAGEMENT_TRIGGERED':
+      s.engagements[e.engagement.id] = e.engagement;
+      s.pendingEngagementId = e.engagement.id;
+      break;
+
+    case 'EVASION_RESOLVED': {
+      const eng = s.engagements[e.engagementId];
+      if (e.success) {
+        eng.status = 'EVADED';
+        s.pendingEngagementId = null;
+      }
+      // failure leaves the engagement PENDING for export
+      break;
+    }
+
+    case 'HANDOFF_EXPORTED': {
+      s.handoffs[e.pkg.id] = e.pkg;
+      const eng = s.engagements[e.engagementId];
+      eng.status = 'EXPORTED';
+      eng.handoffId = e.pkg.id;
+      break;
+    }
+
+    case 'BATTLE_RESULT_INGESTED': {
+      const eng = s.engagements[e.engagementId];
+      eng.status = 'RESOLVED';
+      s.pendingEngagementId = null;
+      for (const fid of [...eng.attackerFormationIds, ...eng.defenderFormationIds]) {
+        const f = s.formations[fid];
+        if (f && !f.destroyed) f.lastBattleTick = e.tick; // a fighting day ⇒ ×2 supply
+      }
+      break;
+    }
+
+    case 'UNIT_STATE_CHANGED': {
+      const u = s.units[e.unitId];
+      if (u) { u.damage = e.damage; u.ammoState = e.ammoState as typeof u.ammoState; }
+      break;
+    }
+
+    case 'PILOT_STATE_CHANGED': {
+      const p = s.pilots[e.pilotId];
+      if (p) p.status = e.status;
+      break;
+    }
+
+    case 'MARKER_ADDED':
+      s.markers[e.marker.id] = e.marker;
+      break;
+
+    case 'VP_CHANGED':
+      s.sides[e.sideId].vp += e.delta;
+      break;
+
+    case 'ROUT_STARTED': {
+      const f = s.formations[e.formationId];
+      f.routUntilTick = e.untilTick > 0 ? e.untilTick : null; // 0 ⇒ rout cleared
+      break;
+    }
+
+    case 'SALVAGE_CREATED':
+      s.salvage[e.token.id] = e.token;
+      break;
+
+    case 'SALVAGE_RESOLVED':
+      delete s.salvage[e.tokenId];
+      break;
+
+    case 'SUPPLY_CHANGED': {
+      const f = s.formations[e.formationId];
+      f.supply = { inSupply: e.inSupply, lastSuppliedTick: e.lastSuppliedTick };
+      break;
+    }
+
     case 'CLOCK_ADVANCED':
       s.tick = e.tick;
       break;
@@ -196,6 +304,9 @@ export function isInterestingEvent(e: GameEvent): boolean {
     case 'REPORT_DELIVERED':
     case 'ORDER_COMPLETED':
     case 'FORMATION_DESTROYED':
+    case 'TRIGGER_FIRED':
+    case 'ENGAGEMENT_TRIGGERED':
+    case 'BATTLE_RESULT_INGESTED':
       return true;
     default:
       return false;

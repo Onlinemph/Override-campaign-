@@ -26,11 +26,26 @@
       formation <select id="o-formation"></select>
       kind <select id="o-kind">
         <option>MOVE</option><option>FORCED_MARCH</option><option>MOVE_CAUTIOUS</option>
-        <option>HIDE</option><option>DIG_IN</option><option>PATROL</option><option>REST</option>
+        <option>HIDE</option><option>DIG_IN</option><option>PATROL</option>
+        <option>SCREEN</option><option>STRIKE</option><option>REST</option>
       </select><br>
-      path (q,r;q,r;…) <input id="o-path" size="28" placeholder="12,5;11,5;10,6"><br>
+      path (q,r;q,r;…) <input id="o-path" size="28" placeholder="12,5;11,5;10,6">
+      <small>(SCREEN: hexes to hold · STRIKE: leave blank, pick target)</small><br>
+      strike target <select id="o-target"><option value="">—</option></select>
       EMCON <select id="o-emcon"><option value="">keep</option><option>DARK</option>
-        <option>PASSIVE</option><option>ACTIVE</option></select>
+        <option>PASSIVE</option><option>ACTIVE</option></select><br>
+      <fieldset style="border:1px solid #344;margin-top:4px">
+        <legend>conditional (optional)</legend>
+        if <select id="c-when"><option value="">—none—</option>
+          <option>CONTACT_WITHIN</option><option>DETECTED_SELF</option>
+          <option>RDY_BELOW</option><option>TICK_REACHED</option><option>HEX_REACHED</option>
+          <option>ALLY_ENGAGED</option></select>
+        param <input id="c-param" size="6" placeholder="4">
+        then <select id="c-kind"><option>STRIKE</option><option>HIDE</option>
+          <option>MOVE</option><option>FORCED_MARCH</option><option>DIG_IN</option><option>REST</option></select>
+        target <select id="c-target"><option value="">—</option></select>
+        path <input id="c-path" size="14" placeholder="10,6;9,6">
+      </fieldset>
       <button onclick="sendOrder()">Issue</button>
       <div id="o-result"></div>
     </div></div>
@@ -66,16 +81,34 @@ async function refresh() {
   const cur = sel.value;
   sel.innerHTML = v.ownFormations.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
   if (cur) sel.value = cur;
+  // target-contact pickers (STRIKE / conditional STRIKE) — contacts at CONTACT+ are targetable
+  const opts = '<option value="">—</option>' + v.contacts.map(c =>
+    `<option value="${c.id}">${c.levelName} @ ${c.estPos.q},${c.estPos.r}</option>`).join('');
+  for (const id of ['o-target', 'c-target']) {
+    const t = document.getElementById(id); const tv = t.value;
+    t.innerHTML = opts; if (tv) t.value = tv;
+  }
 }
+const parsePath = s => s.trim() ? s.trim().split(';').map(p =>
+  ({ q: +p.split(',')[0], r: +p.split(',')[1] })) : [];
 async function sendOrder() {
-  const path = document.getElementById('o-path').value.trim();
   const body = {
     formationId: document.getElementById('o-formation').value,
     kind: document.getElementById('o-kind').value,
-    path: path ? path.split(';').map(p => ({ q: +p.split(',')[0], r: +p.split(',')[1] })) : [],
+    path: parsePath(document.getElementById('o-path').value),
   };
+  const target = document.getElementById('o-target').value;
+  if (target) body.targetContactId = target;
   const emcon = document.getElementById('o-emcon').value;
   if (emcon) body.emconOverride = emcon;
+  const when = document.getElementById('c-when').value;
+  if (when) {
+    body.conditional = { when, param: document.getElementById('c-param').value,
+      kind: document.getElementById('c-kind').value,
+      path: parsePath(document.getElementById('c-path').value) };
+    const ct = document.getElementById('c-target').value;
+    if (ct) body.conditional.targetContactId = ct;
+  }
   const r = await (await fetch(`/api/side/${sideId}/order`, { method: 'POST',
     headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })).json();
   document.getElementById('o-result').textContent = r.ok ? 'order accepted' : `REFUSED: ${r.reason}`;

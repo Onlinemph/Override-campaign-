@@ -14,6 +14,10 @@
   .bar { margin-bottom: 10px; }
   .tick { color: #ffd479; }
   textarea, input, select { background: #222; color: #cfe; border: 1px solid #444; font: inherit; }
+  #engagement { background: #3a1f1f; border: 1px solid #a44; padding: 8px; margin: 8px 0; display: none; }
+  #engagement.active { display: block; }
+  #engagement h2 { color: #ff9f9f; }
+  .salv { display: inline-block; margin: 2px 6px 2px 0; }
 </style>
 </head>
 <body>
@@ -25,6 +29,18 @@
     <input id="inj-text" size="50" placeholder="PULSE 1400 — FLASH — ...">
     <button onclick="inject()">Inject</button></span>
 </div>
+<div id="engagement">
+  <h2>⚔ PENDING ENGAGEMENT — campaign frozen</h2>
+  <pre id="eng-detail"></pre>
+  <button onclick="evade()">Resolve evasion (2d6)</button>
+  <button onclick="exportHandoff()">Export handoff →</button>
+  <pre id="handoff-out"></pre>
+  <div>Paste BattleResult JSON then Ingest:</div>
+  <textarea id="battle-result" rows="6" cols="90" placeholder='{"handoffId":"...","victorSideId":"blue","hexControlSideId":"blue","unitOutcomes":[...],"ejections":[],"turnsElapsed":9,"notes":""}'></textarea><br>
+  <button onclick="ingest()">Ingest BattleResult</button>
+  <span id="ingest-msg"></span>
+</div>
+<div id="salvage-bar"></div>
 <div class="cols">
   <div class="col"><h2>TRUTH</h2><pre id="truth"></pre></div>
   <div class="col" id="views"></div>
@@ -60,6 +76,28 @@ async function refresh() {
     `<h2>VIEW: ${side}</h2><pre>${JSON.stringify(s.views[side], null, 1)}</pre>`).join('');
   document.getElementById('log').textContent = s.eventLog.map(l =>
     `#${l.index} ${l.event.type} ${summ(l.event)}`).join('\n');
+
+  // pending engagement banner
+  const engDiv = document.getElementById('engagement');
+  if (s.pendingEngagement) {
+    engDiv.classList.add('active');
+    const e = s.pendingEngagement;
+    document.getElementById('eng-detail').textContent = JSON.stringify({
+      id: e.id, trigger: e.trigger, hex: `${e.hex.q},${e.hex.r}`, status: e.status,
+      attacker: e.attackerSideId, attackerForces: e.attackerFormationIds,
+      defender: e.defenderSideId, defenderForces: e.defenderFormationIds,
+    }, null, 1);
+  } else {
+    engDiv.classList.remove('active');
+    document.getElementById('handoff-out').textContent = '';
+  }
+
+  // salvage tokens awaiting recovery
+  document.getElementById('salvage-bar').innerHTML = (s.salvage || []).length
+    ? '<b>Salvage:</b> ' + s.salvage.map(t =>
+        `<span class="salv">${t.sourceUnitId} (held ${t.heldBy || '—'}) ` +
+        `<button onclick="resolveSalvage('${t.id}')">recover</button></span>`).join('')
+    : '';
 }
 function summ(e) {
   if (e.type === 'DIE_ROLLED') return `${e.roll.result} (${e.roll.purpose})`;
@@ -80,6 +118,39 @@ async function inject() {
     body: JSON.stringify({ sideId: document.getElementById('inj-side').value,
                            text: document.getElementById('inj-text').value }) });
   document.getElementById('inj-text').value = '';
+  refresh();
+}
+async function post(path, body) {
+  return (await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body || {}) })).json();
+}
+async function evade() {
+  const r = await post('/api/gm/evade', {});
+  alert('Evasion ' + (r.success ? 'SUCCEEDED — defender slipped away' : 'failed — proceed to battle'));
+  refresh();
+}
+async function exportHandoff() {
+  const pkg = await post('/api/gm/export-handoff', {});
+  document.getElementById('handoff-out').textContent = JSON.stringify(pkg, null, 1);
+  // prefill the battle-result skeleton
+  const skel = { handoffId: pkg.id, victorSideId: '', hexControlSideId: '',
+    unitOutcomes: pkg.perSide.flatMap(p => p.units.map(u =>
+      ({ unitId: u.unitId, damage: 'OK', ammoState: u.ammoState, pilotOutcomes: [] }))),
+    ejections: [], turnsElapsed: 0, notes: '' };
+  document.getElementById('battle-result').value = JSON.stringify(skel, null, 1);
+  refresh();
+}
+async function ingest() {
+  let body;
+  try { body = JSON.parse(document.getElementById('battle-result').value); }
+  catch (e) { document.getElementById('ingest-msg').textContent = 'invalid JSON'; return; }
+  const r = await post('/api/gm/battle-result', body);
+  document.getElementById('ingest-msg').textContent = r.ok ? 'ingested ✓' : ('error: ' + r.reason);
+  refresh();
+}
+async function resolveSalvage(tokenId) {
+  const r = await post('/api/gm/salvage', { tokenId });
+  alert('Salvage recovered as: ' + (r.outcome || r.error));
   refresh();
 }
 const ws = new WebSocket(`ws://${location.host}`);

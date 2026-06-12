@@ -107,6 +107,7 @@ export function emptyTruth(seed: string, config?: Partial<CampaignConfig>): Trut
     sides: {}, theaters: {}, units: {}, pilots: {}, formations: {},
     facilities: {}, satellites: {}, markers: {}, salvage: {},
     contacts: {}, reports: {}, orders: {}, scoutedHexes: {},
+    engagements: {}, pendingEngagementId: null, handoffs: {},
   };
 }
 

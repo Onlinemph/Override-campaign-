@@ -143,3 +143,70 @@ constants/flags in rules.ts or commented at the use site, and all are GM-overrid
     passes at tick 0 and appends the resulting events to the log, so formations standing
     inside their node's radius start on-net (and order entry works before the first step)
     without any out-of-band state mutation.
+
+---
+
+## D-009 ✅ Milestone 2 interpretive calls (orders & engagement)
+The spec lists the M2 deliverables but defines no fixed M2 acceptance scenario, so the
+gate is the round-trip acceptance test (`test/acceptance/m2-strike-roundtrip.test.ts`)
+plus all M1 tests staying green. Calls made, all rules.ts-backed and GM-overridable:
+
+1. **Conditionals fire off-net** (spec §3.3): `triggerPass` evaluates a formation's active
+   order conditionals every step regardless of net status, then spawns the embedded
+   `thenOrder` (fresh id, effective next tick) which supersedes the current order via the
+   existing M1 order-activation machinery. A fired conditional is marked `fired` so it
+   cannot re-fire.
+2. **Trigger semantics:** TICK_REACHED/RDY_BELOW/HEX_REACHED are literal; CONTACT_WITHIN =
+   an *own-side* contact (level ≥1) within N hexes; DETECTED_SELF = an *enemy* holds
+   ladder ≥ param (default 1) on this formation; ALLY_ENGAGED = a live engagement
+   involving a friendly within N hexes. FUEL_BELOW is parked until M3 (always false).
+3. **Attacker/defender** (drives evasion bonus & initiative): STRIKE → striker attacks;
+   SCREEN → the mover attacks, screener defends; SAME_HEX → the side with the better
+   contact ladder on the other is the attacker (it pressed the fight), tie broken by who
+   moved this step, then by deterministic id order.
+4. **SAME_HEX requires a fresh arrival** (someone with `transient.moved !== NONE` in the
+   hex) so a resolved battle whose forces remain co-located does not instantly re-trigger.
+   STRIKE/SCREEN have explicit triggers and are exempt from this guard.
+5. **STRIKE movement** re-paths toward the *delivered* contact estimate each step (stale
+   intel ⇒ you march to where the enemy was). Reaching the estimate hex with the enemy
+   present ⇒ battle; reaching it empty ⇒ the order completes with a miss (no pathfinding
+   cleverness — the GM is in the loop). STRIKE never self-completes in the movement pass;
+   the engagement pass owns its arrival.
+6. **One engagement at a time:** the first candidate (deterministic id order) freezes the
+   campaign (`pendingEngagementId`); `step()` is a no-op while frozen, exactly the spec's
+   "pause(), exportHandoff(), await ingestBattleResult()".
+7. **Co-located battles auto-LOCK both sides** (M1, core §6.4), so a ground SAME_HEX/STRIKE
+   engagement has *zero* intel-initiative differential by construction — both sides see
+   each other at LOCK at the moment of contact. The intel=initiative bonus (core §7.2.3)
+   therefore only manifests for non-co-located engagements (SCREEN, where the screener is
+   adjacent) or hidden setups. This is faithful, not a bug; the acceptance/handoff tests
+   reflect it.
+8. **Handoff entry edges** are derived from each side's spearhead `lastHeadingDeg`
+   collapsed onto the package's 6-edge vocabulary; unknown heading ⇒ `ANY_HALF`. Off-board
+   artillery = friendly units tagged with an `ARTILLERY_TAG_RANGE` key within range of the
+   battle hex; reinforcements = friendly *on-net* formations within range, `arrivesTurn =
+   hexes × 5` (core §7.2.5). Default crew 4/5 (`COMBAT.PILOT_DEFAULT_*`) when no Pilot is
+   assigned.
+9. **BattleResult import** emits granular events (damage, pilots, ejection markers, RDY,
+   auto-LOCK, salvage, destruction, withdrawal, rout) then a final
+   `BATTLE_RESULT_INGESTED` that unfreezes the campaign and stamps `lastBattleTick`. Order
+   is chosen so every reference resolves before destruction; full-log replay reproduces
+   truth byte-for-byte across the battle.
+10. **Rout** (core §3.2/§7.4): a survivor projected to RDY ≤1 post-battle gets
+    `routUntilTick = now + 2 pulses`; while routed it refuses player orders
+    (`issueOrder`) and the tick loop will not activate queued orders for it. The
+    *automatic* "forced-march away from contacts" rout *movement* is deferred (GM moves it
+    by hand for now) — the commandability lock is the testable core.
+11. **Salvage** (core §7.5): destroyed units in the battle hex become SalvageTokens held
+    by the hex-controller; `resolveSalvage` rolls 2d6 ≥8 (logged) ⇒ UNIT else PARTS and
+    consumes the token. Hauling-to-depot logistics deferred to a later logistics pass.
+12. **Supply** (core §10.2) uses a *straight-line* depot-range test for M2 (≤30 hexes to a
+    stocked friendly DEPOT/SPACEPORT); the full path-based "friendly-controlled hexes"
+    supply line is deferred and logged here. Daily SP draw is anchored on each formation's
+    `lastSuppliedTick` so clock compression cannot skip a day. Out of supply ⇒ −1 RDY/day.
+13. **REST recovery** applies only at PULSE/WATCH scale (you do not rest mid-firefight in
+    CONTACT mode): +2 RDY/pulse in supply, +1 out of supply, capped at 10.
+14. **Quick Resolution stays a human procedure** (the "battles are never simulated" hard
+    requirement): the GM runs it at the table / in their head and enters the outcome
+    through the same BattleResult form. `turnsElapsed` is tabletop bookkeeping and does not
+    advance the campaign clock.

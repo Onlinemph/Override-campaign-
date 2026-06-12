@@ -93,6 +93,15 @@
   "orders": [
     { "id": "order-red-1", "sideId": "red", "formationId": "red-recon-1",
       "kind": "MOVE", "effectiveTick": 0,
-      "path": [ { "q": 20, "r": 6 }, { "q": 18, "r": 7 }, { "q": 16, "r": 7 }, { "q": 14, "r": 7 }, { "q": 12, "r": 8 } ] }
+      "path": [ { "q": 20, "r": 6 }, { "q": 18, "r": 7 }, { "q": 16, "r": 7 }, { "q": 14, "r": 7 }, { "q": 12, "r": 8 } ] },
+    { "id": "order-red-2", "sideId": "red", "formationId": "red-probe-co",
+      "kind": "MOVE", "effectiveTick": 0, "emconOverride": "ACTIVE",
+      "path": [ { "q": 19, "r": 7 }, { "q": 16, "r": 7 }, { "q": 13, "r": 8 }, { "q": 10, "r": 8 }, { "q": 8, "r": 8 }, { "q": 6, "r": 8 } ] },
+    { "id": "order-blue-1", "sideId": "blue", "formationId": "blue-line-co",
+      "kind": "PATROL", "effectiveTick": 0,
+      "conditionals": [
+        { "trigger": { "when": "CONTACT_WITHIN", "param": 5 },
+          "then": { "kind": "STRIKE", "targetContactId": "contact:blue:red-probe-co" } }
+      ] }
   ]
 }

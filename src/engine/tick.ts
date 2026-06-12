@@ -11,12 +11,16 @@ import { chooseClockMode, ticksFor } from './clock.js';
 import { movementPass } from './movement.js';
 import { detectionPass, fadePass, satellitePass } from './detection.js';
 import { deliverReportsPass, netPass, scoutPass } from './net.js';
+import { triggerPass } from './triggers.js';
+import { engagementPass } from './engagement.js';
+import { maintenancePass } from './logistics.js';
 
 export interface StepResult {
   truth: TruthState;
   events: GameEvent[];
   interesting: boolean;
   dt: number;
+  paused: boolean; // true ⇒ campaign frozen awaiting GM resolution of a pending engagement
 }
 
 function applyDueOrders(s: TruthState, emit: (e: GameEvent) => void): void {
@@ -25,6 +29,8 @@ function applyDueOrders(s: TruthState, emit: (e: GameEvent) => void): void {
     if (o.completed || s.tick < o.effectiveTick) continue;
     const f = s.formations[o.formationId];
     if (!f || f.destroyed || f.currentOrderId === o.id) continue;
+    // routed formations are uncommandable for the rout window (core §3.2/§7.4)
+    if (f.routUntilTick != null && s.tick < f.routUntilTick) continue;
     if (!due.has(o.formationId)) due.set(o.formationId, []);
     due.get(o.formationId)!.push(o);
   }
@@ -42,6 +48,12 @@ function applyDueOrders(s: TruthState, emit: (e: GameEvent) => void): void {
 }
 
 export function step(truth: TruthState): StepResult {
+  // Frozen on a pending engagement (spec §3.1): the campaign does not advance until the
+  // GM exports the handoff and ingests a result. step() is a no-op while paused.
+  if (truth.pendingEngagementId) {
+    return { truth, events: [], interesting: false, dt: 0, paused: true };
+  }
+
   const work = structuredClone(truth);
   const events: GameEvent[] = [];
   const emit = (e: GameEvent) => { events.push(e); applyEvent(work, e); };
@@ -58,9 +70,15 @@ export function step(truth: TruthState): StepResult {
   fadePass(work, emit);
   deliverReportsPass(work, emit);
   scoutPass(work, emit);
-  // triggers & engagements: Milestone 2
+  maintenancePass(work, dt, emit);
+  triggerPass(work, emit);      // conditionals react to this step's contacts/positions
+  engagementPass(work, emit);   // may freeze the campaign (sets pendingEngagementId)
 
   emit({ type: 'CLOCK_ADVANCED', dt, tick: work.tick + dt });
 
-  return { truth: work, events, interesting: events.some(isInterestingEvent), dt };
+  return {
+    truth: work, events, dt,
+    interesting: events.some(isInterestingEvent),
+    paused: !!work.pendingEngagementId,
+  };
 }

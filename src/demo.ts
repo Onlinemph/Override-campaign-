@@ -71,7 +71,17 @@ export function loadCampaignFixture(path: string): TruthState {
       issuedTick: 0, effectiveTick: o.effectiveTick ?? 0,
       kind: o.kind,
       path: (o.path ?? []).map((p: any) => ({ kind: 'ground', theaterId, q: p.q, r: p.r })),
-      conditionals: [],
+      conditionals: (o.conditionals ?? []).map((c: any) => ({
+        trigger: c.trigger,
+        thenOrder: {
+          id: 'ph', sideId: o.sideId, formationId: o.formationId, issuedTick: 0,
+          effectiveTick: 0, kind: c.then.kind,
+          ...(c.then.path ? { path: c.then.path.map((p: any) =>
+            ({ kind: 'ground', theaterId, q: p.q, r: p.r })) } : {}),
+          ...(c.then.targetContactId ? { targetContactId: c.then.targetContactId } : {}),
+        },
+      })),
+      ...(o.targetContactId ? { targetContactId: o.targetContactId } : {}),
     };
     truth.orders[order.id] = order;
   }

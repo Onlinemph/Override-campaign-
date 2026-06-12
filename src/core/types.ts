@@ -124,6 +124,10 @@ export interface Formation {
   renetAtTick?: Tick | null;      // pending re-net after decapitation
   transient?: { moved: 'NONE' | 'NORMAL' | 'CAUTIOUS' | 'FORCED' | 'SPRINT';
                 onRoad: boolean; fired: boolean };
+  // ext (M2): rout & combat bookkeeping
+  routUntilTick?: Tick | null;    // RDY≤1: uncommandable until this tick (core §3.2/§7.4)
+  digInPulseAcc?: number;         // accumulates pulses toward DUG_IN (core §4.1)
+  lastBattleTick?: Tick;          // a fighting day costs ×2 supply (core §10.1)
 }
 
 // ── §2.2 Facilities & logistics ─────────────────────────────────────────────
@@ -207,7 +211,8 @@ export interface Order {
   kind: GroundOrderKind | AirMission | SpaceOrderKind;
   path?: Position[]; targetContactId?: Id; targetHex?: GroundPos; station?: Position;
   burnProfile?: BurnProfile;
-  conditionals: { trigger: Trigger; thenOrder: Omit<Order, 'conditionals'> }[];
+  conditionals: { trigger: Trigger; thenOrder: Omit<Order, 'conditionals'>;
+                  fired?: boolean /* ext (M2): consumed, won't re-fire */ }[];
   emconOverride?: Emcon;
   completed?: boolean; // ext
 }
@@ -241,6 +246,21 @@ export interface BattleResult {
   ejections: Array<{ pilotId: Id; pos: Position }>;
   withdrewVia?: Record<Id, 'N' | 'NE' | 'SE' | 'S' | 'SW' | 'NW'>;
   turnsElapsed: number; notes: string;
+}
+
+// ── §7 Engagement (core §7; spec §3.1) — M2 ─────────────────────────────────
+/**
+ * A pending or resolved tabletop battle. The engine never simulates it: it freezes the
+ * campaign (`TruthState.pendingEngagementId`), exports a HandoffPackage, and waits for a
+ * BattleResult. attacker/defender drive evasion bonus and initiative (core §7.1–7.2).
+ */
+export interface Engagement {
+  id: Id; tick: Tick; hex: GroundPos;
+  trigger: 'SAME_HEX' | 'SCREEN' | 'STRIKE';
+  attackerSideId: Id; defenderSideId: Id;
+  attackerFormationIds: Id[]; defenderFormationIds: Id[];
+  status: 'PENDING' | 'EVADED' | 'EXPORTED' | 'RESOLVED';
+  handoffId?: Id;
 }
 
 // ── §3.7 Jump board (M4) ────────────────────────────────────────────────────
@@ -282,6 +302,9 @@ export interface TruthState {
   reports: Record<Id, ContactReport>;
   orders: Record<Id, Order>;
   scoutedHexes: Record<Id, string[]>; // sideId → hex keys "theaterId:q,r"
+  engagements: Record<Id, Engagement>;       // M2
+  pendingEngagementId?: Id | null;           // M2: set ⇒ campaign frozen awaiting GM
+  handoffs: Record<Id, HandoffPackage>;      // M2: exported packages, by id
 }
 
 export const hexKey = (q: number, r: number) => `${q},${r}`;

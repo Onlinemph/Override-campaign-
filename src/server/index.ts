@@ -31,12 +31,15 @@ function broadcast() {
 
 function gmState() {
   const sides = Object.keys(campaign.truth.sides);
+  const eng = campaign.pendingEngagement;
   return {
     truth: campaign.truth,
     views: Object.fromEntries(
       sides.map(s => [s, project(campaign.truth, s, campaign.truth.tick)])),
     eventLog: campaign.store.all().slice(-200),
     eventCount: campaign.store.length(),
+    pendingEngagement: eng,
+    salvage: Object.values(campaign.truth.salvage),
   };
 }
 
@@ -96,6 +99,35 @@ const server = createServer(async (req, res) => {
       return json(res, 200, { ok: true });
     }
 
+    // ── M2: engagement resolution ──
+    if (path === '/api/gm/evade' && req.method === 'POST') {
+      const b = await readBody(req);
+      const slipTo = b.slipTo
+        ? { kind: 'ground' as const, theaterId: campaign.pendingEngagement?.hex.theaterId ?? '',
+            q: b.slipTo.q, r: b.slipTo.r }
+        : undefined;
+      const result = campaign.resolveEvasion(slipTo);
+      broadcast();
+      return json(res, 200, result);
+    }
+    if (path === '/api/gm/export-handoff' && req.method === 'POST') {
+      const pkg = campaign.exportHandoff();
+      broadcast();
+      return pkg ? json(res, 200, pkg) : json(res, 400, { error: 'no pending engagement' });
+    }
+    if (path === '/api/gm/battle-result' && req.method === 'POST') {
+      const result = await readBody(req);
+      const r = campaign.ingestBattleResult(result);
+      broadcast();
+      return json(res, r.ok ? 200 : 400, r);
+    }
+    if (path === '/api/gm/salvage' && req.method === 'POST') {
+      const b = await readBody(req);
+      const r = campaign.resolveSalvage(b.tokenId);
+      broadcast();
+      return json(res, 'error' in r ? 400 : 200, r);
+    }
+
     // player API
     const sideView = path.match(/^\/api\/side\/([^/]+)\/view$/);
     if (sideView) {
@@ -108,14 +140,26 @@ const server = createServer(async (req, res) => {
       const f = campaign.truth.formations[b.formationId];
       if (!f || f.sideId !== sideId) return json(res, 400, { ok: false, reason: 'not your formation' });
       const theaterId = f.pos.kind === 'ground' ? f.pos.theaterId : '';
+      const toPath = (pts: { q: number; r: number }[] = []): GroundPos[] =>
+        pts.map(p => ({ kind: 'ground', theaterId, q: p.q, r: p.r }));
+      // optional single conditional: { when, param, kind, path }
+      const conditionals = b.conditional ? [{
+        trigger: { when: b.conditional.when, param: b.conditional.param },
+        thenOrder: {
+          id: 'ph', sideId, formationId: b.formationId, issuedTick: 0, effectiveTick: 0,
+          kind: b.conditional.kind,
+          ...(b.conditional.path ? { path: toPath(b.conditional.path) } : {}),
+          ...(b.conditional.targetContactId ? { targetContactId: b.conditional.targetContactId } : {}),
+        } as Order,
+      }] : [];
       const order: Order = {
         id: `order:${sideId}:${campaign.truth.tick}:${b.formationId}`,
         sideId, formationId: b.formationId,
         issuedTick: campaign.truth.tick, effectiveTick: campaign.truth.tick + 1,
         kind: b.kind,
-        path: (b.path ?? []).map((p: { q: number; r: number }): GroundPos =>
-          ({ kind: 'ground', theaterId, q: p.q, r: p.r })),
-        conditionals: [],
+        path: toPath(b.path),
+        conditionals,
+        ...(b.targetContactId ? { targetContactId: b.targetContactId } : {}),
         ...(b.emconOverride ? { emconOverride: b.emconOverride } : {}),
       };
       const result = campaign.issueOrder(order);

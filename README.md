@@ -54,8 +54,10 @@ returns to the command net, original timestamp preserved.
 
 - [x] **M1 — Kernel**: entities, event log, seeded RNG, tick loop with clock compression,
       Module-0 ground movement + detection + contact ladder + per-side views.
-- [ ] **M2 — Orders & engagement**: conditionals, net latency, evasion,
-      HandoffPackage/BattleResult round-trip, salvage, RDY effects.
+- [x] **M2 — Orders & engagement**: conditional triggers, STRIKE/SCREEN, evasion,
+      engagement freeze, HandoffPackage export / BattleResult import round-trip, salvage,
+      rout, RDY/Dig-In/supply upkeep. GM resolves battles from the GM screen; the demo
+      drives itself to an engagement on *Run until event*.
 - [ ] **M3 — SKYWATCH**: flight ledgers, ATO, alert states, chase mode, joker/bingo,
       merge export. *Acceptance: the §12 Shilone day, 400→240→179→159 FP tick-for-tick.*
 - [ ] **M4 — DEEP SKY**: system graph, brachistochrone solver, burn-day ledgers,

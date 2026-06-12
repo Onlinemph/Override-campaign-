@@ -182,6 +182,15 @@ export const ENGAGEMENT = {
   ROUT_UNCOMMANDABLE_PULSES: 2,
 } as const;
 
+// ── Battle handoff & pilots (core §7.2; spec §3.6) ──────────────────────────
+export const COMBAT = {
+  // default crew when no Pilot is assigned to a unit (regular MechWarrior, core/TW)
+  PILOT_DEFAULT_GUNNERY: 4,
+  PILOT_DEFAULT_PILOTING: 5,
+  DIG_IN_PULSES: 2,                  // Dig In completes to DUG_IN after 2 pulses (core §4.1)
+  ENGINEER_DIG_IN_FACTOR: 0.5,      // engineers halve the time (core §4.1, §9.3)
+} as const;
+
 // ── Artillery (core §9, App. A) ─────────────────────────────────────────────
 export const ARTILLERY_RANGE_HEXES = {
   ARROW_IV: 8,
@@ -190,6 +199,13 @@ export const ARTILLERY_RANGE_HEXES = {
   LONG_TOM: 30,
   CRUISE_50: 50, CRUISE_70: 70, CRUISE_90: 90, CRUISE_120: 120,
 } as const;
+/** Unit tags that mark an artillery piece, mapped to its operational range key. */
+export const ARTILLERY_TAG_RANGE: Record<string, number> = {
+  ARROW_IV: ARTILLERY_RANGE_HEXES.ARROW_IV,
+  SNIPER: ARTILLERY_RANGE_HEXES.SNIPER,
+  THUMPER: ARTILLERY_RANGE_HEXES.THUMPER,
+  LONG_TOM: ARTILLERY_RANGE_HEXES.LONG_TOM,
+};
 export const COUNTER_BATTERY_AUTO_CONTACT_LEVEL = 3; // firing hex revealed at CONTACT
 
 // ── Engineers & minefields (core §9.3) — parked for M2 ─────────────────────

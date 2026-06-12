@@ -4,9 +4,10 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
-  ARTILLERY_RANGE_HEXES, BASE_SIG, CLOCK, CONTACT_MODE_RANGE_HEXES, ENGAGEMENT,
-  LADDER, MOVEMENT, NET, RDY, ROAD_COST_FACTOR, ROAD_MIN_COST, SATELLITE,
-  SEARCHER_MODS, SENSOR_RANGES, SIG_MODS, SUPPLY, TERRAIN, VP_PER_DAY,
+  ARTILLERY_RANGE_HEXES, ARTILLERY_TAG_RANGE, BASE_SIG, CLOCK, COMBAT,
+  CONTACT_MODE_RANGE_HEXES, ENGAGEMENT, LADDER, MOVEMENT, NET, RDY, ROAD_COST_FACTOR,
+  ROAD_MIN_COST, SATELLITE, SEARCHER_MODS, SENSOR_RANGES, SIG_MODS, SUPPLY, TERRAIN,
+  VP_PER_DAY,
 } from '../../src/rules.js';
 
 describe('A1 — clock constants (core §2, App. A; spec §1.1)', () => {
@@ -209,9 +210,29 @@ describe('A10 — remaining Appendix A rows parked for later milestones', () => 
   it('engagement constants for M2 (core §7): evasion, intel initiative, quick res', () => {
     expect(ENGAGEMENT.EVASION_GHOST_SHADOW_BONUS).toBe(2);
     expect(ENGAGEMENT.EVASION_WIN_MARGIN).toBe(3);
+    expect(ENGAGEMENT.EVASION_SLIP_HEXES).toBe(2);
     expect(ENGAGEMENT.INTEL_INITIATIVE_PER_LEVEL).toBe(1);
     expect(ENGAGEMENT.INTEL_INITIATIVE_TURNS).toBe(3);
     expect(ENGAGEMENT.REINFORCE_TURNS_PER_HEX).toBe(5);
     expect(ENGAGEMENT.QUICK_RES_DAMAGE_PCT_PER_DIFF).toBe(5);
+    expect(ENGAGEMENT.ROUT_UNCOMMANDABLE_PULSES).toBe(2);
+  });
+
+  it('combat/handoff constants (core §7.2, §3.2): default pilot 4/5, RDY −1/−2, dig-in 2', () => {
+    expect(COMBAT.PILOT_DEFAULT_GUNNERY).toBe(4);
+    expect(COMBAT.PILOT_DEFAULT_PILOTING).toBe(5);
+    expect(COMBAT.DIG_IN_PULSES).toBe(2);
+    expect(COMBAT.ENGINEER_DIG_IN_FACTOR).toBe(0.5);
+    expect(RDY.PER_BATTLE).toBe(-1);
+    expect(RDY.PER_BATTLE_LOST_EXTRA).toBe(-1);
+    expect(RDY.REST_RECOVERY_PER_PULSE).toBe(2);
+    expect(RDY.REST_RECOVERY_UNSUPPLIED).toBe(1);
+  });
+
+  it('artillery tag→range map matches the published ranges (core §9)', () => {
+    expect(ARTILLERY_TAG_RANGE.ARROW_IV).toBe(ARTILLERY_RANGE_HEXES.ARROW_IV);
+    expect(ARTILLERY_TAG_RANGE.SNIPER).toBe(ARTILLERY_RANGE_HEXES.SNIPER);
+    expect(ARTILLERY_TAG_RANGE.THUMPER).toBe(ARTILLERY_RANGE_HEXES.THUMPER);
+    expect(ARTILLERY_TAG_RANGE.LONG_TOM).toBe(ARTILLERY_RANGE_HEXES.LONG_TOM);
   });
 });

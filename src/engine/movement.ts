@@ -11,10 +11,25 @@
 import { CLOCK, MOVEMENT, ROAD_MIN_COST, ROAD_COST_FACTOR, TERRAIN } from '../rules.js';
 import type { Formation, GroundPos, Hex, Order, TruthState } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
-import { headingDeg, hexDistance } from '../hex/axial.js';
+import { headingDeg, hexDistance, hexLine } from '../hex/axial.js';
 import { hexKey } from '../core/types.js';
 
 const MOVE_KINDS = new Set(['MOVE', 'FORCED_MARCH', 'MOVE_CAUTIOUS']);
+
+/**
+ * Where is a STRIKE heading? Toward the latest delivered estimate of its target contact
+ * (re-pathing as intel updates), falling back to a fixed targetHex. Null ⇒ no usable
+ * intel: the strike stalls (the GM sees a formation with nothing to hit).
+ */
+export function strikeTargetHex(s: TruthState, order: Order): GroundPos | null {
+  if (order.targetContactId) {
+    const c = s.contacts[order.targetContactId];
+    const est = c?.delivered?.estPos ?? c?.estPos;
+    if (est && est.kind === 'ground') return est;
+  }
+  if (order.targetHex) return order.targetHex;
+  return null;
+}
 
 /** OMP = slowest Walk/Cruise MP in the formation (core §3). */
 export function deriveFormationOmp(units: Array<{ walkOrCruise: number }>): number {
@@ -70,12 +85,25 @@ export function movementPass(
   for (const f of Object.values(s.formations)) {
     if (f.destroyed || !f.currentOrderId) continue;
     const order = s.orders[f.currentOrderId];
-    if (!order || order.completed || !MOVE_KINDS.has(order.kind)) continue;
-    if (!order.path || f.pos.kind !== 'ground') continue;
+    if (!order || order.completed || f.pos.kind !== 'ground') continue;
     if (s.tick < order.effectiveTick) continue;
+    const isStrike = order.kind === 'STRIKE';
+    if (!isStrike && !MOVE_KINDS.has(order.kind)) continue;
 
-    const path = order.path.filter((p): p is GroundPos => p.kind === 'ground');
-    let pathIndex = f.pathIndex ?? 0;
+    // STRIKE re-paths toward the live contact estimate; everything else follows its plot.
+    let path: GroundPos[];
+    let pathIndex: number;
+    if (isStrike) {
+      const target = strikeTargetHex(s, order);
+      const cur = f.pos as GroundPos;
+      if (!target || hexDistance(cur, target) === 0) continue; // arrived or blind: hold
+      path = hexLine(cur, target).slice(1).map(h => ({ ...cur, q: h.q, r: h.r }));
+      pathIndex = 0; // path rebuilt from current position each step
+    } else {
+      if (!order.path) continue;
+      path = order.path.filter((p): p is GroundPos => p.kind === 'ground');
+      pathIndex = f.pathIndex ?? 0;
+    }
     let progress = f.moveProgress ?? 0;
     const mult = speedMult(order.kind);
 
@@ -144,7 +172,9 @@ export function movementPass(
       s.formations[f.id].forcedMarchPulseAcc = acc; // bookkeeping, not event-worthy
     }
 
-    if (pathIndex >= path.length) {
+    // STRIKE never self-completes here: arrival is resolved by the engagement pass
+    // (battle if the enemy is present, completion-with-miss if the estimate was stale).
+    if (!isStrike && pathIndex >= path.length) {
       emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
     }
   }
