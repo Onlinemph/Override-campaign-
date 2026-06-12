@@ -58,8 +58,12 @@ returns to the command net, original timestamp preserved.
       engagement freeze, HandoffPackage export / BattleResult import round-trip, salvage,
       rout, RDY/Dig-In/supply upkeep. GM resolves battles from the GM screen; the demo
       drives itself to an engagement on *Run until event*.
-- [ ] **M3 — SKYWATCH**: flight ledgers, ATO, alert states, chase mode, joker/bingo,
-      merge export. *Acceptance: the §12 Shilone day, 400→240→179→159 FP tick-for-tick.*
+- [x] **M3 — SKYWATCH**: flight ledger engine, alert board (launch delays, idle burn,
+      crew fatigue), plotted air missions with conditional scrambles, predictive chase
+      mode in contact turns, live joker/bingo with auto-RTB at bingo, the merge export
+      (map by band, entry velocity, Energy State, surprise, per-fighter FP/joker/bingo),
+      turnaround & fuel farms. *Acceptance passed: the §12 Shilone day tick-for-tick —
+      400→240→179→159 FP, the 0901 scramble, the farm down to 11 tons, Fatigue 3.*
 - [ ] **M4 — DEEP SKY**: system graph, brachistochrone solver, burn-day ledgers,
       light-lag staleness, encounter classifier, jump board.
       *Acceptance: Operation SKEAN incl. 83-min light lag and MATCHED intercept.*

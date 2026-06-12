@@ -11,6 +11,7 @@
 import type { GroundPos, Id, Tick, TruthState } from '../core/types.js';
 import { LADDER_NAMES } from '../rules.js';
 import { isNight } from '../engine/clock.js';
+import { isFlight, jokerBingo, minFp } from '../engine/air.js';
 import type { ContactView, OwnFormationView, ReportView, ScoutedHexView,
               ViewState } from './viewTypes.js';
 
@@ -20,23 +21,45 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
 
   const ownFormations: OwnFormationView[] = Object.values(truth.formations)
     .filter(f => f.sideId === sideId && !f.destroyed)
-    .map(f => ({
-      id: f.id, name: f.name,
-      pos: f.pos.kind === 'ground' ? { ...f.pos } : null,
-      omp: f.omp, br: f.br, rdy: f.rdy,
-      emcon: f.emcon, posture: f.posture,
-      onNet: f.onNet,
-      currentOrder: f.currentOrderId && truth.orders[f.currentOrderId]
-        ? { id: f.currentOrderId, kind: truth.orders[f.currentOrderId].kind,
-            completed: !!truth.orders[f.currentOrderId].completed }
-        : undefined,
-      units: f.unitIds.map(uid => {
-        const u = truth.units[uid];
-        return { id: u.id, name: u.name, model: u.model, class: u.class,
-                 damage: u.damage, ammoState: u.ammoState };
-      }),
-      inSupply: f.supply.inSupply,
-    }));
+    .map(f => {
+      const view: OwnFormationView = {
+        id: f.id, name: f.name,
+        pos: f.pos.kind === 'ground' ? { ...f.pos } : null,
+        omp: f.omp, br: f.br, rdy: f.rdy,
+        emcon: f.emcon, posture: f.posture,
+        onNet: f.onNet,
+        currentOrder: f.currentOrderId && truth.orders[f.currentOrderId]
+          ? { id: f.currentOrderId, kind: truth.orders[f.currentOrderId].kind,
+              completed: !!truth.orders[f.currentOrderId].completed }
+          : undefined,
+        units: f.unitIds.map(uid => {
+          const u = truth.units[uid];
+          return { id: u.id, name: u.name, model: u.model, class: u.class,
+                   damage: u.damage, ammoState: u.ammoState };
+        }),
+        inSupply: f.supply.inSupply,
+      };
+      if (f.alertState) view.alertState = f.alertState;
+      // M3: a flight's live ledger is its own side's information, always (SKYWATCH §2)
+      if (isFlight(truth, f)) {
+        const { joker, bingo } = jokerBingo(truth, f);
+        const fatigues = f.unitIds.flatMap(uid =>
+          (truth.units[uid]?.pilotIds ?? []).map(pid => truth.pilots[pid]?.fatigue ?? 0));
+        view.flight = {
+          airPos: f.pos.kind === 'air'
+            ? { q: f.pos.gridQ, r: f.pos.gridR, band: f.pos.band, altLevel: f.pos.altLevel }
+            : null,
+          phase: f.air?.phase ?? 'GROUNDED',
+          speed: f.air?.speed ?? 'CRUISE',
+          fpMin: minFp(truth, f),
+          jokerFp: Math.round(joker * 100) / 100,
+          bingoFp: Math.round(bingo * 100) / 100,
+          fatigueMax: fatigues.length ? Math.max(...fatigues) : 0,
+          turnaroundReadyTick: f.air?.turnaroundReadyTick ?? null,
+        };
+      }
+      return view;
+    });
 
   const contacts: ContactView[] = Object.values(truth.contacts)
     .filter(c => c.observerSideId === sideId && c.delivered && c.delivered.level >= 1)
@@ -47,7 +70,7 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
         level: d.level,
         levelName: LADDER_NAMES[d.level],
         kind: c.kind,
-        estPos: { ...(d.estPos as GroundPos) },
+        estPos: structuredClone(d.estPos) as ContactView['estPos'],
         posErrorHexes: d.posErrorHexes,
         staleAsOfTick: d.asOfTick,
         ageTicks: now - d.asOfTick,

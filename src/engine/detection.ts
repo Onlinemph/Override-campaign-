@@ -203,11 +203,16 @@ function ghostScatter(s: TruthState, cid: string, tick: number, pos: GroundPos):
 function buildSnapshot(
   s: TruthState, cid: string, target: Formation, level: LadderLevel, tick: number,
 ): ContactSnapshot {
-  const pos = target.pos as GroundPos;
+  // GHOST scatter applies on the ground grid; air positions are reported as-observed
+  // (an air GHOST is vague in identity, not in radar bearing — D-010.6)
+  const estPos = target.pos.kind === 'ground'
+    ? (level === 1 ? ghostScatter(s, cid, tick, target.pos) : { ...target.pos })
+    : structuredClone(target.pos);
   const snap: ContactSnapshot = {
     level,
-    estPos: level === 1 ? ghostScatter(s, cid, tick, pos) : { ...pos },
-    posErrorHexes: level === 1 ? LADDER.GHOST_POS_ERROR_HEXES : 0,
+    estPos,
+    posErrorHexes: level === 1 && target.pos.kind === 'ground'
+      ? LADDER.GHOST_POS_ERROR_HEXES : 0,
     asOfTick: tick,
   };
   if (level >= 2) {
@@ -227,12 +232,15 @@ function buildSnapshot(
 
 function reportText(snap: ContactSnapshot, sourceName: string, tick: number): string {
   const lvl = LADDER_NAMES[snap.level];
-  const pos = snap.estPos as GroundPos;
+  const p = snap.estPos;
+  const where = p.kind === 'ground' ? `hex ${p.q},${p.r}`
+    : p.kind === 'air' ? `air hex ${p.gridQ},${p.gridR} ${p.band}`
+    : 'position unknown';
   const bits = [
     `T+${tick} — ${sourceName}: ${lvl}`,
     snap.estSizeClass ? `${snap.estSizeClass}-strength` : 'unidentified return',
     snap.estComposition ? `(${snap.estComposition})` : '',
-    `hex ${pos.q},${pos.r}${snap.posErrorHexes ? ` ±${snap.posErrorHexes}` : ''}`,
+    `${where}${snap.posErrorHexes ? ` ±${snap.posErrorHexes}` : ''}`,
     snap.estVector !== undefined ? `heading ${snap.estVector}°` : '',
   ].filter(Boolean);
   return bits.join(' ');
@@ -247,7 +255,8 @@ function nextReportId(s: TruthState, tick: number, cid: string, sourceId: string
   return `report:${tick}:${cid}:${sourceId}:${n}`;
 }
 
-function upgradeContact(
+/** Shared by the ground pass, satellites, and the air pass (M3). */
+export function registerDetection(
   s: TruthState, emit: (e: GameEvent) => void,
   observerSideId: string, target: Formation, by: number,
   source: { id: string; name: string; alwaysOnNet: boolean },
@@ -304,7 +313,7 @@ export function detectionPass(s: TruthState, emit: (e: GameEvent) => void): void
       if (ap.theaterId === bp.theaterId && hexDistance(ap, bp) === 0) {
         const cid = contactId(a.sideId, b.id);
         if ((s.contacts[cid]?.level ?? 0) < LADDER.MAX_LEVEL) {
-          upgradeContact(s, emit, a.sideId, b, LADDER.MAX_LEVEL, // jump straight to LOCK
+          registerDetection(s, emit, a.sideId, b, LADDER.MAX_LEVEL, // jump straight to LOCK
             { id: a.id, name: a.name, alwaysOnNet: false });
         }
       }
@@ -332,7 +341,7 @@ export function detectionPass(s: TruthState, emit: (e: GameEvent) => void): void
       });
 
       if (r.result + mod >= tn) {
-        upgradeContact(s, emit, searcher.sideId, target, LADDER.CLIMB_PER_SUCCESS,
+        registerDetection(s, emit, searcher.sideId, target, LADDER.CLIMB_PER_SUCCESS,
           { id: searcher.id, name: searcher.name, alwaysOnNet: searcher.alwaysOnNet });
       }
     }
@@ -400,7 +409,7 @@ export function satellitePass(s: TruthState, emit: (e: GameEvent) => void): void
                 dice: '2d6', result: r.result, seedCursor: r.nextCursor - 2 },
       });
       if (r.result >= tn) {
-        upgradeContact(s, emit, sat.sideId, target, LADDER.CLIMB_PER_SUCCESS,
+        registerDetection(s, emit, sat.sideId, target, LADDER.CLIMB_PER_SUCCESS,
           { id: sat.id, name: `Satellite ${sat.id}`, alwaysOnNet: true });
       }
     }

@@ -1,6 +1,7 @@
 {
   "seed": "OVERRIDE-DEMO-1",
-  "config": { "name": "The Cavanaugh Salient (demo)", "dawnTick": 60, "duskTick": 180, "weather": "CLEAR" },
+  "config": { "name": "The Cavanaugh Salient (demo)", "dawnTick": 60, "duskTick": 180, "weather": "CLEAR",
+              "airHexByTheater": { "cavanaugh": { "q": 0, "r": 0 } } },
   "theaters": [
     {
       "id": "cavanaugh", "name": "Cavanaugh Valley", "width": 24, "height": 16,
@@ -42,7 +43,8 @@
       "tags": ["AIRSTRIP"], "fuelFarmTons": 25, "turnaroundCrews": 2 },
     { "id": "blue-sensor-1", "sideId": "blue", "name": "Sensor Station Echo",
       "theaterId": "cavanaugh", "q": 6, "r": 7,
-      "tags": ["SENSOR_STATION"], "sensorStation": { "passive": 6, "active": 12 } }
+      "tags": ["SENSOR_STATION"], "sensorStation": { "passive": 6, "active": 12 },
+      "activeSweep": true }
   ],
   "satellites": [
     { "id": "blue-sat-1", "sideId": "blue", "kind": "RECON", "theaterId": "cavanaugh",
@@ -87,6 +89,21 @@
       "units": [
         { "name": "Kasai 1", "model": "Spider SDR-5V", "class": "MECH" },
         { "name": "Kasai 2", "model": "Spider SDR-5V", "class": "MECH" }
+      ] },
+    { "id": "blue-anvil-flight", "sideId": "blue", "name": "Anvil Flight",
+      "theaterId": "cavanaugh", "q": 4, "r": 9, "sigBase": 8, "alertState": "ALERT15",
+      "flight": { "homeFacilityId": "blue-airbase" },
+      "units": [
+        { "name": "Anvil 1", "model": "Lightning LTN-G15", "class": "CONV_FIGHTER",
+          "safeThrust": 4, "fuelFp": 320, "pilot": "Lt. Maya Reyes" },
+        { "name": "Anvil 2", "model": "Lightning LTN-G15", "class": "CONV_FIGHTER",
+          "safeThrust": 4, "fuelFp": 320, "pilot": "Sgt. Theo Brandt" }
+      ] },
+    { "id": "red-tengu", "sideId": "red", "name": "Tengu Recon Flight",
+      "sigBase": 9, "airPos": { "q": 9, "r": 0 },
+      "units": [
+        { "name": "Tengu 1", "model": "SL-17 Shilone", "class": "ASF",
+          "safeThrust": 6, "fuelFp": 400, "pilot": "Chu-i Okabe" }
       ] }
   ],
   "commandNodes": { "blue": ["blue-spaceport", "blue-line-co"], "red": ["red-probe-co"] },
@@ -102,6 +119,17 @@
       "conditionals": [
         { "trigger": { "when": "CONTACT_WITHIN", "param": 5 },
           "then": { "kind": "STRIKE", "targetContactId": "contact:blue:red-probe-co" } }
+      ] },
+    { "id": "order-tengu", "sideId": "red", "formationId": "red-tengu",
+      "kind": "RECON", "effectiveTick": 70, "airSpeed": "DASH", "loiterTicks": 2,
+      "airStation": { "q": 0, "r": 0 }, "airPath": true,
+      "path": [ { "q": 60, "r": 0 } ] },
+    { "id": "order-anvil", "sideId": "blue", "formationId": "blue-anvil-flight",
+      "kind": "REST", "effectiveTick": 0,
+      "conditionals": [
+        { "trigger": { "when": "CONTACT_WITHIN", "param": 4 },
+          "then": { "kind": "SWEEP", "targetContactId": "contact:blue:red-tengu",
+                    "airSpeed": "DASH" } }
       ] }
   ]
 }

@@ -267,11 +267,99 @@ export const SPECIAL = {
 } as const;
 
 // ════════════════════════════════════════════════════════════════════════════
-// §M1 — SKYWATCH (Module 1) — constants land here at Milestone 3.
-// (Fuel ledger costs, alert states, merge rules, crew fatigue — per the SKYWATCH
-//  quick reference. Placeholder kept so rules.ts structure is stable.)
+// §M1 — SKYWATCH (Module 1) — mirrors the SKYWATCH quick-reference appendix.
 // ════════════════════════════════════════════════════════════════════════════
-export const SKYWATCH = {} as const;
+export const SKYWATCH = {
+  // ── §1 sky grid & altitude ladder ──
+  AIR_HEX_KM: 18,
+  AIR_TURNS_PER_TICK: 6,            // 1 air turn = 60 s; 1 contact turn = 6 air turns
+  BAND_LEVELS: { DECK: [1, 1], LOW: [2, 4], HIGH: [5, 7], SUBORBITAL: [8, 10] } as
+    Record<string, [number, number]>,
+  CRUISE_ALT_LEVEL: 6,              // representative HIGH-band level (climb to HIGH = 12 FP)
+  CLIMB_FP_PER_LEVEL: 2,
+  TO_ORBIT_FP: 30,                  // climb + circularization
+  FROM_ORBIT_FP: 35,                // deorbit burn + descent control + approach
+  DESCEND_IN_ATMO_FP: 0,            // trade altitude for speed
+  // mid-battle map transitions only — handoff itself is 1:1 (D-010.3)
+  MAP_CHANGE_DOWN_MULT: 2, MAP_CHANGE_UP_DIV: 2,
+
+  // ── §2 the flight ledger ──
+  FP_PER_TON: 80,
+  TAKEOFF_VSTOL_FP: 10, TAKEOFF_RUNWAY_FP: 4,
+  LANDING_VSTOL_FP: 5, LANDING_RUNWAY_FP: 2,
+  CRUISE_FP_PER_HEX: 1, CRUISE_HEX_PER_MIN: 2,   // 12 hexes per contact turn
+  DASH_FP_PER_HEX: 2,                            // speed: Safe Thrust hexes/min
+  LOITER_FP_PER_MIN: 2, LEAN_LOITER_FP_PER_MIN: 1,
+  ORBIT_LOITER_FP: 0,
+  // conventional fighters sip fuel: halve transit/loiter; takeoff/climb/landing full
+  // (D-010.4 — the spec's "160 FP/ton conv" is the same advantage expressed once)
+  CONV_FIGHTER_COST_FACTOR: 0.5,
+
+  // ── §3 airbases, turnaround & the fuel farm ──
+  TURNAROUND_PULSES: 2,             // rearm + refuel one flight (≤6 fighters)
+  HOT_PIT_PULSES: 1,                // refuel + external ordnance only
+  HOT_PIT_MISHAP_MAX: 3,            // 2d6 ≤ 3 ⇒ mishap
+  HOT_PIT_MISHAP_FARM_FP_PER_D6: 10, // mishap costs 1d6 × 10 FP of farm stock
+  HOT_PIT_MISHAP_STAND_DOWN_PULSES: 1,
+  CREW_FLIGHT_MAX_AIRCRAFT: 6,
+  SP_TO_AVIATION_FUEL_TONS: 2,      // 1 SP → 2 tons at a depot
+  FARM_TORCH_TICKS: 1,
+
+  // ── §3.1 alert states ──
+  // launch delay is measured from the scramble call; fatigue per pulse standing the
+  // alert. D-010.1: rates anchored on the §12 worked day (Fatigue 3); §11's
+  // "+1 per 4 pulses at ALERT-5" is irreconcilable with §12 and loses.
+  ALERT: {
+    ALERT5:     { launchDelayTicks: 0,  fatiguePerPulse: 1,   idleFpPerPulse: 5 },
+    ALERT15:    { launchDelayTicks: 1,  fatiguePerPulse: 0.5, idleFpPerPulse: 0 },
+    ALERT60:    { launchDelayTicks: 10, fatiguePerPulse: 0,   idleFpPerPulse: 0 },
+    STAND_DOWN: { launchDelayTicks: 20, fatiguePerPulse: 0,   idleFpPerPulse: 0 },
+  } as Record<string, { launchDelayTicks: number; fatiguePerPulse: number; idleFpPerPulse: number }>,
+  ORBITAL_STANDBY_RESPONSE_TICKS: 3,
+
+  // ── §5 seeing the sky ──
+  AIR_SIG: { FLIGHT_3_6: 6, PAIR: 8, SINGLE: 9, DROPSHIP_THRUST: 3, SKYEYE: 5 },
+  AIR_SIG_MODS: { DASH_OR_CLIMB: -2, LEAN_LOITER: 1, BALLISTIC_GLIDE: 3 },
+  RADAR_HORIZON: {
+    HIGH_BAND_AIR_HEXES: 0,         // ground sensors: HIGH band within their theater air hex
+    STATION_HQ_BONUS_AIR_HEXES: 1,  // sensor stations & Mobile HQs see one air hex further
+    LOW_BAND_OP_HEXES: 6,
+  },
+  AIR_TO_AIR_DETECT_AIR_HEXES: 1,   // fighters resolve air targets in own + adjacent hex (D-010.6)
+  SKYEYE_SENSOR: { passive: 6, active: 12 },
+  MIN_PLOT_INTERCEPT_LEVEL: 2,      // you cannot plot an interception against < SHADOW
+
+  // ── §6 scramble & chase ──
+  AIR_CONTACT_CLOCK_RANGE: 3,       // air activity this close to the enemy ⇒ contact turns (D-010.7)
+  ORBIT_CLIMB_GAUNTLET: { burnTicks: 2, sigMod: -2, freeInterceptRangeHexes: 2 },
+
+  // ── §7 the merge ──
+  ENTRY_VELOCITY_CRUISE: 2,         // dash = Safe Thrust; glide = 2 + 1/level dropped
+  ENTRY_VELOCITY_GLIDE_BASE: 2,
+  ENERGY_INIT_TIE_TURNS: 3,         // higher Energy wins init ties 3 turns + may decline pass
+  JOKER_MULT: 1.25,                 // RTB-at-dash cost × 1.25 (transit only — §12: 36 hexes ⇒ 90)
+  BINGO_MULT: 1.10,                 // RTB-at-cruise cost × 1.10
+  BINGO_DISENGAGE_TURNS: 3,
+  FUMES: { DEADSTICK_PSR_MOD: 4, DEADSTICK_RUNWAY_MOD: 2, CRASH_SURVIVAL_TN: 8, EJECT_TN: 5 },
+
+  // ── §8 after the merge ──
+  ACE_KILLS: 5, ACE_LOSS_WING_RDY: -1, CAPTURED_CREW_ATO_PAGES: 1,
+
+  // ── §9–§10 air-to-ground & DropShips ──
+  STRIKE_MIN_LEVEL: 3,              // strikes need ≥ CONTACT
+  STRIKE_AT_CONTACT_TO_HIT_MOD: -2, // vs CONTACT: −2 on the table; vs LOCK clean
+  DROP_DESCENT_TICKS: 2,
+  DROP_SCATTER_PER_ESCORT_LOST_HEXES: 2,
+  ORBITAL_FIRE_PREDICTABLE_TICKS: 3,
+  TANKER_DELIVERY_RATIO: 0.5,       // 1 ton delivered per 2 tons carried
+
+  // ── §11 crews ──
+  FATIGUE_PER_SORTIE: 1,
+  FATIGUE_PER_EJECTION: 2,
+  FATIGUE_TN_PENALTY_AT: 4,
+  FATIGUE_GROUNDED_AT: 7,
+  STAND_DOWN_DAY_CLEARS: 4,         // implemented as −1 per 6 pulses at STAND_DOWN
+} as const;
 
 // ════════════════════════════════════════════════════════════════════════════
 // §M2 — DEEP SKY (Module 2) — constants land here at Milestone 4.

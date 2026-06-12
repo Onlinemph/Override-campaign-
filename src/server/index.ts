@@ -103,7 +103,7 @@ const server = createServer(async (req, res) => {
     if (path === '/api/gm/evade' && req.method === 'POST') {
       const b = await readBody(req);
       const slipTo = b.slipTo
-        ? { kind: 'ground' as const, theaterId: campaign.pendingEngagement?.hex.theaterId ?? '',
+        ? { kind: 'ground' as const, theaterId: campaign.pendingEngagement?.hex?.theaterId ?? '',
             q: b.slipTo.q, r: b.slipTo.r }
         : undefined;
       const result = campaign.resolveEvasion(slipTo);
@@ -126,6 +126,26 @@ const server = createServer(async (req, res) => {
       const r = campaign.resolveSalvage(b.tokenId);
       broadcast();
       return json(res, 'error' in r ? 400 : 200, r);
+    }
+
+    // ── M3: the air board ──
+    if (path === '/api/gm/alert' && req.method === 'POST') {
+      const b = await readBody(req);
+      const r = campaign.setAlertState(b.formationId, b.state);
+      broadcast();
+      return json(res, r.ok ? 200 : 400, r);
+    }
+    if (path === '/api/gm/turnaround' && req.method === 'POST') {
+      const b = await readBody(req);
+      const r = campaign.turnaround(b.formationId, b.mode ?? 'STANDARD');
+      broadcast();
+      return json(res, r.ok ? 200 : 400, r);
+    }
+    if (path === '/api/gm/reposition-air' && req.method === 'POST') {
+      const b = await readBody(req);
+      const r = campaign.repositionAir(b.formationId, b.q, b.r, b.vectorDeg ?? 0);
+      broadcast();
+      return json(res, r.ok ? 200 : 400, r);
     }
 
     // player API
@@ -152,6 +172,11 @@ const server = createServer(async (req, res) => {
           ...(b.conditional.targetContactId ? { targetContactId: b.conditional.targetContactId } : {}),
         } as Order,
       }] : [];
+      // M3: air-mission extras — a station on the high-altitude grid, speed, loiter
+      const airStation = b.station
+        ? { kind: 'air' as const, gridQ: b.station.q, gridR: b.station.r,
+            band: (b.station.band ?? 'HIGH') as 'HIGH', altLevel: 6, velocity: 0, vectorDeg: 0 }
+        : undefined;
       const order: Order = {
         id: `order:${sideId}:${campaign.truth.tick}:${b.formationId}`,
         sideId, formationId: b.formationId,
@@ -161,6 +186,9 @@ const server = createServer(async (req, res) => {
         conditionals,
         ...(b.targetContactId ? { targetContactId: b.targetContactId } : {}),
         ...(b.emconOverride ? { emconOverride: b.emconOverride } : {}),
+        ...(airStation ? { station: airStation } : {}),
+        ...(b.airSpeed ? { airSpeed: b.airSpeed } : {}),
+        ...(b.loiterTicks !== undefined ? { loiterTicks: Number(b.loiterTicks) } : {}),
       };
       const result = campaign.issueOrder(order);
       if (result.ok) broadcast();

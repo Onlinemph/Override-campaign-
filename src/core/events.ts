@@ -4,9 +4,11 @@
  * it never touches state directly.
  */
 import type {
-  ClockMode, Contact, ContactReport, DamageState, DieRoll, Engagement, GroundPos,
-  HandoffPackage, Id, Marker, Order, Pilot, Posture, SalvageToken, TruthState, Tick,
+  AirPos, ClockMode, Contact, ContactReport, DamageState, DieRoll, Engagement,
+  Formation, GroundPos, HandoffPackage, Id, Marker, Order, Pilot, Posture,
+  SalvageToken, TruthState, Tick, Unit,
 } from './types.js';
+import { SKYWATCH } from '../rules.js';
 
 export type GameEvent =
   | { type: 'CAMPAIGN_INIT'; state: TruthState }
@@ -42,7 +44,8 @@ export type GameEvent =
       slipTo: GroundPos | null; tick: Tick }
   | { type: 'HANDOFF_EXPORTED'; engagementId: Id; pkg: HandoffPackage; tick: Tick }
   | { type: 'BATTLE_RESULT_INGESTED'; engagementId: Id; handoffId: Id; tick: Tick }
-  | { type: 'UNIT_STATE_CHANGED'; unitId: Id; damage: DamageState; ammoState: string }
+  | { type: 'UNIT_STATE_CHANGED'; unitId: Id; damage: DamageState; ammoState: string;
+      fpRemaining?: number /* M3: tabletop fuel comes home on the record sheet */ }
   | { type: 'PILOT_STATE_CHANGED'; pilotId: Id; status: Pilot['status'] }
   | { type: 'MARKER_ADDED'; marker: Marker }
   | { type: 'VP_CHANGED'; sideId: Id; delta: number; reason: string }
@@ -50,6 +53,29 @@ export type GameEvent =
   | { type: 'SALVAGE_CREATED'; token: SalvageToken }
   | { type: 'SALVAGE_RESOLVED'; tokenId: Id; outcome: 'UNIT' | 'PARTS'; tick: Tick }
   | { type: 'SUPPLY_CHANGED'; formationId: Id; inSupply: boolean; lastSuppliedTick: Tick }
+  // ── replay-safe engine bookkeeping (fractional accumulators, anchors) ──
+  | { type: 'FORMATION_BOOKKEEPING'; formationId: Id;
+      patch: Partial<Pick<Formation, 'forcedMarchPulseAcc' | 'digInPulseAcc'>> &
+             { air?: Partial<NonNullable<Formation['air']>> } }
+  // ── M3: SKYWATCH — flights, ledgers, alerts, turnaround ──
+  | { type: 'FORMATION_SPAWNED'; formation: Formation; units: Unit[];
+      pilots: Pilot[]; tick: Tick }
+  | { type: 'ALERT_CHANGED'; formationId: Id; alertState: NonNullable<Formation['alertState']>;
+      tick: Tick }
+  | { type: 'AIR_LAUNCHED'; formationId: Id; pos: AirPos; fpPaid: number; tick: Tick }
+  | { type: 'AIR_MOVED'; formationId: Id; pos: AirPos; fpPaid: number;
+      speed: 'CRUISE' | 'DASH'; tick: Tick }
+  | { type: 'AIR_PHASE'; formationId: Id; phase: NonNullable<Formation['air']>['phase'];
+      tick: Tick }
+  | { type: 'AIR_LANDED'; formationId: Id; facilityId: Id; pos: GroundPos;
+      fpPaid: number; tick: Tick }
+  | { type: 'FUEL_SPENT'; formationId: Id; fpPaid: number; reason: string; tick: Tick }
+  | { type: 'FUEL_THRESHOLD'; formationId: Id; threshold: 'JOKER' | 'BINGO';
+      fpMin: number; tick: Tick }
+  | { type: 'PILOT_FATIGUE'; pilotId: Id; delta: number }
+  | { type: 'TURNAROUND_STARTED'; formationId: Id; facilityId: Id;
+      mode: 'STANDARD' | 'HOT_PIT'; readyTick: Tick; tonsDrawn: number;
+      mishapFarmFpLoss?: number; tick: Tick }
   | { type: 'CLOCK_ADVANCED'; dt: number; tick: Tick }; // tick = NEW absolute tick
 
 export interface LoggedEvent { index: number; event: GameEvent }
@@ -86,6 +112,12 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
       else if (o.kind === 'DIG_IN') f.posture = 'DIGGING';
       else if (['MOVE', 'FORCED_MARCH', 'MOVE_CAUTIOUS', 'PATROL'].includes(o.kind)) {
         f.posture = 'NONE'; // breaking cover to move
+      }
+      // M3: a fresh air tasking puts an airborne flight back on mission (not RTB),
+      // and resets the station clock
+      if (f.pos.kind === 'air' && f.air) {
+        f.air.phase = 'ENROUTE';
+        f.air.loiterTicksRemaining = undefined;
       }
       if (o.emconOverride) f.emcon = o.emconOverride;
       break;
@@ -251,7 +283,11 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
 
     case 'UNIT_STATE_CHANGED': {
       const u = s.units[e.unitId];
-      if (u) { u.damage = e.damage; u.ammoState = e.ammoState as typeof u.ammoState; }
+      if (u) {
+        u.damage = e.damage;
+        u.ammoState = e.ammoState as typeof u.ammoState;
+        if (e.fpRemaining !== undefined && u.fuel) u.fuel.fp = e.fpRemaining;
+      }
       break;
     }
 
@@ -289,6 +325,109 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
       break;
     }
 
+    case 'FORMATION_BOOKKEEPING': {
+      const f = s.formations[e.formationId];
+      if (!f) break;
+      const { air, ...rest } = e.patch;
+      Object.assign(f, rest);
+      if (air) f.air = { phase: 'GROUNDED', speed: 'CRUISE', ...f.air, ...air };
+      break;
+    }
+
+    // ── M3: SKYWATCH ──────────────────────────────────────────────────────
+    case 'FORMATION_SPAWNED': {
+      for (const u of e.units) s.units[u.id] = u;
+      for (const p of e.pilots) s.pilots[p.id] = p;
+      s.formations[e.formation.id] = e.formation;
+      break;
+    }
+
+    case 'ALERT_CHANGED': {
+      const f = s.formations[e.formationId];
+      f.alertState = e.alertState;
+      f.air = { phase: 'GROUNDED', speed: 'CRUISE', ...f.air, alertAnchorTick: e.tick };
+      break;
+    }
+
+    case 'AIR_LAUNCHED': {
+      const f = s.formations[e.formationId];
+      f.pos = e.pos;
+      f.alertState = undefined; // airborne: the alert board no longer applies
+      f.air = { speed: 'CRUISE', ...f.air, phase: 'ENROUTE', launchAtTick: null,
+                lastLaunchTick: e.tick, jokerWarned: false, bingoCalled: false };
+      for (const uid of f.unitIds) {
+        const u = s.units[uid];
+        if (u?.fuel) u.fuel.fp -= e.fpPaid;
+      }
+      break;
+    }
+
+    case 'AIR_MOVED': {
+      const f = s.formations[e.formationId];
+      f.pos = e.pos;
+      for (const uid of f.unitIds) {
+        const u = s.units[uid];
+        if (u?.fuel) u.fuel.fp -= e.fpPaid;
+      }
+      break;
+    }
+
+    case 'AIR_PHASE': {
+      const f = s.formations[e.formationId];
+      f.air = { phase: e.phase, speed: 'CRUISE', ...f.air };
+      f.air.phase = e.phase;
+      break;
+    }
+
+    case 'AIR_LANDED': {
+      const f = s.formations[e.formationId];
+      f.pos = e.pos;
+      f.air = { speed: 'CRUISE', ...f.air, phase: 'GROUNDED',
+                homeFacilityId: f.air?.homeFacilityId ?? e.facilityId };
+      for (const uid of f.unitIds) {
+        const u = s.units[uid];
+        if (u?.fuel) u.fuel.fp -= e.fpPaid;
+      }
+      break;
+    }
+
+    case 'FUEL_SPENT': {
+      const f = s.formations[e.formationId];
+      for (const uid of f.unitIds) {
+        const u = s.units[uid];
+        if (u?.fuel) u.fuel.fp = Math.max(0, u.fuel.fp - e.fpPaid);
+      }
+      break;
+    }
+
+    case 'FUEL_THRESHOLD': {
+      const f = s.formations[e.formationId];
+      f.air = { phase: 'ENROUTE', speed: 'CRUISE', ...f.air };
+      if (e.threshold === 'JOKER') f.air.jokerWarned = true;
+      else f.air.bingoCalled = true;
+      break;
+    }
+
+    case 'PILOT_FATIGUE': {
+      const p = s.pilots[e.pilotId];
+      if (p) p.fatigue = Math.max(0, p.fatigue + e.delta);
+      break;
+    }
+
+    case 'TURNAROUND_STARTED': {
+      const f = s.formations[e.formationId];
+      const fac = s.facilities[e.facilityId];
+      fac.fuelFarmTons -= e.tonsDrawn + (e.mishapFarmFpLoss ?? 0) / SKYWATCH.FP_PER_TON;
+      fac.turnaroundCrews.busyUntil.push(e.readyTick);
+      f.air = { phase: 'GROUNDED', speed: 'CRUISE', ...f.air, turnaroundReadyTick: e.readyTick };
+      for (const uid of f.unitIds) {
+        const u = s.units[uid];
+        if (u?.fuel) u.fuel.fp = Math.round(u.fuel.tons * u.fuel.fpPerTon);
+        if (u) u.ammoState = 'FULL';
+      }
+      break;
+    }
+
     case 'CLOCK_ADVANCED':
       s.tick = e.tick;
       break;
@@ -307,6 +446,10 @@ export function isInterestingEvent(e: GameEvent): boolean {
     case 'TRIGGER_FIRED':
     case 'ENGAGEMENT_TRIGGERED':
     case 'BATTLE_RESULT_INGESTED':
+    case 'FUEL_THRESHOLD':
+    case 'AIR_LAUNCHED':
+    case 'AIR_LANDED':
+    case 'FORMATION_SPAWNED':
       return true;
     default:
       return false;

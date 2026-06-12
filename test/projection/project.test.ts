@@ -165,6 +165,41 @@ describe('B9 — projection', () => {
     expect(truth).toEqual(before);
   });
 
+  it('M3: own flights expose their live ledger (FP, joker/bingo, fatigue) — enemies never', async () => {
+    const truth = scenario();
+    const { addFlight } = await import('../helpers.js');
+    const flt = addFlight(truth, { id: 'blue-flt', sideId: 'blue', count: 2,
+      airPos: { q: 2, r: 0 }, withPilots: true, fp: 250 });
+    flt.air!.homeFacilityId = undefined;
+    const v = project(truth, 'blue', 120);
+    const fv = v.ownFormations.find(f => f.id === 'blue-flt')!;
+    expect(fv.flight).toBeTruthy();
+    expect(fv.flight!.fpMin).toBe(250);
+    expect(fv.flight!.airPos).toEqual({ q: 2, r: 0, band: 'HIGH', altLevel: 6 });
+
+    // the enemy never sees a fuel state: red's view contains no ledger fields at all
+    const redView = project(truth, 'red', 120);
+    expect(JSON.stringify(redView)).not.toContain('fpMin');
+    expect(JSON.stringify(redView)).not.toContain('jokerFp');
+  });
+
+  it('M3: an air contact renders its air position and nothing more', () => {
+    const truth = scenario();
+    truth.contacts['ca'] = {
+      id: 'ca', observerSideId: 'blue', targetFormationId: 'red-secret', kind: 'STANDARD',
+      level: 2, lastConfirmedTick: 110, lastFadeTick: 110,
+      estPos: { kind: 'air', gridQ: 3, gridR: 1, band: 'HIGH', altLevel: 6, velocity: 6, vectorDeg: 180 },
+      posErrorHexes: 0, staleAsOfTick: 110,
+      delivered: { level: 2, posErrorHexes: 0, asOfTick: 110, estVector: 180, estSizeClass: 'single unit',
+        estPos: { kind: 'air', gridQ: 3, gridR: 1, band: 'HIGH', altLevel: 6, velocity: 6, vectorDeg: 180 } },
+    };
+    const [c] = project(truth, 'blue', 120).contacts;
+    expect(c.estPos.kind).toBe('air');
+    expect((c.estPos as { gridQ: number }).gridQ).toBe(3);
+    expect(c.estVector).toBe(180);
+    expect(JSON.stringify(c)).not.toContain('fp'); // no fuel intelligence from a radar blip
+  });
+
   it('symmetric: red view shows red things and no blue things', () => {
     const truth = scenario();
     withContact(truth, 3, true);

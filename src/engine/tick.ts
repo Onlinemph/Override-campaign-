@@ -14,6 +14,7 @@ import { deliverReportsPass, netPass, scoutPass } from './net.js';
 import { triggerPass } from './triggers.js';
 import { engagementPass } from './engagement.js';
 import { maintenancePass } from './logistics.js';
+import { airDetectionPass, airPass } from './air.js';
 
 export interface StepResult {
   truth: TruthState;
@@ -64,8 +65,10 @@ export function step(truth: TruthState): StepResult {
 
   applyDueOrders(work, emit);
   movementPass(work, dt, emit);
+  airPass(work, dt, emit);      // flight ledgers, launches, chases, thresholds (M3)
   netPass(work, emit);          // positions changed: recompute nets before detection
   detectionPass(work, emit);
+  airDetectionPass(work, emit); // radar horizon + air-to-air (M3)
   satellitePass(work, emit);
   fadePass(work, emit);
   deliverReportsPass(work, emit);

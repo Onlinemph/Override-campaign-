@@ -28,7 +28,11 @@
         <option>MOVE</option><option>FORCED_MARCH</option><option>MOVE_CAUTIOUS</option>
         <option>HIDE</option><option>DIG_IN</option><option>PATROL</option>
         <option>SCREEN</option><option>STRIKE</option><option>REST</option>
+        <option>CAP</option><option>SWEEP</option><option>RECON</option><option>FERRY</option>
       </select><br>
+      <small>air missions:</small> station q,r <input id="o-station" size="6" placeholder="2,0">
+      speed <select id="o-airspeed"><option value="">—</option><option>CRUISE</option><option>DASH</option></select>
+      loiter CT <input id="o-loiter" size="3"><br>
       path (q,r;q,r;…) <input id="o-path" size="28" placeholder="12,5;11,5;10,6">
       <small>(SCREEN: hexes to hold · STRIKE: leave blank, pick target)</small><br>
       strike target <select id="o-target"><option value="">—</option></select>
@@ -57,13 +61,24 @@ async function refresh() {
   const v = await (await fetch(`/api/side/${sideId}/view`)).json();
   document.getElementById('title').textContent =
     `OVERRIDE — ${sideId.toUpperCase()} · tick ${v.now} · ${v.clockMode} · ${v.isNight ? 'NIGHT' : 'DAY'} · VP ${v.vp}`;
-  document.getElementById('own').textContent = v.ownFormations.map(f =>
-    `${f.name} @ ${f.pos ? f.pos.q + ',' + f.pos.r : '?'}  RDY ${f.rdy}  ${f.emcon}/${f.posture}` +
-    `  ${f.onNet ? 'ON-NET' : 'OFF-NET'}${f.currentOrder ? '  [' + f.currentOrder.kind + ']' : ''}\n` +
-    f.units.map(u => `   ${u.name} (${u.model}) ${u.damage} ammo:${u.ammoState}`).join('\n')
-  ).join('\n\n') || '(none)';
+  document.getElementById('own').textContent = v.ownFormations.map(f => {
+    const where = f.flight?.airPos
+      ? `AIR ${f.flight.airPos.q},${f.flight.airPos.r} ${f.flight.airPos.band} L${f.flight.airPos.altLevel}`
+      : (f.pos ? f.pos.q + ',' + f.pos.r : '?');
+    const ledger = f.flight
+      ? `\n   ✈ ${f.flight.phase} ${f.flight.speed}  FP ${f.flight.fpMin}` +
+        `  JOKER ${f.flight.jokerFp}  BINGO ${f.flight.bingoFp}` +
+        `  fatigue ${f.flight.fatigueMax}${f.alertState ? '  ' + f.alertState : ''}`
+      : '';
+    return `${f.name} @ ${where}  RDY ${f.rdy}  ${f.emcon}/${f.posture}` +
+      `  ${f.onNet ? 'ON-NET' : 'OFF-NET'}${f.currentOrder ? '  [' + f.currentOrder.kind + ']' : ''}` +
+      ledger + '\n' +
+      f.units.map(u => `   ${u.name} (${u.model}) ${u.damage} ammo:${u.ammoState}`).join('\n');
+  }).join('\n\n') || '(none)';
   document.getElementById('contacts').textContent = v.contacts.map(c =>
-    `${c.levelName} @ ${c.estPos.q},${c.estPos.r}${c.posErrorHexes ? ' ±' + c.posErrorHexes : ''}` +
+    `${c.levelName} @ ${c.estPos.kind === 'air'
+        ? 'AIR ' + c.estPos.gridQ + ',' + c.estPos.gridR + ' ' + c.estPos.band
+        : c.estPos.q + ',' + c.estPos.r}${c.posErrorHexes ? ' ±' + c.posErrorHexes : ''}` +
     (c.estSizeClass ? `  ${c.estSizeClass}` : '') +
     (c.estVector !== undefined ? `  hdg ${c.estVector}°` : '') +
     (c.estComposition ? `\n   ${c.estComposition}` : '') +
@@ -82,8 +97,11 @@ async function refresh() {
   sel.innerHTML = v.ownFormations.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
   if (cur) sel.value = cur;
   // target-contact pickers (STRIKE / conditional STRIKE) — contacts at CONTACT+ are targetable
-  const opts = '<option value="">—</option>' + v.contacts.map(c =>
-    `<option value="${c.id}">${c.levelName} @ ${c.estPos.q},${c.estPos.r}</option>`).join('');
+  const opts = '<option value="">—</option>' + v.contacts.map(c => {
+    const at = c.estPos.kind === 'air'
+      ? `AIR ${c.estPos.gridQ},${c.estPos.gridR}` : `${c.estPos.q},${c.estPos.r}`;
+    return `<option value="${c.id}">${c.levelName} @ ${at}</option>`;
+  }).join('');
   for (const id of ['o-target', 'c-target']) {
     const t = document.getElementById(id); const tv = t.value;
     t.innerHTML = opts; if (tv) t.value = tv;
@@ -101,6 +119,12 @@ async function sendOrder() {
   if (target) body.targetContactId = target;
   const emcon = document.getElementById('o-emcon').value;
   if (emcon) body.emconOverride = emcon;
+  const st = document.getElementById('o-station').value.trim();
+  if (st) body.station = { q: +st.split(',')[0], r: +st.split(',')[1] };
+  const spd = document.getElementById('o-airspeed').value;
+  if (spd) body.airSpeed = spd;
+  const loiter = document.getElementById('o-loiter').value;
+  if (loiter) body.loiterTicks = +loiter;
   const when = document.getElementById('c-when').value;
   if (when) {
     body.conditional = { when, param: document.getElementById('c-param').value,

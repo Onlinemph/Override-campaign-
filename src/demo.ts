@@ -41,6 +41,7 @@ export function loadCampaignFixture(path: string): TruthState {
       fuelFarmTons: f.fuelFarmTons ?? 0,
       isCommandNode: f.isCommandNode ?? false,
       sensorStation: f.sensorStation,
+      activeSweep: f.activeSweep ?? false,
       turnaroundCrews: { total: f.turnaroundCrews ?? 1, busyUntil: [] },
     });
   }
@@ -52,25 +53,56 @@ export function loadCampaignFixture(path: string): TruthState {
     });
   }
   for (const f of j.formations) {
+    const pos = f.airPos
+      ? { kind: 'air' as const, gridQ: f.airPos.q, gridR: f.airPos.r,
+          band: (f.airPos.band ?? 'HIGH') as 'HIGH', altLevel: f.airPos.altLevel ?? 6,
+          velocity: 2, vectorDeg: 0 }
+      : { kind: 'ground' as const, theaterId: f.theaterId, q: f.q, r: f.r };
     const formation = mkFormation({
-      id: f.id, sideId: f.sideId, name: f.name,
-      pos: { kind: 'ground', theaterId: f.theaterId, q: f.q, r: f.r },
-      omp: f.omp, sigBase: f.sigBase,
+      id: f.id, sideId: f.sideId, name: f.name, pos,
+      omp: f.omp ?? 0, sigBase: f.sigBase,
       sns: f.sns, emcon: f.emcon ?? 'PASSIVE',
+      alertState: f.alertState,
     });
-    const units = (f.units ?? []).map((u: any) => mkUnit({
-      sideId: f.sideId, name: u.name, model: u.model, class: u.class, tags: u.tags ?? [],
-    }));
+    if (f.flight || f.airPos) {
+      formation.air = { phase: f.airPos ? 'ENROUTE' : 'GROUNDED', speed: 'CRUISE',
+                        homeFacilityId: f.flight?.homeFacilityId };
+    }
+    const units = (f.units ?? []).map((u: any, i: number) => {
+      const unit = mkUnit({
+        id: `${f.id}-u${i + 1}`,
+        sideId: f.sideId, name: u.name, model: u.model, class: u.class, tags: u.tags ?? [],
+        safeThrust: u.safeThrust,
+        fuel: u.fuelFp ? { fp: u.fuelFp, fpPerTon: 80, tons: u.fuelTons ?? u.fuelFp / 80 } : undefined,
+      });
+      if (u.pilot) {
+        const pilot = { id: `${f.id}-pilot-${i + 1}`, name: u.pilot, gunnery: 4, piloting: 5,
+                        kills: 0, ace: false, fatigue: 0, status: 'OK' as const };
+        truth.pilots[pilot.id] = pilot;
+        unit.pilotIds = [pilot.id];
+      }
+      return unit;
+    });
     addFormation(truth, formation, units);
   }
   for (const o of j.orders) {
     const theaterId = truth.formations[o.formationId].pos.kind === 'ground'
       ? (truth.formations[o.formationId].pos as GroundPos).theaterId : j.theaters[0].id;
+    const airStation = o.airStation
+      ? { kind: 'air' as const, gridQ: o.airStation.q, gridR: o.airStation.r,
+          band: 'HIGH' as const, altLevel: 6, velocity: 0, vectorDeg: 0 }
+      : undefined;
     const order: Order = {
       id: o.id, sideId: o.sideId, formationId: o.formationId,
       issuedTick: 0, effectiveTick: o.effectiveTick ?? 0,
       kind: o.kind,
-      path: (o.path ?? []).map((p: any) => ({ kind: 'ground', theaterId, q: p.q, r: p.r })),
+      ...(airStation ? { station: airStation } : {}),
+      ...(o.airSpeed ? { airSpeed: o.airSpeed } : {}),
+      ...(o.loiterTicks !== undefined ? { loiterTicks: o.loiterTicks } : {}),
+      ...(o.emconOverride ? { emconOverride: o.emconOverride } : {}),
+      path: (o.path ?? []).map((p: any) => o.airPath
+        ? { kind: 'air', gridQ: p.q, gridR: p.r, band: 'HIGH', altLevel: 6, velocity: 0, vectorDeg: 0 }
+        : { kind: 'ground', theaterId, q: p.q, r: p.r }),
       conditionals: (o.conditionals ?? []).map((c: any) => ({
         trigger: c.trigger,
         thenOrder: {
@@ -79,6 +111,8 @@ export function loadCampaignFixture(path: string): TruthState {
           ...(c.then.path ? { path: c.then.path.map((p: any) =>
             ({ kind: 'ground', theaterId, q: p.q, r: p.r })) } : {}),
           ...(c.then.targetContactId ? { targetContactId: c.then.targetContactId } : {}),
+          ...(c.then.airSpeed ? { airSpeed: c.then.airSpeed } : {}),
+          ...(c.then.loiterTicks !== undefined ? { loiterTicks: c.then.loiterTicks } : {}),
         },
       })),
       ...(o.targetContactId ? { targetContactId: o.targetContactId } : {}),

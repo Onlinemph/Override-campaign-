@@ -20,9 +20,8 @@ const WITHDRAW_DELTA: Record<string, { q: number; r: number }> = {
 
 function lockSnapshot(s: TruthState, targetFormationId: Id): ContactSnapshot {
   const f = s.formations[targetFormationId];
-  const pos = f.pos as GroundPos;
   return {
-    level: 4, estPos: { ...pos }, posErrorHexes: 0,
+    level: 4, estPos: structuredClone(f.pos), posErrorHexes: 0,
     estVector: f.lastHeadingDeg, estSizeClass: undefined,
     estComposition: undefined,
     toe: f.unitIds.map(uid => {
@@ -51,11 +50,12 @@ export function ingestBattleResult(
   const events: GameEvent[] = [];
   const allFormationIds = [...eng.attackerFormationIds, ...eng.defenderFormationIds];
 
-  // 1. unit damage / ammo
+  // 1. unit damage / ammo / remaining fuel (M3: the record sheet's FP comes home)
   for (const o of result.unitOutcomes) {
     if (!s.units[o.unitId]) continue;
     events.push({ type: 'UNIT_STATE_CHANGED', unitId: o.unitId,
-                  damage: o.damage, ammoState: o.ammoState });
+                  damage: o.damage, ammoState: o.ammoState,
+                  ...(o.fpRemaining !== undefined ? { fpRemaining: o.fpRemaining } : {}) });
   }
   // 2. pilots
   for (const o of result.unitOutcomes) {
@@ -104,8 +104,9 @@ export function ingestBattleResult(
     }
   }
 
-  // 6. salvage: destroyed units in the battle hex go to the hex-controller (core §7.5)
-  if (result.hexControlSideId) {
+  // 6. salvage: destroyed units in the battle hex go to the hex-controller (core §7.5).
+  //    Air kills leave wrecks scattered under the merge — GM places markers by hand.
+  if (result.hexControlSideId && eng.hex) {
     for (const o of result.unitOutcomes) {
       if (o.damage !== 'DESTROYED' && o.damage !== 'SALVAGE') continue;
       events.push({ type: 'SALVAGE_CREATED', token: {
@@ -145,6 +146,21 @@ export function ingestBattleResult(
       events.push({ type: 'ROUT_STARTED', formationId: fid,
                     untilTick: s.tick + ENGAGEMENT.ROUT_UNCOMMANDABLE_PULSES * CLOCK.TICKS_PER_PULSE,
                     tick: s.tick });
+    }
+  }
+
+  // 9b. air engagements (M3): the merge consumed the mission — surviving flights exit
+  //     the table and head home (SKYWATCH §8.1; pursuit may re-trigger on the grid)
+  if (eng.domain === 'AIR') {
+    for (const fid of survivors) {
+      const f = s.formations[fid];
+      const order = f.currentOrderId ? s.orders[f.currentOrderId] : undefined;
+      if (order && !order.completed) {
+        events.push({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: fid, tick: s.tick });
+      }
+      if (f.pos.kind === 'air') {
+        events.push({ type: 'AIR_PHASE', formationId: fid, phase: 'RTB', tick: s.tick });
+      }
     }
   }
 

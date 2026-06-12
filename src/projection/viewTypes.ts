@@ -3,8 +3,8 @@
  * These types deliberately contain no truth references, no internal target ids,
  * no RNG state, no other side's anything. Never persisted (spec §4).
  */
-import type { ClockMode, DamageState, Emcon, GroundPos, Id, LadderLevel, Posture,
-              TerrainType, Tick } from '../core/types.js';
+import type { AirPos, ClockMode, DamageState, Emcon, GroundPos, Id, LadderLevel,
+              Posture, TerrainType, Tick } from '../core/types.js';
 
 export interface OwnUnitView {
   id: Id; name: string; model: string; class: string;
@@ -19,6 +19,18 @@ export interface OwnFormationView {
   currentOrder?: { id: Id; kind: string; completed: boolean };
   units: OwnUnitView[];
   inSupply: boolean;
+  // M3: the flight board — your own ledgers, always visible (SKYWATCH §2)
+  alertState?: string;
+  flight?: {
+    airPos: { q: number; r: number; band: AirPos['band']; altLevel: number } | null;
+    phase: string;
+    speed: 'CRUISE' | 'DASH';
+    fpMin: number;
+    jokerFp: number;
+    bingoFp: number;
+    fatigueMax: number;
+    turnaroundReadyTick?: Tick | null;
+  };
 }
 
 export interface ContactView {
@@ -26,7 +38,7 @@ export interface ContactView {
   level: LadderLevel;
   levelName: string;
   kind: 'STANDARD' | 'ECM_HAZE';
-  estPos: GroundPos; posErrorHexes: number;
+  estPos: GroundPos | AirPos; posErrorHexes: number;
   estVector?: number;           // SHADOW+
   estSizeClass?: string;        // SHADOW+
   estComposition?: string;      // CONTACT+

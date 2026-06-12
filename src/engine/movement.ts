@@ -169,7 +169,11 @@ export function movementPass(
                delta: MOVEMENT.FORCED_MARCH_RDY_PER_PULSE, reason: 'forced march' });
         acc -= 1;
       }
-      s.formations[f.id].forcedMarchPulseAcc = acc; // bookkeeping, not event-worthy
+      if (acc !== (f.forcedMarchPulseAcc ?? 0)) {
+        // through the log so replay reproduces the accumulator exactly
+        emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id,
+               patch: { forcedMarchPulseAcc: acc } });
+      }
     }
 
     // STRIKE never self-completes here: arrival is resolved by the engagement pass

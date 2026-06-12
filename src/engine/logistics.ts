@@ -54,7 +54,8 @@ export function maintenancePass(s: TruthState, dt: number, emit: (e: GameEvent) 
         emit({ type: 'POSTURE_CHANGED', formationId: f.id, posture: 'DUG_IN', tick: s.tick });
         emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
       }
-      s.formations[f.id].digInPulseAcc = acc; // bookkeeping, not event-worthy
+      // through the log so replay reproduces the accumulator exactly
+      emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id, patch: { digInPulseAcc: acc } });
     }
 
     // REST recovery (core §3.2): +2 RDY/pulse in supply, +1 without

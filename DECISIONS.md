@@ -210,3 +210,65 @@ plus all M1 tests staying green. Calls made, all rules.ts-backed and GM-overrida
     requirement): the GM runs it at the table / in their head and enters the outcome
     through the same BattleResult form. `turnsElapsed` is tabletop bookkeeping and does not
     advance the campaign clock.
+
+---
+
+## D-010 ✅ Milestone 3 (SKYWATCH) interpretive calls & conflicts
+The acceptance contract is the §12 worked day reproduced tick-for-tick
+(400→240→179→159 FP). Three places where Module 1 contradicts itself were resolved by
+anchoring on §12, the same precedent as D-006 (the worked example is the law):
+
+1. **Alert fatigue rates conflict.** §3.1 says ALERT-5 "2×/pulse" and ALERT-15
+   "1×/pulse"; §11 says "+1 per 4 pulses at ALERT-5"; §12 says "Fatigue +1/pulse begins"
+   at ALERT-15 — and then ends the day at **Fatigue 3** (4 pulses of ALERT-15 + 1
+   sortie). Only A15 = ½/pulse, A5 = 1/pulse reproduces Fatigue 3. §11's "per 4 pulses"
+   loses; constants in `SKYWATCH.ALERT`, trivially house-ruleable.
+2. **§12's intercept geometry is internally inconsistent** ("dash 2 contact turns = 36
+   hexes at 2 FP/hex" yet −144 FP; "JOKER was 90" implies a 36-hex RTB; "cruise home 18
+   hexes"). The FP ledger column is exact and is the acceptance; JOKER 90 is verified as
+   the 36-hex formula in the module-1 table tests; the engine's own geometry is
+   self-consistent (dash = ST×6 hexes/CT, 72 hexes dashed for 144 FP).
+3. **Map-change ×2/÷2 is NOT applied at handoff.** §1 says "the GM tool applies this
+   automatically at handoff", but §12 puts 240 FP on the table, burns 61, and banks 179 —
+   strictly 1:1. Handoff exports ledger FP unconverted; the ×2/÷2 constants exist for
+   mid-battle map transitions (§7.1's "Mixed" row), applied by the GM at the table.
+4. **Conventional fighters:** the spec's FuelLedger comment (160 FP/ton conv) and
+   SKYWATCH §2 ("halve all transit/loiter costs") are the same advantage stated twice.
+   Implemented once: 80 FP/ton for everyone, conv transit/loiter ×0.5; takeoff, climb
+   and landing cost full price (they are not "transit/loiter").
+5. **JOKER/BINGO are transit-only** (no landing/descent term): 90 = 36 × 2 × 1.25 exactly.
+6. **Air detection model:** radar horizon at HIGH = the searcher's own theater air hex
+   (sensor stations & Mobile HQs +1 air hex — the EW line); LOW band collapsed to the
+   same envelope for M3 (no per-aircraft ground track yet); DECK is terrain-masked = GM
+   territory; air-to-air resolution in own + adjacent air hex; an air GHOST has no
+   position scatter (vague in identity, not in radar bearing).
+7. **Clock:** pending scrambles, active chases, and any airborne formation within 3 air
+   hexes of enemy aircraft or enemy-occupied sky run in CONTACT turns
+   (`AIR_CONTACT_CLOCK_RANGE`) — §6's "on the grid, in contact turns".
+8. **Night +2 extends to the sky** for passive searchers (D-006 applied consistently);
+   active sweeps exempt. This is why the demo recon flies at 0700, not 0300.
+9. **Pursuit prediction:** a chase steers at the target's predicted end-of-turn position
+   (vector + flown speed) while the track is live (≥SHADOW), falls back to the stale
+   estimate otherwise, and gives up on a cold trail (track < SHADOW, nobody home) ⇒ RTB.
+   §6's tail-chase rule emerges naturally: a slower pursuer never catches a runner.
+10. **Alert launch delays** are measured from the scramble call (order issue tick).
+    ALERT-15 = next contact turn reproduces §12's 0900 SHADOW → 0901 takeoff exactly.
+11. **After an air battle:** survivors auto-RTB; the GM records tabletop exit drift via
+    `repositionAir` (§8.1 "returns to the grid at its exit velocity and vector"); in air
+    merges energy is initiative (specialRules), the intel ladder grants no init bonus;
+    surprise = CONTACT+ vs ≤GHOST ⇒ the bounced side deploys first, pinned to its
+    approach edge.
+12. **Interception requires intent**: a chase order on that contact, or a committed
+    CAP/SWEEP, plus ≥SHADOW (§5/§6). Strangers crossing in the same air hex do not
+    auto-battle.
+13. **Replay-safety fix (latent M2 bug):** fractional accumulators (forced-march RDY,
+    dig-in progress) were mutated outside the event log and would have diverged under
+    replay; they now persist via `FORMATION_BOOKKEEPING` events, as do all M3 air
+    anchors (fatigue clocks, launch gates, loiter countdowns).
+14. **Turnaround** applies fuel/ammo at start with `readyTick` gating the next launch;
+    a hot-pit mishap's stand-down pulse is folded into readyTick. Fuel farm pays
+    refuel + mishap losses in tons at 80 FP/t.
+15. **Deferred Module-1 mechanics** (constants parked & table-tested; engine hooks
+    later): the capturable ATO artifact, ORBITAL_STANDBY & the orbit-climb gauntlet,
+    drop-corridor interception, Skyeye, ESCORT/INTERDICTION/TANKER/SAR mission specials,
+    AA flak ceilings, FUMES gliding & dead-stick landings, automatic ace kill-tracking.

@@ -7,6 +7,8 @@ import {
 import type { Formation, GroundPos, Order, TruthState, Unit } from '../src/core/types.js';
 import type { HexOverride } from '../src/fixtures.js';
 
+export { mkFacility, mkUnit };
+
 export const T = 'theater-1';
 
 export function gp(q: number, r: number): GroundPos {
@@ -42,4 +44,44 @@ export function moveOrder(
     id, sideId: f.sideId, formationId: f.id,
     issuedTick: 0, effectiveTick, kind, path, conditionals: [], ...extra,
   };
+}
+
+/** A flight of fighters, grounded at a base or airborne (M3 / SKYWATCH). */
+export function addFlight(
+  truth: TruthState,
+  p: { id: string; sideId: string; count?: number; klass?: 'ASF' | 'CONV_FIGHTER';
+       fp?: number; tons?: number; safeThrust?: number;
+       basePos?: GroundPos; homeFacilityId?: string;
+       airPos?: { q: number; r: number; band?: 'DECK' | 'LOW' | 'HIGH' | 'SUBORBITAL' | 'ORBIT' };
+       withPilots?: boolean },
+): Formation {
+  const count = p.count ?? 1;
+  const units = Array.from({ length: count }, (_, i) => {
+    const u = mkUnit({
+      id: `${p.id}-${i + 1}`,
+      sideId: p.sideId, name: `${p.id}-${i + 1}`, model: p.klass ?? 'ASF',
+      class: p.klass ?? 'ASF', safeThrust: p.safeThrust ?? 6,
+      fuel: { fp: p.fp ?? 400, fpPerTon: 80, tons: p.tons ?? (p.fp ?? 400) / 80 },
+    });
+    if (p.withPilots) {
+      const pilot = { id: `${p.id}-pilot-${i + 1}`, name: `${p.id} pilot ${i + 1}`,
+                      gunnery: 4, piloting: 5, kills: 0, ace: false, fatigue: 0,
+                      status: 'OK' as const };
+      truth.pilots[pilot.id] = pilot;
+      u.pilotIds = [pilot.id];
+    }
+    return u;
+  });
+  const pos: Formation['pos'] = p.airPos
+    ? { kind: 'air', gridQ: p.airPos.q, gridR: p.airPos.r, band: p.airPos.band ?? 'HIGH',
+        altLevel: 6, velocity: 2, vectorDeg: 0 }
+    : p.basePos!;
+  const f = mkFormation({
+    id: p.id, sideId: p.sideId, name: p.id, pos,
+    sigBase: count >= 3 ? 6 : count === 2 ? 8 : 9,
+  });
+  f.air = { phase: p.airPos ? 'ENROUTE' : 'GROUNDED', speed: 'CRUISE',
+            homeFacilityId: p.homeFacilityId };
+  addFormation(truth, f, units);
+  return truth.formations[p.id];
 }

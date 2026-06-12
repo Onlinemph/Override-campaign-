@@ -5,12 +5,13 @@
  * approach vectors, intel→initiative, posture→hidden/fortified, RDY→TN penalty, plus
  * in-range off-board artillery and on-net reinforcements. No combat is computed here.
  */
-import { ARTILLERY_TAG_RANGE, COMBAT, ENGAGEMENT, RDY } from '../rules.js';
+import { ARTILLERY_TAG_RANGE, COMBAT, ENGAGEMENT, RDY, SKYWATCH } from '../rules.js';
 import type {
-  Engagement, Formation, GroundPos, HandoffPackage, Id, TruthState,
+  AirPos, Engagement, Formation, GroundPos, HandoffPackage, Id, TruthState,
 } from '../core/types.js';
 import { hexKey } from '../core/types.js';
 import { hexDistance, neighbors } from '../hex/axial.js';
+import { jokerBingo, minSafeThrust } from '../engine/air.js';
 
 const EDGES = ['E', 'NE', 'NW', 'W', 'SW', 'SE'] as const;
 // map a heading (0°=+q/E, CCW) to one of six entry edges
@@ -111,7 +112,8 @@ function sideBlock(
 }
 
 export function buildHandoff(s: TruthState, eng: Engagement): HandoffPackage {
-  const hex = eng.hex;
+  if (eng.domain === 'AIR') return buildAirHandoff(s, eng);
+  const hex = eng.hex!;
   const terrain = s.theaters[hex.theaterId]?.hexes[hexKey(hex.q, hex.r)]?.terrain ?? 'CLEAR';
   const neighborTerrain = neighbors(hex)
     .map(h => s.theaters[hex.theaterId]?.hexes[hexKey(h.q, h.r)]?.terrain)
@@ -146,4 +148,117 @@ export function buildHandoff(s: TruthState, eng: Engagement): HandoffPackage {
   if (pkg.perSide.some(p => p.hiddenSetup)) pkg.specialRules.push('HIDDEN_SETUP');
   if (pkg.perSide.some(p => p.fortified)) pkg.specialRules.push('FORTIFIED');
   return pkg;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// THE MERGE — air handoff (SKYWATCH §7)
+// Map, vectors, energy, and fuel; then the table takes over.
+// ════════════════════════════════════════════════════════════════════════════
+
+function mergeTable(band: AirPos['band']): HandoffPackage['table'] {
+  if (band === 'ORBIT' || band === 'SUBORBITAL') return 'SPACE';
+  if (band === 'DECK') return 'GROUND_WITH_AIR';
+  return 'LOW_ALT_ATMO'; // HIGH / LOW: low-altitude map with atmospheric rules
+}
+
+/** Starting velocity = transit mode (§7.2): cruise 2, dash = Safe Thrust. */
+function entryVelocity(s: TruthState, f: Formation): number {
+  return f.air?.speed === 'DASH' ? minSafeThrust(s, f) : SKYWATCH.ENTRY_VELOCITY_CRUISE;
+}
+
+function airSideBlock(
+  s: TruthState, formationIds: Id[], sideId: Id, deploysFirst: boolean,
+): HandoffPackage['perSide'][number] {
+  const formations = formationIds.map(id => s.formations[id]).filter(Boolean);
+  const units = formations.flatMap(f => {
+    const { joker, bingo } = jokerBingo(s, f);
+    const vel = entryVelocity(s, f);
+    const alt = f.pos.kind === 'air' ? f.pos.altLevel : 0;
+    return f.unitIds.map(uid => {
+      const u = s.units[uid];
+      return {
+        unitId: uid,
+        velocity: vel,
+        altLevel: alt,
+        // ledger FP rides onto the table 1:1 (D-010.3 — the §12 worked day is the law);
+        // the ×2/÷2 constants exist for mid-battle map transitions
+        fpOnTable: u.fuel?.fp,
+        jokerFp: Math.round(joker * 100) / 100,
+        bingoFp: Math.round(bingo * 100) / 100,
+        ammoState: u.ammoState, damage: u.damage,
+        pilotSkills: pilotSkills(s, uid),
+      };
+    });
+  });
+  const heading = formations[0]?.pos.kind === 'air'
+    ? (formations[0].pos as AirPos).vectorDeg : undefined;
+  const worstRdy = Math.min(10, ...formations.map(f => f.rdy));
+  return {
+    sideId,
+    entryEdge: deploysFirst ? edgeFromHeading(heading) : 'ANY_HALF', // bounced side is pinned
+    deploysFirst,
+    initiativeBonus: 0, // in the air, energy is initiative (§7.3), not the intel ladder
+    initiativeBonusTurns: 0,
+    hiddenSetup: false, fortified: false,
+    rdyTnPenalty: rdyPenalty(worstRdy),
+    units,
+    offboard: { artillery: [], airOnStation: [], reinforcements: [] },
+  };
+}
+
+export function buildAirHandoff(s: TruthState, eng: Engagement): HandoffPackage {
+  const pos = eng.airPos!;
+  const atkLadder = bestLadder(s, eng.attackerSideId, eng.defenderFormationIds);
+  const defLadder = bestLadder(s, eng.defenderSideId, eng.attackerFormationIds);
+  // surprise (§7.2): CONTACT+ versus ≤GHOST ⇒ the blind side sets up first and the
+  // sighted side enters anywhere on its half's edges after seeing that deployment
+  const atkBounced = defLadder >= 3 && atkLadder <= 1;
+  const defBounced = atkLadder >= 3 && defLadder <= 1;
+
+  const sides = [
+    airSideBlock(s, eng.attackerFormationIds, eng.attackerSideId, atkBounced),
+    airSideBlock(s, eng.defenderFormationIds, eng.defenderSideId, defBounced),
+  ];
+
+  // Energy State = starting velocity + altitude (§7.3): higher wins init ties for the
+  // first 3 turns and may decline the first head-to-head pass.
+  const energyOf = (ids: Id[]) => Math.max(0, ...ids.map(id => {
+    const f = s.formations[id];
+    return entryVelocity(s, f) + (f.pos.kind === 'air' ? f.pos.altLevel : 0);
+  }));
+  const atkEnergy = energyOf(eng.attackerFormationIds);
+  const defEnergy = energyOf(eng.defenderFormationIds);
+
+  const specialRules = [
+    `ENERGY:${eng.attackerSideId}=${atkEnergy}`,
+    `ENERGY:${eng.defenderSideId}=${defEnergy}`,
+  ];
+  if (atkEnergy !== defEnergy) {
+    const higher = atkEnergy > defEnergy ? eng.attackerSideId : eng.defenderSideId;
+    specialRules.push(
+      `HIGHER_ENERGY:${higher} (wins init ties ${SKYWATCH.ENERGY_INIT_TIE_TURNS} turns, may decline first pass)`);
+  }
+  if (atkBounced || defBounced) {
+    specialRules.push(`BOUNCE:${atkBounced ? eng.attackerSideId : eng.defenderSideId} deploys first`);
+  }
+  // ace callsigns are psychological warfare (§8.3)
+  for (const fid of [...eng.attackerFormationIds, ...eng.defenderFormationIds]) {
+    const f = s.formations[fid];
+    for (const uid of f?.unitIds ?? []) {
+      for (const pid of s.units[uid]?.pilotIds ?? []) {
+        const p = s.pilots[pid];
+        if (p?.ace) specialRules.push(`ACE:${f.sideId}:${p.name}`);
+      }
+    }
+  }
+  specialRules.push(`BINGO_DISENGAGE_WITHIN:${SKYWATCH.BINGO_DISENGAGE_TURNS}_TURNS`);
+
+  return {
+    id: `handoff:${eng.id}`,
+    tick: s.tick,
+    table: mergeTable(pos.band),
+    mapSpec: { sheetsHint: [`${pos.band} band merge at air hex ${pos.gridQ},${pos.gridR}`] },
+    perSide: sides,
+    specialRules,
+  };
 }

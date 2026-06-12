@@ -128,6 +128,20 @@ export interface Formation {
   routUntilTick?: Tick | null;    // RDY≤1: uncommandable until this tick (core §3.2/§7.4)
   digInPulseAcc?: number;         // accumulates pulses toward DUG_IN (core §4.1)
   lastBattleTick?: Tick;          // a fighting day costs ×2 supply (core §10.1)
+  // ext (M3): flight state (SKYWATCH) — present on air-capable formations
+  air?: {
+    homeFacilityId?: Id;
+    phase: 'GROUNDED' | 'ENROUTE' | 'ON_STATION' | 'RTB';
+    speed: 'CRUISE' | 'DASH';
+    lean?: boolean;                  // lean loiter (1 FP/min, −1 to own search)
+    launchAtTick?: Tick | null;      // scramble call + alert delay
+    lastLaunchTick?: Tick;           // launch climb is a bright burn (−2 SIG that turn)
+    loiterTicksRemaining?: number;
+    jokerWarned?: boolean;
+    bingoCalled?: boolean;
+    alertAnchorTick?: Tick;          // fatigue/idle-burn accrual anchor
+    turnaroundReadyTick?: Tick | null;
+  };
 }
 
 // ── §2.2 Facilities & logistics ─────────────────────────────────────────────
@@ -215,6 +229,10 @@ export interface Order {
                   fired?: boolean /* ext (M2): consumed, won't re-fire */ }[];
   emconOverride?: Emcon;
   completed?: boolean; // ext
+  // ext (M3): air mission profile (SKYWATCH §2/§4)
+  airSpeed?: 'CRUISE' | 'DASH';
+  loiterTicks?: number;            // time on station (CAP/RECON) in contact turns
+  lean?: boolean;                  // lean loiter
 }
 export interface ATO { id: Id; sideId: Id; pulse: number; orderIds: Id[] }
 
@@ -255,8 +273,11 @@ export interface BattleResult {
  * BattleResult. attacker/defender drive evasion bonus and initiative (core §7.1–7.2).
  */
 export interface Engagement {
-  id: Id; tick: Tick; hex: GroundPos;
-  trigger: 'SAME_HEX' | 'SCREEN' | 'STRIKE';
+  id: Id; tick: Tick;
+  hex?: GroundPos;                  // ground engagements (absent for AIR domain)
+  trigger: 'SAME_HEX' | 'SCREEN' | 'STRIKE' | 'AIR_INTERCEPT';
+  domain?: 'GROUND' | 'AIR';        // ext (M3); absent = GROUND
+  airPos?: AirPos;                  // ext (M3): merge location for air engagements
   attackerSideId: Id; defenderSideId: Id;
   attackerFormationIds: Id[]; defenderFormationIds: Id[];
   status: 'PENDING' | 'EVADED' | 'EXPORTED' | 'RESOLVED';
@@ -281,6 +302,9 @@ export interface CampaignConfig {
   dawnTick: number;   // tick-of-day
   duskTick: number;
   weather: 'CLEAR' | 'RAIN' | 'STORM';
+  // ext (M3): which high-altitude air hex sits over each theater (SKYWATCH §1:
+  // one high-altitude hex covers an entire low-altitude theater map)
+  airHexByTheater?: Record<Id, { q: number; r: number }>;
 }
 
 export interface TruthState {

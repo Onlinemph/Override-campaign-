@@ -143,7 +143,7 @@ describe('M2 acceptance — strike round-trip', () => {
     expect(Object.values(c.truth.salvage).some(s => s.heldBy === 'blue')).toBe(true);
     expect(Object.values(c.truth.markers).some(m => m.kind === 'DOWNED_CREW')).toBe(true);
     // the raider withdrew east of the battle hex (pursuit seeded, core §7.4)
-    expect((c.truth.formations['red-raider'].pos as { q: number }).q).toBe(eng.hex.q + 1);
+    expect((c.truth.formations['red-raider'].pos as { q: number }).q).toBe(eng.hex!.q + 1);
 
     // the campaign resumes after the battle
     c.step();

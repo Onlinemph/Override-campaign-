@@ -11,9 +11,18 @@ import type { GroundPos, Id, Order, TruthState, Trigger } from '../core/types.js
 import { hexKey } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
 import { hexDistance } from '../hex/axial.js';
+import { theaterAirHex } from './air.js';
 
 function asHex(pos: { kind: string }): GroundPos | null {
   return pos.kind === 'ground' ? (pos as GroundPos) : null;
+}
+
+/** Where does this formation sit on the air grid (its own hex, or the hex above it)? */
+function airHexOf(s: TruthState, f: { pos: { kind: string } }): { q: number; r: number } | null {
+  const pos = f.pos as GroundPos | { kind: 'air'; gridQ: number; gridR: number };
+  if (pos.kind === 'air') return { q: pos.gridQ, r: pos.gridR };
+  if (pos.kind === 'ground') return theaterAirHex(s, (pos as GroundPos).theaterId);
+  return null;
 }
 
 /** Highest ladder level any enemy of `sideId` holds on `formationId`. */
@@ -27,13 +36,24 @@ function enemyLadderOn(s: TruthState, sideId: Id, formationId: Id): number {
   return best;
 }
 
-/** Nearest own-side contact (level ≥1) to `from`, in hexes; Infinity if none. */
-function nearestOwnContactDist(s: TruthState, sideId: Id, from: GroundPos): number {
+/**
+ * Nearest own-side contact (level ≥1) to the formation, in hexes of the contact's own
+ * layer: ground contacts in op-hexes; air contacts in air hexes measured from the
+ * formation's air hex (an alert flight reacts to a raid approaching its sky — M3).
+ */
+function nearestOwnContactDist(s: TruthState, sideId: Id, formationId: Id): number {
+  const f = s.formations[formationId];
+  const from = asHex(f.pos);
   let best = Infinity;
   for (const c of Object.values(s.contacts)) {
     if (c.observerSideId !== sideId || c.level < 1) continue;
-    const h = asHex(c.estPos);
-    if (h && h.theaterId === from.theaterId) best = Math.min(best, hexDistance(from, h));
+    const est = c.delivered?.estPos ?? c.estPos;
+    if (est.kind === 'ground' && from && est.theaterId === from.theaterId) {
+      best = Math.min(best, hexDistance(from, est));
+    } else if (est.kind === 'air') {
+      const mine = airHexOf(s, f);
+      if (mine) best = Math.min(best, hexDistance(mine, { q: est.gridQ, r: est.gridR }));
+    }
   }
   return best;
 }
@@ -54,7 +74,7 @@ export function evalTrigger(
       return hexKey(here.q, here.r) === String(trigger.param);
     }
     case 'CONTACT_WITHIN':
-      return here ? nearestOwnContactDist(s, sideId, here) <= Number(trigger.param) : false;
+      return nearestOwnContactDist(s, sideId, formationId) <= Number(trigger.param);
     case 'DETECTED_SELF':
       // enemy holds ladder ≥ param on this formation (param defaults to 1 = any sighting)
       return enemyLadderOn(s, sideId, formationId) >= (Number(trigger.param) || 1);
@@ -64,7 +84,7 @@ export function evalTrigger(
       for (const eng of Object.values(s.engagements)) {
         if (eng.status === 'RESOLVED' || eng.status === 'EVADED') continue;
         if (eng.attackerSideId !== sideId && eng.defenderSideId !== sideId) continue;
-        if (hexDistance(here, eng.hex) <= radius) return true;
+        if (eng.hex && hexDistance(here, eng.hex) <= radius) return true;
       }
       return false;
     }

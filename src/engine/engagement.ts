@@ -12,6 +12,7 @@ import { hexKey } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
 import { hexDistance } from '../hex/axial.js';
 import { strikeTargetHex } from './movement.js';
+import { airEngagementCandidates } from './air.js';
 
 function asHex(f: Formation): GroundPos | null {
   return f.pos.kind === 'ground' ? f.pos : null;
@@ -137,6 +138,17 @@ export function engagementPass(s: TruthState, emit: (e: GameEvent) => void): voi
       // battle is fought in the mover's hex; screener is the defender holding the line
       candidates.push(buildEngagement(s, mh, 'SCREEN', mover.sideId, screener.sideId));
     }
+  }
+
+  // AIR_INTERCEPT (M3, SKYWATCH §6): pursuer in the target's air hex with ≥SHADOW + intent
+  for (const { pursuer, target, pos } of airEngagementCandidates(s)) {
+    candidates.push({
+      id: `eng:${s.tick}:air:${pos.gridQ},${pos.gridR}:${pursuer.sideId}-${target.sideId}`,
+      tick: s.tick, trigger: 'AIR_INTERCEPT', domain: 'AIR', airPos: structuredClone(pos),
+      attackerSideId: pursuer.sideId, defenderSideId: target.sideId,
+      attackerFormationIds: [pursuer.id], defenderFormationIds: [target.id],
+      status: 'PENDING',
+    });
   }
 
   if (candidates.length === 0) return;

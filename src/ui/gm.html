@@ -41,6 +41,7 @@
   <span id="ingest-msg"></span>
 </div>
 <div id="salvage-bar"></div>
+<div id="air-board"></div>
 <div class="cols">
   <div class="col"><h2>TRUTH</h2><pre id="truth"></pre></div>
   <div class="col" id="views"></div>
@@ -98,6 +99,36 @@ async function refresh() {
         `<span class="salv">${t.sourceUnitId} (held ${t.heldBy || '—'}) ` +
         `<button onclick="resolveSalvage('${t.id}')">recover</button></span>`).join('')
     : '';
+
+  // the air board (M3): every flight, its ledger and alert state
+  const flights = Object.values(t.formations).filter(f => f.air && !f.destroyed);
+  document.getElementById('air-board').innerHTML = flights.length
+    ? '<b>Air board:</b> ' + flights.map(f => {
+        const where = f.pos.kind === 'air'
+          ? `air(${f.pos.gridQ},${f.pos.gridR}) ${f.pos.band} ${f.air.phase}`
+          : `grounded ${f.alertState || '—'}`;
+        return `<span class="salv">${f.id} [${f.sideId}] ${where} ` +
+          (f.pos.kind === 'ground'
+            ? `<select onchange="setAlert('${f.id}', this.value)">
+                 <option value="">alert…</option><option>ALERT5</option><option>ALERT15</option>
+                 <option>ALERT60</option><option>STAND_DOWN</option></select>
+               <button onclick="turnaround('${f.id}','HOT_PIT')">hot-pit</button>
+               <button onclick="turnaround('${f.id}','STANDARD')">turnaround</button>`
+            : '') + '</span>';
+      }).join('')
+    : '';
+}
+async function setAlert(formationId, state) {
+  if (!state) return;
+  const r = await post('/api/gm/alert', { formationId, state });
+  if (!r.ok) alert(r.reason);
+  refresh();
+}
+async function turnaround(formationId, mode) {
+  const r = await post('/api/gm/turnaround', { formationId, mode });
+  alert(r.ok ? `turnaround started, ready t${r.readyTick}${r.mishap ? ' — MISHAP on the pad!' : ''}`
+             : r.reason);
+  refresh();
 }
 function summ(e) {
   if (e.type === 'DIE_ROLLED') return `${e.roll.result} (${e.roll.purpose})`;
