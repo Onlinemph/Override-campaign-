@@ -24,18 +24,20 @@ Event-sourced fog-of-war engine:
 
 ```sh
 npm install
-npm run dev      # loads demo/campaign.json
+npm run dev                          # in-memory demo campaign
+npm run dev -- demo/campaign.json --log war.jsonl   # persist + resume from war.jsonl
 ```
 
-Then open:
-- `http://localhost:8420/gm` — GM screen: truth, all side views, event log,
-  step / run-until-event, report (noise) injection.
-- `http://localhost:8420/player/blue` and `/player/red` — player screens: own forces,
-  contacts with staleness timestamps, report inbox, order entry.
+Then open `http://localhost:8420/gm` — the GM screen (truth map with belief overlays,
+event log, step / run-until-event, noise injection, VP & endings). The GM screen lists
+the **tokenized player links** to hand out; they also print to the console at boot
+(e.g. `/player/blue/<token>`). Player screens show own forces, contacts with staleness,
+the report inbox, and click-to-plot order entry. All maps scroll-to-zoom and drag-to-pan.
 
-The demo theater ships with a satellite (watch its scheduled passes catch GHOST returns),
-an airbase, a supply convoy, a hidden objective, and a red probe force already moving.
-Click **Run until event** a few times.
+The demo is a 25-VP campaign: a satellite (watch its passes catch GHOST returns), an
+airbase, a supply convoy, hidden and contested objectives, a system layer with a gas-giant
+picket, and a red probe force already moving. Click **Run until event** a few times.
+Pass `--log <file>` to make it survive a restart.
 
 ## Test
 
@@ -79,5 +81,15 @@ returns to the command net, original timestamp preserved.
       noise-injection editor (edit reports in transit, conjure phantom contacts);
       best-effort MegaMek `.mul` export per side from any handoff; and the audit viewer
       at `/audit` — scrub the entire campaign with the fog lifted.
+
+The five spec milestones are complete. Beyond the spec, toward real game nights:
+
+- [x] **M6 — Campaign-ready**: JSONL persistence with resume-on-restart (`--log`);
+      VP scoring (objective control + daily accrual) and endings (VP threshold /
+      wall-clock); per-side access tokens on player links; scroll/drag map zoom & pan.
+- [ ] **M7 — Fires & logistics**: artillery fire missions + counter-battery, the spotter
+      loop, engineers/minefields, convoy SP pipelines & interdiction, path-based supply.
+- [ ] **M8 — Full combined-arms kit**: combat drops, orbital standby, escort/SAR/tanker
+      missions, transponders & false flags, blockades — toward the §12.3 Cavanaugh frame.
 
 *Fan project; BattleTech © The Topps Company, Inc., published by Catalyst Game Labs.*

@@ -17,7 +17,22 @@ import { JsonlEventStore, MemoryEventStore } from '../core/log.js';
 import { project } from '../projection/project.js';
 import { loadCampaignFixture } from '../demo.js';
 import { buildMul } from '../handoff/mul.js';
+import { hashPick } from '../core/rng.js';
 import type { Contact, ContactReport, GroundPos, Order } from '../core/types.js';
+
+/**
+ * Per-side access token (M6): unguessable without the campaign seed (which only the GM
+ * sees), stable across restarts so player links keep working — stops accidental peeking
+ * at the other side's view without standing up real auth.
+ */
+function tokenFor(sideId: string): string {
+  let out = '';
+  for (let i = 0; i < 5; i++) {
+    out += hashPick(campaign.truth.seed, ['access-v1', sideId, i], 36 ** 4)
+      .toString(36).padStart(4, '0');
+  }
+  return out;
+}
 
 // CLI: `dev [fixture.json] [--log campaign.jsonl]`
 const argv = process.argv.slice(2);
@@ -81,7 +96,19 @@ const server = createServer(async (req, res) => {
     // pages & static assets
     if (path === '/' || path === '/gm') return page(res, 'gm.html');
     if (path === '/audit') return page(res, 'audit.html');
-    if (path.startsWith('/player/')) return page(res, 'player.html');
+    // player page: /player/:sideId/:token (token validated client-side calls below)
+    const playerPage = path.match(/^\/player\/([^/]+)(?:\/([^/]+))?$/);
+    if (playerPage) {
+      const sideId = playerPage[1], token = playerPage[2];
+      if (!campaign.truth.sides[sideId]) return json(res, 404, { error: 'no such side' });
+      if (token !== tokenFor(sideId)) {
+        res.writeHead(403, { 'content-type': 'text/html' });
+        return res.end('<body style="font:14px monospace;background:#0b0e13;color:#c8d0da;padding:40px">' +
+          '<h2>Access token required</h2><p>Ask the GM for your side\'s link — ' +
+          'it looks like <code>/player/' + sideId + '/&lt;token&gt;</code>.</p></body>');
+      }
+      return page(res, 'player.html');
+    }
     const asset = path.match(/^\/ui\/([\w.-]+\.(js|css))$/);
     if (asset) {
       res.writeHead(200, { 'content-type': asset[2] === 'css' ? 'text/css' : 'text/javascript' });
@@ -230,15 +257,19 @@ const server = createServer(async (req, res) => {
       return json(res, r.ok ? 200 : 400, r);
     }
 
-    // player API
+    // player API — gated by the per-side token (?t=<token>)
     const sideView = path.match(/^\/api\/side\/([^/]+)\/view$/);
     if (sideView) {
-      return json(res, 200, project(campaign.truth, sideView[1], campaign.truth.tick));
+      const sideId = sideView[1];
+      if (!campaign.truth.sides[sideId]) return json(res, 404, { error: 'no such side' });
+      if (url.searchParams.get('t') !== tokenFor(sideId)) return json(res, 403, { error: 'bad token' });
+      return json(res, 200, project(campaign.truth, sideId, campaign.truth.tick));
     }
     const sideOrder = path.match(/^\/api\/side\/([^/]+)\/order$/);
     if (sideOrder && req.method === 'POST') {
       const b = await readBody(req);
       const sideId = sideOrder[1];
+      if (url.searchParams.get('t') !== tokenFor(sideId)) return json(res, 403, { ok: false, reason: 'bad token' });
       const f = campaign.truth.formations[b.formationId];
       if (!f || f.sideId !== sideId) return json(res, 400, { ok: false, reason: 'not your formation' });
       const theaterId = f.pos.kind === 'ground' ? f.pos.theaterId : '';
@@ -277,6 +308,13 @@ const server = createServer(async (req, res) => {
       return json(res, result.ok ? 200 : 400, result);
     }
 
+    // GM: the shareable per-side player links (token included)
+    if (path === '/api/gm/links') {
+      return json(res, 200, Object.keys(campaign.truth.sides).map(s =>
+        ({ sideId: s, name: campaign.truth.sides[s].name,
+           url: `/player/${s}/${tokenFor(s)}` })));
+    }
+
     json(res, 404, { error: 'not found' });
   } catch (err) {
     json(res, 500, { error: String(err) });
@@ -294,5 +332,7 @@ const PORT = Number(process.env.PORT ?? 8420);
 server.listen(PORT, () => {
   const sides = Object.keys(campaign.truth.sides);
   console.log(`OVERRIDE GM Tool — http://localhost:${PORT}/gm`);
-  for (const s of sides) console.log(`  player screen: http://localhost:${PORT}/player/${s}`);
+  for (const s of sides) {
+    console.log(`  ${campaign.truth.sides[s].name}: http://localhost:${PORT}/player/${s}/${tokenFor(s)}`);
+  }
 });

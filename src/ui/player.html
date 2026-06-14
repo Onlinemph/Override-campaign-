@@ -11,17 +11,17 @@
   <div class="col" style="flex:1.7;min-width:480px">
     <div class="panel">
       <h2>Theater map <small>— your intelligence picture, not the territory</small></h2>
-      <svg id="map" class="map"></svg>
+      <div class="mapwrap"><svg id="map" class="map"></svg></div>
+      <div class="maphint">scroll to zoom · drag to pan · double-click to reset · click a hex to plot</div>
       <div class="legend">
         <b>◯</b> your formations (dashed ring = EMCON DARK) · <b>▢</b> facilities ·
         <b>◇</b> contacts <b>G/S/C/L</b> (dimmer = staler; dashed circle = ±1) ·
-        <b>★</b> objective · <b>⌁</b> satellite track ·
-        click hexes to plot a path
+        <b>★</b> objective · <b>⌁</b> satellite track
       </div>
     </div>
     <div class="panel" id="sys-panel" style="display:none">
       <h2>System map <small>— light-cones, not truths</small></h2>
-      <svg id="sysmap" class="map"></svg>
+      <div class="mapwrap"><svg id="sysmap" class="map"></svg></div>
     </div>
   </div>
 
@@ -71,12 +71,20 @@
 <script src="/ui/hexmap.js"></script>
 <script src="/ui/sysmap.js"></script>
 <script src="/ui/mapmodel.js"></script>
+<script src="/ui/panzoom.js"></script>
 <script>
-const sideId = location.pathname.split('/').pop();
+// path is /player/:sideId/:token
+const parts = location.pathname.split('/').filter(Boolean);
+const sideId = parts[1];
+const token = parts[2] || '';
+const q = `t=${encodeURIComponent(token)}`;
 let plotted = [];
+attachPanZoom(document.getElementById('map'));
+attachPanZoom(document.getElementById('sysmap'));
 
 async function refresh() {
-  const v = await (await fetch(`/api/side/${sideId}/view`)).json();
+  const v = await (await fetch(`/api/side/${sideId}/view?${q}`)).json();
+  if (v.error) { document.getElementById('title').textContent = 'OVERRIDE — ' + v.error; return; }
   document.getElementById('title').textContent =
     `OVERRIDE — ${sideId.toUpperCase()} · t${v.now} · ${v.clockMode} · ${v.isNight ? 'NIGHT' : 'DAY'} · ` +
     `${v.vp} VP${v.vpThreshold ? ' / ' + v.vpThreshold : ''}` +
@@ -183,7 +191,7 @@ async function sendOrder() {
     const ct = document.getElementById('c-target').value;
     if (ct) body.conditional.targetContactId = ct;
   }
-  const r = await (await fetch(`/api/side/${sideId}/order`, { method: 'POST',
+  const r = await (await fetch(`/api/side/${sideId}/order?${q}`, { method: 'POST',
     headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })).json();
   document.getElementById('o-result').textContent = r.ok ? '✓ order accepted' : `✗ ${r.reason}`;
   if (r.ok) { plotted = []; document.getElementById('o-path').value = ''; }

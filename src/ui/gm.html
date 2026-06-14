@@ -36,15 +36,16 @@
   <div class="col" style="flex:1.8;min-width:520px">
     <div class="panel">
       <h2>Truth map <small id="map-sub"></small></h2>
-      <svg id="map" class="map"></svg>
+      <div class="mapwrap"><svg id="map" class="map"></svg></div>
+      <div class="maphint">scroll to zoom · drag to pan · double-click to reset · click a hex to inspect</div>
       <div class="legend"><b>◯</b> formations · <b>▢</b> facilities · <b>◇</b> belief
         overlay (what the selected side has been told) · <b>★</b> objectives
-        (purple = fake) · <b>⚒</b> salvage · <b>☂</b> downed crew · click a hex to inspect</div>
+        (purple = fake) · <b>⚒</b> salvage · <b>☂</b> downed crew</div>
       <pre id="inspect" style="max-height:12vh"></pre>
     </div>
     <div class="panel" id="sys-panel" style="display:none">
       <h2>System map <small>— the whole sky, fog lifted</small></h2>
-      <svg id="sysmap" class="map"></svg>
+      <div class="mapwrap"><svg id="sysmap" class="map"></svg></div>
     </div>
     <div class="panel"><h2>Air board</h2><div id="air-board"></div></div>
     <div class="panel" id="salvage-panel" style="display:none">
@@ -66,6 +67,8 @@
       <h2 style="margin-top:10px">Pending reports <small>(editable until delivered)</small></h2>
       <div id="pending" style="max-height:24vh;overflow:auto"></div>
     </div>
+    <div class="panel"><h2>Player links <small>— share each side's private URL</small></h2>
+      <div id="links"></div></div>
     <div class="panel"><h2>Side views</h2><div id="views"></div></div>
   </div>
 
@@ -78,10 +81,23 @@
 <script src="/ui/hexmap.js"></script>
 <script src="/ui/sysmap.js"></script>
 <script src="/ui/mapmodel.js"></script>
+<script src="/ui/panzoom.js"></script>
 <script>
 let lastState = null;
+attachPanZoom(document.getElementById('map'));
+attachPanZoom(document.getElementById('sysmap'));
+
+let linksLoaded = false;
+async function loadLinks() {
+  const links = await (await fetch('/api/gm/links')).json();
+  document.getElementById('links').innerHTML = links.map(l =>
+    `<div class="report">${l.name} <small>[${l.sideId}]</small><br>` +
+    `<a href="${l.url}" target="_blank">${location.origin}${l.url}</a></div>`).join('');
+  linksLoaded = true;
+}
 
 async function refresh() {
+  if (!linksLoaded) loadLinks();
   const s = await (await fetch('/api/gm/state')).json();
   lastState = s;
   const t = s.truth;
