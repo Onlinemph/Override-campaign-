@@ -408,3 +408,42 @@ Both pass through the full engine (`test/acceptance/m7-fires-logistics.test.ts`)
 10. **Deferred to a later logistics pass**: cruise-missile fires, ammo depletion from
     sustained fire missions, rearm/repair SP spend (§10.4 beyond M2 salvage), the
     factory +2 SP/day generation, and decoy/net-intrusion (§6.5/§11).
+
+---
+
+## D-014 ✅ Milestone 8 (combined-arms kit) interpretive calls
+Roadmap: combat drops, escort/SAR/tanker, transponders & false flags, blockades —
+toward the §12.3 Cavanaugh frame. Acceptance: one scripted assault chaining a false-flag
+inspection, a blockade, a combat drop that takes a spaceport, and a SAR pickup
+(`test/acceptance/m8-combined-arms.test.ts`), byte-exact on replay.
+
+1. **Combat drops are a GM/Campaign action** (`combatDrop`), not a tick order — a drop is
+   a discrete, GM-adjudicated commitment like a jump or an evasion. Scatter (core §8.3):
+   1d6 hexes in a 1d6 direction, reduced by the carrier pilot's Piloting margin over
+   `COMBAT_DROP.PILOTING_TN`, +2 in a storm; an off-map landing clamps back onto the
+   target. The dropped force is revealed at LOCK to every enemy ("arrive at LOCK
+   visibility to anyone watching the sky"). ECM-hex +2 is deferred (storm covers the
+   case). Mounted formations (`Formation.mounted`) are dismounted on drop.
+2. **SAR & tanker are Campaign actions** (`recoverDownedCrew`, `transferFuel`) rather than
+   air-engine mission automation: both are point events with a clear trigger (recoverer
+   at the crew's hex; tanker offload between co-located flights). SAR returns the pilot
+   to POOL and clears the marker; tanker delivers 1 ton per 2 offloaded
+   (`SKYWATCH.TANKER_DELIVERY_RATIO`). Continuous ESCORT tethering and ORBITAL_STANDBY /
+   the orbit-climb gauntlet remain table/GM concerns (noted, not engine-automated).
+3. **Transponders / false flags** (DEEP SKY §4.3): a vessel carries an optional `squawk`
+   (claimed identity). `inspectTransponder` resolves a close inspection — the lie holds on
+   2d6 ≥ `FALSE_FLAG_TN` (9), but a vessel under a 1G+ burn (`space.burnStartTick` set)
+   fails automatically ("maneuvers like a warship"). A blown flag drops the squawk and
+   reveals the true hull at LOCK. Neutral-traffic generation is a GM/fixture concern
+   (the `neutral` flag exists for it).
+4. **Blockade & off-world imports** (DEEP SKY §9): a side may declare `importSpPerDay`
+   into a `homeDepotId`; the daily scoring pass delivers it unless the side is blockaded.
+   Blockaded = every jump-point node (JUMP_ZENITH/NADIR) is enemy-occupied and
+   uncontested by a friendly vessel; with no jump points, imports always flow. Contesting
+   any door with your own vessel reopens the lane. This ties the convoy/blockade war into
+   the M7 SP economy without a full scheduled-convoy-arrival system (deferred).
+5. **Still deferred** (table/GM or a later pass): cruise missiles, AA flak ceilings,
+   FUMES gliding & dead-stick landings, automatic ace kill-tracking, the capturable ATO
+   artifact, sentinel drones, passive arrays, water cracking, scheduled JumpShip convoy
+   arrivals, hard-burn medical rolls, orbital fire support, and customs interception as a
+   full scenario generator.

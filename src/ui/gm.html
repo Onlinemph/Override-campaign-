@@ -67,6 +67,16 @@
       <h2 style="margin-top:10px">Pending reports <small>(editable until delivered)</small></h2>
       <div id="pending" style="max-height:24vh;overflow:auto"></div>
     </div>
+    <div class="panel"><h2>Combined-arms actions <small>(M8)</small></h2>
+      <div class="kv">combat drop: carrier <input id="d-carrier" size="9"> payload <input id="d-payload" size="9">
+        → <input id="d-hex" size="6" placeholder="q,r"> <button onclick="doDrop()">Drop</button></div>
+      <div class="kv">inspect squawk: contact <input id="i-target" size="9"> by <select id="i-side"></select>
+        <button onclick="doInspect()">Inspect</button></div>
+      <div class="kv">SAR: VTOL <input id="s-rec" size="9"> crew marker <input id="s-marker" size="9">
+        <button onclick="doSar()">Recover</button></div>
+      <div class="kv">tanker: from <input id="k-from" size="9"> to <input id="k-to" size="9">
+        tons <input id="k-tons" size="4"> <button onclick="doTanker()">Offload</button></div>
+      <div id="ca-msg" class="kv"></div></div>
     <div class="panel"><h2>Player links <small>— share each side's private URL</small></h2>
       <div id="links"></div></div>
     <div class="panel"><h2>Side views</h2><div id="views"></div></div>
@@ -114,7 +124,7 @@ async function refresh() {
 
   // selectors (once)
   const sides = Object.keys(s.views);
-  for (const id of ['belief', 'inj-side', 'ph-side']) {
+  for (const id of ['belief', 'inj-side', 'ph-side', 'i-side']) {
     const sel = document.getElementById(id);
     if (sel.options.length <= (id === 'belief' ? 1 : 0)) {
       sides.forEach(x => sel.add(new Option(x, x)));
@@ -291,6 +301,25 @@ async function resolveSalvage(tokenId) {
   const r = await post('/api/gm/salvage', { tokenId });
   alert('Recovered as: ' + (r.outcome || r.error));
   refresh();
+}
+function caMsg(r) { document.getElementById('ca-msg').textContent =
+  r.ok === false ? '✗ ' + r.reason : JSON.stringify(r); refresh(); }
+async function doDrop() {
+  const h = document.getElementById('d-hex').value.split(',');
+  caMsg(await post('/api/gm/drop', { carrierId: document.getElementById('d-carrier').value,
+    payloadId: document.getElementById('d-payload').value, q: +h[0], r: +h[1] }));
+}
+async function doInspect() {
+  caMsg(await post('/api/gm/inspect', { targetId: document.getElementById('i-target').value,
+    bySideId: document.getElementById('i-side').value }));
+}
+async function doSar() {
+  caMsg(await post('/api/gm/sar', { recovererId: document.getElementById('s-rec').value,
+    markerId: document.getElementById('s-marker').value }));
+}
+async function doTanker() {
+  caMsg(await post('/api/gm/tanker', { tankerId: document.getElementById('k-from').value,
+    receiverId: document.getElementById('k-to').value, tons: +document.getElementById('k-tons').value }));
 }
 
 const ws = new WebSocket(`ws://${location.host}`);

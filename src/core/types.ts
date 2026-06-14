@@ -68,6 +68,10 @@ export interface Side {
   id: Id; name: string; vp: number;
   commandNodes: Id[];     // formation/facility ids able to anchor nets
   reprisalsOwed: number;  // DEEP SKY 7.4
+  // ext (M8, DEEP SKY §9): off-world imports — SP delivered daily to homeDepotId via a
+  // friendly jump point; a blockade (enemy holds the jump points) cuts it to zero.
+  importSpPerDay?: number;
+  homeDepotId?: Id;
 }
 
 export interface Pilot {
@@ -133,6 +137,8 @@ export interface Formation {
   engPulseAcc?: number;           // ext (M7): engineer task progress in pulses (core §9.3)
   lastBattleTick?: Tick;          // a fighting day costs ×2 supply (core §10.1)
   carriedSp?: number;             // ext (M7): a supply convoy's onboard SP (core §10.1)
+  squawk?: string;                // ext (M8): broadcast transponder identity (DEEP SKY §4.3)
+  neutral?: boolean;             // ext (M8): civilian/neutral traffic for the false-flag game
   // ext (M4): space bookkeeping (DEEP SKY) — present on vessels in transit
   space?: {
     burnStartTick?: Tick | null;    // emitting since (1G+ drives are automatic after lag)

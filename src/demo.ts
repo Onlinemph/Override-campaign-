@@ -45,6 +45,8 @@ export function buildCampaign(j: FixtureJson, source = 'campaign'): TruthState {
   for (const s of j.sides) {
     truth.sides[s.id] = mkSide(s.id, s.name, j.commandNodes[s.id] ?? []);
     if ((s as any).vp !== undefined) truth.sides[s.id].vp = (s as any).vp;
+    if ((s as any).importSpPerDay !== undefined) truth.sides[s.id].importSpPerDay = (s as any).importSpPerDay;
+    if ((s as any).homeDepotId !== undefined) truth.sides[s.id].homeDepotId = (s as any).homeDepotId;
   }
   for (const f of j.facilities) {
     truth.facilities[f.id] = mkFacility({
@@ -95,7 +97,8 @@ export function buildCampaign(j: FixtureJson, source = 'campaign'): TruthState {
       sns: f.sns, emcon: f.emcon ?? 'PASSIVE',
       alertState: f.alertState,
       posture: f.posture, rdy: f.rdy, facing: f.facing,
-      carriedSp: f.carriedSp,
+      carriedSp: f.carriedSp, squawk: f.squawk, neutral: f.neutral,
+      ...(f.mountedOn ? { mounted: { carrierFormationId: f.mountedOn } } : {}),
     });
     if (f.flight || f.airPos) {
       formation.air = { phase: f.airPos ? 'ENROUTE' : 'GROUNDED', speed: 'CRUISE',

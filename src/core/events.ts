@@ -105,6 +105,10 @@ export type GameEvent =
   | { type: 'NODE_CONTROL'; nodeId: Id; ownerSideId: Id; tick: Tick }
   | { type: 'DAY_SCORED'; tick: Tick }            // advances the daily-accrual anchor
   | { type: 'CAMPAIGN_ENDED'; winnerSideId: Id | null; reason: string; tick: Tick }
+  // ── M8: combined-arms kit ──
+  | { type: 'MOUNT_CHANGED'; formationId: Id; carrierFormationId: Id | null }
+  | { type: 'TRANSPONDER_REVEALED'; formationId: Id; tick: Tick }   // false flag blown
+  | { type: 'BLOCKADE_STATE'; sideId: Id; blockaded: boolean; tick: Tick }
   | { type: 'CLOCK_ADVANCED'; dt: number; tick: Tick }; // tick = NEW absolute tick
 
 export interface LoggedEvent { index: number; event: GameEvent }
@@ -613,6 +617,24 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
       s.ended = { winnerSideId: e.winnerSideId, reason: e.reason, tick: e.tick };
       break;
 
+    case 'MOUNT_CHANGED': {
+      const f = s.formations[e.formationId];
+      if (f) {
+        if (e.carrierFormationId) f.mounted = { carrierFormationId: e.carrierFormationId };
+        else delete f.mounted;
+      }
+      break;
+    }
+
+    case 'TRANSPONDER_REVEALED': {
+      const f = s.formations[e.formationId];
+      if (f) f.squawk = undefined; // the lie is dropped once it's seen through
+      break;
+    }
+
+    case 'BLOCKADE_STATE':
+      break; // informational; the SP effect rides on SP_CHANGED in the same pass
+
     case 'CLOCK_ADVANCED':
       s.tick = e.tick;
       break;
@@ -643,6 +665,7 @@ export function isInterestingEvent(e: GameEvent): boolean {
     case 'NODE_CONTROL':
     case 'CAMPAIGN_ENDED':
     case 'UNIT_STATE_CHANGED':   // M7: arty/minefield damage is worth a look
+    case 'TRANSPONDER_REVEALED': // M8: a false flag blown
       return true;
     default:
       return false;

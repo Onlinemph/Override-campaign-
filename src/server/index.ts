@@ -263,6 +263,34 @@ const server = createServer(async (req, res) => {
       return json(res, r.ok ? 200 : 400, r);
     }
 
+    // ── M8: combined-arms actions ──
+    if (path === '/api/gm/drop' && req.method === 'POST') {
+      const b = await readBody(req);
+      const theaterId = b.theaterId ?? Object.keys(campaign.truth.theaters)[0];
+      const r = campaign.combatDrop(b.carrierId, b.payloadId,
+        { kind: 'ground', theaterId, q: Number(b.q), r: Number(b.r) });
+      broadcast();
+      return json(res, r.ok ? 200 : 400, r);
+    }
+    if (path === '/api/gm/inspect' && req.method === 'POST') {
+      const b = await readBody(req);
+      const r = campaign.inspectTransponder(b.targetId, b.bySideId);
+      broadcast();
+      return json(res, r.ok ? 200 : 400, r);
+    }
+    if (path === '/api/gm/sar' && req.method === 'POST') {
+      const b = await readBody(req);
+      const r = campaign.recoverDownedCrew(b.recovererId, b.markerId);
+      broadcast();
+      return json(res, r.ok ? 200 : 400, r);
+    }
+    if (path === '/api/gm/tanker' && req.method === 'POST') {
+      const b = await readBody(req);
+      const r = campaign.transferFuel(b.tankerId, b.receiverId, Number(b.tons));
+      broadcast();
+      return json(res, r.ok ? 200 : 400, r);
+    }
+
     // player API — gated by the per-side token (?t=<token>)
     const sideView = path.match(/^\/api\/side\/([^/]+)\/view$/);
     if (sideView) {

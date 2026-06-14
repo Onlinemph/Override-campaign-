@@ -14,6 +14,8 @@ import { ingestBattleResult } from '../handoff/import.js';
 import { rollDice } from './rng.js';
 import { CLOCK, DEEPSKY, ENGAGEMENT, LADDER, SKYWATCH, SUPPLY } from '../rules.js';
 import { classifyEncounter, emitJumpFlash, type Classification } from '../engine/space.js';
+import { COMBAT_DROP } from '../rules.js';
+import { AXIAL_DIRECTIONS } from '../hex/axial.js';
 
 /** Rebuild truth purely from the log: truth = fold(applyEvent, genesis, events). */
 export function replay(events: LoggedEvent[]): TruthState {
@@ -421,6 +423,130 @@ export class Campaign {
     this.inject({ type: 'NODE_SURVEYED', nodeId, sideId, tick: this.truth.tick });
   }
 
+  // ── M8: combat drops & the false-flag game ──────────────────────────────
+
+  /**
+   * Combat drop (core §8.3): a carrier releases an embarked formation onto a target hex.
+   * Scatter = 1d6 hexes in a random direction, reduced by the carrier's Piloting margin,
+   * +2 in a storm; the dropped formation arrives at LOCK visibility to everyone watching
+   * the sky. Returns the landing hex and the scatter applied.
+   */
+  combatDrop(carrierId: Id, payloadId: Id, target: GroundPos):
+      { ok: true; landing: GroundPos; scatter: number } | { ok: false; reason: string } {
+    const carrier = this.truth.formations[carrierId];
+    const payload = this.truth.formations[payloadId];
+    if (!carrier || carrier.destroyed) return { ok: false, reason: 'no such carrier' };
+    if (!payload || payload.destroyed) return { ok: false, reason: 'no such payload' };
+    if (payload.sideId !== carrier.sideId) return { ok: false, reason: 'payload is not the carrier\'s' };
+    const theater = this.truth.theaters[target.theaterId];
+    if (!theater?.hexes[`${target.q},${target.r}`]) return { ok: false, reason: 'target hex off-map' };
+
+    const piloting = (() => {
+      for (const uid of carrier.unitIds) {
+        const p = this.truth.units[uid]?.pilotIds.map(id => this.truth.pilots[id]).find(Boolean);
+        if (p) return p.piloting;
+      }
+      return COMBAT_DROP.PILOTING_TN;
+    })();
+    const psr = this.rollLogged('2d6', `drop piloting ${carrier.name}`);
+    const dist = this.rollLogged('1d6', `drop scatter distance ${carrier.name}`);
+    const dirRoll = this.rollLogged('1d6', `drop scatter direction ${carrier.name}`);
+    const margin = Math.max(0, psr - piloting);
+    let scatter = Math.max(0, dist - margin);
+    if (this.truth.config.weather === 'STORM') scatter += COMBAT_DROP.STORM_OR_ECM_SCATTER;
+
+    const dir = AXIAL_DIRECTIONS[(dirRoll - 1) % 6];
+    let landing: GroundPos = { ...target, q: target.q + dir.q * scatter, r: target.r + dir.r * scatter };
+    if (!theater.hexes[`${landing.q},${landing.r}`]) landing = { ...target }; // off-map ⇒ on target
+
+    if (payload.mounted) this.inject({ type: 'MOUNT_CHANGED', formationId: payloadId, carrierFormationId: null });
+    this.inject({ type: 'FORMATION_MOVED', formationId: payloadId, to: landing,
+                  movedKind: 'NORMAL', onRoad: false, headingDeg: 0, tick: this.truth.tick });
+    // "dropping troops arrive at LOCK-level visibility to anyone watching the sky"
+    for (const sideId of Object.keys(this.truth.sides)) {
+      if (sideId === payload.sideId) continue;
+      this.inject({ type: 'CONTACT_UPGRADED', contact: this.contactAt(sideId, payloadId, LADDER.MAX_LEVEL),
+                    tick: this.truth.tick });
+    }
+    this.inject({ type: 'GM_NOTE', tick: this.truth.tick,
+      text: `${carrier.name} dropped ${payload.name} at ${target.q},${target.r} — scattered ${scatter} to ${landing.q},${landing.r}` });
+    return { ok: true, landing, scatter };
+  }
+
+  /**
+   * Customs inspection of a transponder claim (DEEP SKY §4.3): a picket resolves a
+   * contact's squawk. The lie holds on 2d6 ≥ 9 — but a vessel maneuvering like a warship
+   * (a 1G+ burn in progress) fails automatically. Failure reveals its true nature
+   * (LOCK) and drops the false flag.
+   */
+  inspectTransponder(targetId: Id, bySideId: Id):
+      { ok: true; held: boolean } | { ok: false; reason: string } {
+    const target = this.truth.formations[targetId];
+    if (!target || target.destroyed) return { ok: false, reason: 'no such contact' };
+    if (!target.squawk) return { ok: false, reason: 'nothing being squawked' };
+    const burningHard = target.space?.burnStartTick != null;
+    let held: boolean;
+    if (burningHard) {
+      this.inject({ type: 'GM_NOTE', tick: this.truth.tick,
+        text: `${target.name} maneuvers like a warship — the merchant squawk fails automatically` });
+      held = false;
+    } else {
+      const roll = this.rollLogged('2d6', `false-flag inspection of ${target.squawk}`);
+      held = roll >= DEEPSKY.FALSE_FLAG_TN;
+    }
+    if (!held) {
+      this.inject({ type: 'TRANSPONDER_REVEALED', formationId: targetId, tick: this.truth.tick });
+      this.inject({ type: 'CONTACT_UPGRADED', contact: this.contactAt(bySideId, targetId, LADDER.MAX_LEVEL),
+                    tick: this.truth.tick });
+    }
+    return { ok: true, held };
+  }
+
+  /**
+   * SAR (SKYWATCH §8.4): a recoverer at a downed-crew marker's hex picks the crew up —
+   * the pilot returns to the POOL and the marker is cleared.
+   */
+  recoverDownedCrew(recovererId: Id, markerId: Id): { ok: boolean; pilotId?: Id; reason?: string } {
+    const r = this.truth.formations[recovererId];
+    const m = this.truth.markers[markerId];
+    if (!r || r.destroyed) return { ok: false, reason: 'no such recoverer' };
+    if (!m || m.kind !== 'DOWNED_CREW') return { ok: false, reason: 'no such downed crew' };
+    const co = (a: { kind: string }, b: { kind: string }) =>
+      a.kind === 'ground' && b.kind === 'ground' &&
+      (a as GroundPos).theaterId === (b as GroundPos).theaterId &&
+      (a as GroundPos).q === (b as GroundPos).q && (a as GroundPos).r === (b as GroundPos).r;
+    if (!co(r.pos, m.pos)) return { ok: false, reason: 'recoverer is not at the crew\'s hex' };
+    const pilotId = m.payload?.pilotId as Id | undefined;
+    if (pilotId && this.truth.pilots[pilotId]) {
+      this.inject({ type: 'PILOT_STATE_CHANGED', pilotId, status: 'POOL' });
+    }
+    this.inject({ type: 'MARKER_REMOVED', markerId });
+    this.inject({ type: 'GM_NOTE', tick: this.truth.tick,
+      text: `${r.name} recovered downed crew at ${(m.pos as GroundPos).q},${(m.pos as GroundPos).r}` });
+    return { ok: true, pilotId };
+  }
+
+  /**
+   * TANKER (SKYWATCH §4): a tanker delivers fuel to another flight — 1 ton delivered per
+   * 2 carried (TANKER_DELIVERY_RATIO). Adds FP to the receiver, burns tons from the tanker.
+   */
+  transferFuel(tankerId: Id, receiverId: Id, tonsOffloaded: number):
+      { ok: boolean; fpDelivered?: number; reason?: string } {
+    const tanker = this.truth.formations[tankerId];
+    const recv = this.truth.formations[receiverId];
+    if (!tanker || !recv) return { ok: false, reason: 'no such formation' };
+    const tankUnit = tanker.unitIds.map(id => this.truth.units[id]).find(u => u.fuel);
+    const recvUnit = recv.unitIds.map(id => this.truth.units[id]).find(u => u.fuel);
+    if (!tankUnit?.fuel || !recvUnit?.fuel) return { ok: false, reason: 'no fuel ledger to transfer' };
+    const tons = Math.min(tonsOffloaded, tankUnit.fuel.tons);
+    const fp = Math.round(tons * SKYWATCH.TANKER_DELIVERY_RATIO * recvUnit.fuel.fpPerTon);
+    this.inject({ type: 'TONS_BURNED', formationId: tankerId, tons, reason: 'tanker offload',
+                  tick: this.truth.tick });
+    this.inject({ type: 'UNIT_STATE_CHANGED', unitId: recvUnit.id, damage: recvUnit.damage,
+                  ammoState: recvUnit.ammoState, fpRemaining: recvUnit.fuel.fp + fp });
+    return { ok: true, fpDelivered: fp };
+  }
+
   /** Resolve one hauled salvage token at a depot: 2d6 ≥8 ⇒ unit, else parts (core §10.4). */
   resolveSalvage(tokenId: Id): { outcome: 'UNIT' | 'PARTS' } | { error: string } {
     const token = this.truth.salvage[tokenId];
@@ -456,13 +582,13 @@ export class Campaign {
 
   private contactAt(observerSideId: Id, targetFormationId: Id, level: number) {
     const f = this.truth.formations[targetFormationId];
-    const pos = f.pos as GroundPos;
+    const pos = structuredClone(f.pos);
     return {
       id: `contact:${observerSideId}:${targetFormationId}`, observerSideId, targetFormationId,
       kind: 'STANDARD' as const, level: level as 0 | 1 | 2 | 3 | 4,
       lastConfirmedTick: this.truth.tick, lastFadeTick: this.truth.tick,
-      estPos: { ...pos }, posErrorHexes: 0, staleAsOfTick: this.truth.tick,
-      delivered: { level: level as 0 | 1 | 2 | 3 | 4, estPos: { ...pos }, posErrorHexes: 0,
+      estPos: pos, posErrorHexes: 0, staleAsOfTick: this.truth.tick,
+      delivered: { level: level as 0 | 1 | 2 | 3 | 4, estPos: structuredClone(pos), posErrorHexes: 0,
                    estVector: f.lastHeadingDeg,
                    estSizeClass: undefined, estComposition: undefined,
                    asOfTick: this.truth.tick },

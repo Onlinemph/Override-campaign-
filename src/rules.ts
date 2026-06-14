@@ -207,6 +207,13 @@ export const ARTILLERY_TAG_RANGE: Record<string, number> = {
   LONG_TOM: ARTILLERY_RANGE_HEXES.LONG_TOM,
 };
 export const COUNTER_BATTERY_AUTO_CONTACT_LEVEL = 3; // firing hex revealed at CONTACT
+// ── Combat drops (core §8.3) ─────────────────────────────────────────────────
+export const COMBAT_DROP = {
+  SCATTER_DICE: '1d6' as const,    // 1d6 hexes, reduced per point the Piloting check beats its TN
+  PILOTING_TN: 5,                  // 2d6 ≥ TN; margin of success reduces scatter
+  STORM_OR_ECM_SCATTER: 2,         // +2 hexes through a thunderstorm or ECM-heavy hex
+  LIFT_UNDER_FIRE_PSR_MOD: 2,      // lifting from a contested hex: Piloting +2 (core §8.3)
+} as const;
 // ── Fire missions (core §9.1) — Quick-Resolution artillery when no battle is running ──
 export const FIRES = {
   BR_DIVISOR: 5,            // 2d6 + battery BR/5 (core §9.1)

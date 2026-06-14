@@ -108,7 +108,13 @@ The five spec milestones are complete. Beyond the spec, toward real game nights:
       that bite movers; path-based supply lines with road/off-road cost, SP draw from
       depots & convoys, the RESUPPLY pipeline, and interdiction that starves a cut-off
       spearhead. *Acceptance: the chaff trick + a starved offensive, both byte-exact on replay.*
-- [ ] **M8 — Full combined-arms kit**: combat drops, orbital standby, escort/SAR/tanker
-      missions, transponders & false flags, blockades — toward the §12.3 Cavanaugh frame.
+- [x] **M8 — Combined-arms kit**: combat drops (scatter + LOCK reveal), SAR pickups &
+      tanker offloads, transponders & false-flag inspection (a hard-burning warship can't
+      hold a merchant squawk), and blockades that cut off-world SP imports when the enemy
+      holds your jump points. *Acceptance: a Cavanaugh-style assault — false flag →
+      blockade → combat drop → spaceport taken → SAR — byte-exact on replay.*
+
+All eight milestones complete. Remaining deferrals (table/GM concerns or a future pass)
+are logged in DECISIONS.md D-014.
 
 *Fan project; BattleTech © The Topps Company, Inc., published by Catalyst Game Labs.*

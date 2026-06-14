@@ -24,6 +24,21 @@ function soleHolderGround(s: TruthState, theaterId: Id, q: number, r: number): I
   return holder;
 }
 
+/**
+ * Blockade (DEEP SKY §9): off-world imports are cut when the enemy holds every jump
+ * point uncontested. With no jump points (a ground-only campaign), imports always flow.
+ */
+function isBlockaded(s: TruthState, sideId: Id): boolean {
+  const jumps = Object.values(s.system.nodes).filter(
+    n => n.type === 'JUMP_ZENITH' || n.type === 'JUMP_NADIR');
+  if (jumps.length === 0) return false;
+  const vesselsAt = (nodeId: Id, friendly: boolean) => Object.values(s.formations).some(f =>
+    !f.destroyed && f.pos.kind === 'node' && (f.pos as NodePos).nodeId === nodeId &&
+    (friendly ? f.sideId === sideId : f.sideId !== sideId));
+  // blockaded iff every jump point is enemy-held and uncontested by us
+  return jumps.every(j => vesselsAt(j.id, false) && !vesselsAt(j.id, true));
+}
+
 function soleHolderNode(s: TruthState, nodeId: Id): Id | null {
   let holder: Id | null = null;
   for (const f of Object.values(s.formations)) {
@@ -75,6 +90,18 @@ export function scoringPass(s: TruthState, emit: (e: GameEvent) => void): void {
       if (obj && obj.ownerSideId && obj.vpPerDay) {
         emit({ type: 'VP_CHANGED', sideId: obj.ownerSideId, delta: obj.vpPerDay,
                reason: `holds ${node.name}` });
+      }
+    }
+    // off-world imports (DEEP SKY §9): SP arrive daily unless the lane home is blockaded
+    for (const side of Object.values(s.sides)) {
+      if (!side.importSpPerDay || !side.homeDepotId) continue;
+      const depot = s.facilities[side.homeDepotId];
+      if (!depot) continue;
+      const blockaded = isBlockaded(s, side.id);
+      emit({ type: 'BLOCKADE_STATE', sideId: side.id, blockaded, tick: scoreTick });
+      if (!blockaded) {
+        emit({ type: 'SP_CHANGED', facilityId: side.homeDepotId, delta: side.importSpPerDay,
+               reason: 'off-world import' });
       }
     }
     emit({ type: 'DAY_SCORED', tick: scoreTick });
