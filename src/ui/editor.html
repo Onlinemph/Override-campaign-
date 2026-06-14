@@ -33,7 +33,10 @@
   <div class="col" style="flex:1.9;min-width:520px">
     <div class="panel">
       <h2>Map <small id="map-sub"></small></h2>
-      <div class="row">
+      <div class="row"><b class="kv">View:</b>
+        <button class="tool" data-mode="theater" onclick="setMode('theater')">Theater (ground/air)</button>
+        <button class="tool" data-mode="system" onclick="setMode('system')">System (DEEP SKY)</button></div>
+      <div class="row" id="theater-tools">
         <b class="kv">Tool:</b>
         <button class="tool" data-tool="select" onclick="setTool('select')">Select</button>
         <button class="tool" data-tool="terrain" onclick="setTool('terrain')">Terrain</button>
@@ -45,9 +48,21 @@
         <button class="tool" data-tool="facility" onclick="setTool('facility')">+ Facility</button>
         <button class="tool" data-tool="erase" onclick="setTool('erase')">Erase</button>
       </div>
+      <div class="row" id="system-tools" style="display:none">
+        <b class="kv">Tool:</b>
+        <button class="tool" data-stool="select" onclick="setSTool('select')">Select / drag</button>
+        <button class="tool" data-stool="node" onclick="setSTool('node')">+ Node</button>
+        <select id="brush-node"></select>
+        <button class="tool" data-stool="lane" onclick="setSTool('lane')">Lane</button>
+        <button class="tool" data-stool="vessel" onclick="setSTool('vessel')">+ Vessel</button>
+        <select id="brush-vclass"></select>
+      </div>
       <div class="row"><b class="kv">Active side:</b> <span id="active-side"></span></div>
-      <div class="mapwrap"><svg id="map" class="map"></svg></div>
-      <div class="maphint">scroll zoom · drag pan · click a hex to apply the tool</div>
+      <div class="mapwrap" id="hex-wrap"><svg id="map" class="map"></svg></div>
+      <svg id="sysmap" class="map" style="display:none;height:360px"></svg>
+      <div class="maphint" id="theater-hint">scroll zoom · drag pan · click a hex to apply the tool</div>
+      <div class="maphint" id="system-hint" style="display:none">+Node: click empty space ·
+        Lane: click two nodes · +Vessel: click a node · Select: click to edit, drag to move</div>
     </div>
     <div class="panel"><h2>Live validation</h2><pre id="problems" style="max-height:20vh"></pre></div>
   </div>
@@ -87,10 +102,12 @@
 </div>
 
 <script src="/ui/hexmap.js"></script>
+<script src="/ui/sysmap.js"></script>
 <script src="/ui/mapmodel.js"></script>
 <script src="/ui/panzoom.js"></script>
 <script>
 let SCHEMA = null, camp = null, tool = 'select', activeSide = null, sel = null, idSeq = 0;
+let mode = 'theater', stool = 'select', sysPos = {}, linkFrom = null;
 const $ = id => document.getElementById(id);
 attachPanZoom($('map'));
 
@@ -121,16 +138,45 @@ async function boot() {
   fill($('brush-infra'), SCHEMA.infra, 'ROAD');
   fill($('c-weather'), SCHEMA.weathers, 'CLEAR');
   fill($('t-terrain'), SCHEMA.terrains, 'CLEAR');
+  fill($('brush-node'), SCHEMA.nodeTypes, 'PLANET');
+  fill($('brush-vclass'), ['DROPSHIP', 'JUMPSHIP', 'WARSHIP', 'SMALL_CRAFT'], 'DROPSHIP');
   camp = blankCampaign();
   activeSide = camp.sides[0].id;
-  setTool('select');
+  setTool('select'); setSTool('select'); setMode('theater');
   redraw();
 }
 
 function setTool(t) {
   tool = t;
-  document.querySelectorAll('.tool').forEach(b =>
+  document.querySelectorAll('[data-tool]').forEach(b =>
     b.classList.toggle('active', b.dataset.tool === t));
+}
+function setSTool(t) {
+  stool = t; linkFrom = null;
+  document.querySelectorAll('[data-stool]').forEach(b =>
+    b.classList.toggle('active', b.dataset.stool === t));
+}
+function setMode(m) {
+  mode = m; sel = null;
+  document.querySelectorAll('[data-mode]').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === m));
+  const sys = m === 'system';
+  $('theater-tools').style.display = sys ? 'none' : '';
+  $('system-tools').style.display = sys ? '' : 'none';
+  $('hex-wrap').style.display = sys ? 'none' : '';
+  $('sysmap').style.display = sys ? '' : 'none';
+  $('theater-hint').style.display = sys ? 'none' : '';
+  $('system-hint').style.display = sys ? '' : 'none';
+  if (sys) seedSysPositions();
+  redraw();
+}
+// give any not-yet-placed node a position (auto-layout once) so the canvas is stable
+function seedSysPositions() {
+  const nodes = (camp.system && camp.system.nodes) || [];
+  if (!nodes.length) return;
+  if (!nodes.some(n => !sysPos[n.id])) return;
+  const auto = sysmapLayout(nodes, (camp.system && camp.system.lanes) || []);
+  nodes.forEach(n => { if (!sysPos[n.id]) sysPos[n.id] = auto[n.id]; });
 }
 
 function redraw() {
@@ -148,11 +194,80 @@ function redraw() {
     `<button class="tool ${s.id === activeSide ? 'active' : ''}" onclick="activeSide='${s.id}';redraw()">${s.name}</button>`).join('');
 
   // map
-  const model = buildEditorHexModel(camp, t.id, sideColorMap());
-  if (sel && sel.kind === 'hex') model.highlight = [{ q: sel.q, r: sel.r }];
-  renderHexMap($('map'), model, { onHexClick: paint, showCoords: true });
+  if (mode === 'theater') {
+    const model = buildEditorHexModel(camp, t.id, sideColorMap());
+    if (sel && sel.kind === 'hex') model.highlight = [{ q: sel.q, r: sel.r }];
+    renderHexMap($('map'), model, { onHexClick: paint, showCoords: true });
+  } else {
+    seedSysPositions();
+    renderSysMap($('sysmap'), buildEditorSysModel(camp), {
+      positions: sysPos, editable: true,
+      selectedId: sel && sel.kind === 'node' ? sel.id : (linkFrom || undefined),
+      selectedLane: sel && sel.kind === 'lane' ? sel.id : undefined,
+      onNodeClick: sysNodeClick, onBackgroundClick: sysBgClick, onNodeDrag: sysNodeDrag,
+    });
+  }
 
   renderSides(); renderEntities(); renderInspector(); validate();
+}
+
+// ── system-graph editing ──
+function sysNodeDrag(id, x, y) { sysPos[id] = { x, y }; redraw(); }
+function sysBgClick(x, y) {
+  if (stool !== 'node') { sel = null; linkFrom = null; return redraw(); }
+  const id = genId('node');
+  camp.system.nodes.push({ id, type: $('brush-node').value, name: $('brush-node').value + ' ' + idSeq,
+    secret: $('brush-node').value === 'PIRATE_POINT' });
+  sysPos[id] = { x, y };
+  sel = { kind: 'node', id };
+  redraw();
+}
+function sysNodeClick(id) {
+  if (stool === 'lane') {
+    if (!linkFrom) { linkFrom = id; return redraw(); }
+    if (linkFrom !== id) {
+      const a = linkFrom, b = id;
+      const exists = camp.system.lanes.some(l =>
+        (l.a === a && l.b === b) || (l.a === b && l.b === a));
+      if (!exists) camp.system.lanes.push({ a, b, distanceAU: 5 });
+      sel = { kind: 'lane', id: `${a}--${b}` };
+    }
+    linkFrom = null; return redraw();
+  }
+  if (stool === 'vessel') {
+    const fid = genId(activeSide + '-v');
+    camp.formations.push({ id: fid, sideId: activeSide, name: `Vessel ${idSeq}`,
+      nodeId: id, sigBase: 8, units: [{ name: 'DropShip', model: 'Union',
+        class: $('brush-vclass').value, tags: [], fuelTons: 150 }] });
+    sel = { kind: 'formation', id: fid }; return redraw();
+  }
+  sel = { kind: 'node', id }; redraw();
+}
+function delNode(id) {
+  camp.system.nodes = camp.system.nodes.filter(n => n.id !== id);
+  camp.system.lanes = camp.system.lanes.filter(l => l.a !== id && l.b !== id);
+  camp.formations.forEach(f => { if (f.nodeId === id) f.nodeId = undefined; });
+  delete sysPos[id]; sel = null; redraw();
+}
+function setNode(id, k, v) {
+  const n = camp.system.nodes.find(x => x.id === id); if (!n) return;
+  if (v === '' || v === false || v === undefined) delete n[k]; else n[k] = v;
+  redraw();
+}
+function setNodeObj(id, k, v) {
+  const n = camp.system.nodes.find(x => x.id === id); if (!n) return;
+  if (k === 'on') { n.objective = v ? { vpPerDay: 2 } : undefined; return redraw(); }
+  if (!n.objective) return;
+  if (v === '' || v === undefined) delete n.objective[k]; else n.objective[k] = v;
+  redraw();
+}
+function setLane(id, distanceAU) {
+  const l = camp.system.lanes.find(x => (x.id || `${x.a}--${x.b}`) === id);
+  if (l) { l.distanceAU = +distanceAU || 1; redraw(); }
+}
+function delLane(id) {
+  camp.system.lanes = camp.system.lanes.filter(x => (x.id || `${x.a}--${x.b}`) !== id);
+  sel = null; redraw();
 }
 
 // ── painting ──
@@ -251,7 +366,7 @@ function delSide(i) {
 function renderEntities() {
   $('formations').innerHTML = camp.formations.map(f =>
     `<div class="ent ${sel&&sel.id===f.id?'sel':''}" onclick="sel={kind:'formation',id:'${f.id}'};redraw()">
-      ${f.name} <small>[${f.sideId}] @${f.q??'?'},${f.r??'?'}</small></div>`).join('')
+      ${f.name} <small>[${f.sideId}] @${f.nodeId ? '⛁'+f.nodeId : (f.q??'?')+','+(f.r??'?')}</small></div>`).join('')
     || '<small>(none — use the + Unit tool)</small>';
   $('facilities').innerHTML = camp.facilities.map(f =>
     `<div class="ent ${sel&&sel.id===f.id?'sel':''}" onclick="sel={kind:'facility',id:'${f.id}'};redraw()">
@@ -275,6 +390,31 @@ function renderInspector() {
           <label><input type="checkbox" ${obj.fake?'checked':''} onchange="setObj(${sel.q},${sel.r},'fake',this.checked)"> fake</label>
           <button class="danger" onclick="delObj(${sel.q},${sel.r})">remove objective</button></div>`
       : '<small>No objective here. Use the Objective tool to add one.</small>');
+    return;
+  }
+  if (sel.kind === 'node') {
+    const n = camp.system.nodes.find(x => x.id === sel.id);
+    if (!n) { box.innerHTML = '<small>Selection gone.</small>'; return; }
+    const obj = n.objective;
+    box.innerHTML = `<div class="row"><label>node</label><input class="m" value="${n.name}" oninput="setNode('${n.id}','name',this.value)"></div>
+      <div class="row"><label>type</label><select onchange="setNode('${n.id}','type',this.value)">
+        ${SCHEMA.nodeTypes.map(x=>`<option${n.type===x?' selected':''}>${x}</option>`).join('')}</select></div>
+      <div class="row"><label>planet→theater</label><select onchange="setNode('${n.id}','theaterId',this.value)">
+        <option value="">none</option>${camp.theaters.map(t=>`<option value="${t.id}"${n.theaterId===t.id?' selected':''}>${t.name}</option>`).join('')}</select></div>
+      <div class="row"><label><input type="checkbox" ${n.secret?'checked':''} onchange="setNode('${n.id}','secret',this.checked)"> secret (pirate point)</label></div>
+      <div class="row"><label><input type="checkbox" ${obj?'checked':''} onchange="setNodeObj('${n.id}','on',this.checked)"> scores VP/day</label>` +
+      (obj ? `<input class="s" value="${obj.vpPerDay}" oninput="setNodeObj('${n.id}','vpPerDay',+this.value)">
+        owner <select onchange="setNodeObj('${n.id}','ownerSideId',this.value)"><option value="">none</option>
+        ${camp.sides.map(s=>`<option value="${s.id}"${obj.ownerSideId===s.id?' selected':''}>${s.name}</option>`).join('')}</select>` : '') +
+      `</div><div class="row"><button class="danger" onclick="delNode('${n.id}')">delete node</button></div>`;
+    return;
+  }
+  if (sel.kind === 'lane') {
+    const l = camp.system.lanes.find(x => (x.id || `${x.a}--${x.b}`) === sel.id);
+    if (!l) { box.innerHTML = '<small>Selection gone.</small>'; return; }
+    box.innerHTML = `<div class="kv">Lane <b>${l.a} ↔ ${l.b}</b></div>
+      <div class="row"><label>distance AU</label><input class="s" value="${l.distanceAU}" oninput="setLane('${sel.id}',this.value)"></div>
+      <div class="row"><button class="danger" onclick="delLane('${sel.id}')">delete lane</button></div>`;
     return;
   }
   const arr = sel.kind === 'formation' ? camp.formations : camp.facilities;
@@ -363,11 +503,13 @@ function validate() {
 }
 
 // ── file ops ──
-function newCampaign() { camp = blankCampaign(); activeSide = camp.sides[0].id; sel = null; idSeq = 0; redraw(); }
+function newCampaign() { camp = blankCampaign(); activeSide = camp.sides[0].id; sel = null; idSeq = 0; sysPos = {}; linkFrom = null; if (mode === 'system') seedSysPositions(); redraw(); }
 async function loadTemplate() {
   camp = await (await fetch('/api/editor/template')).json();
   if (!camp.system) camp.system = { nodes: [], lanes: [] };
-  activeSide = camp.sides[0].id; sel = null; bumpSeq(); redraw();
+  activeSide = camp.sides[0].id; sel = null; sysPos = {}; linkFrom = null; bumpSeq();
+  if (mode === 'system') seedSysPositions();
+  redraw();
 }
 function bumpSeq() {
   const ids = [...camp.formations, ...camp.facilities].map(e => e.id);
@@ -377,7 +519,8 @@ function doImport() {
   const txt = prompt('Paste campaign JSON:');
   if (!txt) return;
   try { camp = JSON.parse(txt); if (!camp.system) camp.system = { nodes: [], lanes: [] };
-    activeSide = camp.sides[0].id; sel = null; bumpSeq(); redraw(); }
+    activeSide = camp.sides[0].id; sel = null; sysPos = {}; linkFrom = null; bumpSeq();
+    if (mode === 'system') seedSysPositions(); redraw(); }
   catch (e) { alert('Invalid JSON: ' + e.message); }
 }
 function doExport() {

@@ -172,6 +172,23 @@
     return { cols: t.width, rows: t.height, hexes, markers };
   };
 
+  // ── EDITOR: the authoring system graph → the sysmap renderer model ────────
+  window.buildEditorSysModel = function (camp) {
+    const sys = camp.system || { nodes: [], lanes: [] };
+    const sc = {}; (camp.sides || []).forEach((s, i) => { sc[s.id] = i === 0 ? 'blue' : i === 1 ? 'red' : s.id; });
+    const vessels = (camp.formations || [])
+      .filter(f => f.nodeId)
+      .map(f => ({ id: f.id, side: sc[f.sideId] || f.sideId, label: f.name, nodeId: f.nodeId,
+        title: `${f.name} [${f.sideId}]` }));
+    return {
+      nodes: (sys.nodes || []).map(n => ({ id: n.id, type: n.type, name: n.name,
+        secret: n.secret, objective: n.objective })),
+      lanes: (sys.lanes || []).map(l => ({ id: l.id || (l.a + '--' + l.b),
+        a: l.a, b: l.b, distanceAU: l.distanceAU })),
+      vessels, contacts: [], flashes: [],
+    };
+  };
+
   window.buildTruthSysModel = function (t) {
     const nodes = Object.values(t.system.nodes);
     if (!nodes.length) return null;

@@ -49,8 +49,10 @@ The loader validates on start and reports any mistakes in plain language
 Run yours with `npm run dev -- mycampaign.json --log mywar.jsonl`.
 Or use the **visual editor at `/editor`**: paint terrain/infra/objectives on the map,
 drop units and facilities, set sides and victory conditions, and download a validated
-`campaign.json` (live error-checking as you build). DEEP SKY system graphs, satellites,
-orders and markers round-trip through the editor and can be hand-tuned in the file.
+`campaign.json` (live error-checking as you build). A **System (DEEP SKY) view** in the same editor builds the node-and-lane graph visually
+— drop nodes by type, draw lanes (with AU distances), place vessels, set secret pirate
+points and node objectives. Satellites, orders and markers round-trip and can be
+hand-tuned in the file.
 
 ## Test
 
