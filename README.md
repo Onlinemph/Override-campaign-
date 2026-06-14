@@ -5,6 +5,10 @@ Implements the **OVERRIDE** campaign rules (Module 0), with **SKYWATCH** (Module
 **DEEP SKY** (Module 2) to follow. The four documents in `docs/` are the complete
 requirements; `DECISIONS.md` logs every judgment call.
 
+**New here?** Start with the **[beginner tutorial](docs/TUTORIAL.md)** — it assumes no
+knowledge of BattleTech, double-blind play, or this tool, and walks from "what is this"
+through running your first session.
+
 ## Architecture (spec §0)
 
 Event-sourced fog-of-war engine:
