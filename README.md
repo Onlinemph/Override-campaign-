@@ -100,8 +100,12 @@ The five spec milestones are complete. Beyond the spec, toward real game nights:
 - [x] **M6 — Campaign-ready**: JSONL persistence with resume-on-restart (`--log`);
       VP scoring (objective control + daily accrual) and endings (VP threshold /
       wall-clock); per-side access tokens on player links; scroll/drag map zoom & pan.
-- [ ] **M7 — Fires & logistics**: artillery fire missions + counter-battery, the spotter
-      loop, engineers/minefields, convoy SP pipelines & interdiction, path-based supply.
+- [x] **M7 — Fires & logistics**: artillery FIRE missions (Quick-Resolved out of battle)
+      with the spotter loop and counter-battery auto-reveal (the §6.5 chaff trick falls
+      out); the engineer toolkit (lay/breach mines, demolish/build bridges) and minefields
+      that bite movers; path-based supply lines with road/off-road cost, SP draw from
+      depots & convoys, the RESUPPLY pipeline, and interdiction that starves a cut-off
+      spearhead. *Acceptance: the chaff trick + a starved offensive, both byte-exact on replay.*
 - [ ] **M8 — Full combined-arms kit**: combat drops, orbital standby, escort/SAR/tanker
       missions, transponders & false flags, blockades — toward the §12.3 Cavanaugh frame.
 

@@ -95,6 +95,7 @@ export function buildCampaign(j: FixtureJson, source = 'campaign'): TruthState {
       sns: f.sns, emcon: f.emcon ?? 'PASSIVE',
       alertState: f.alertState,
       posture: f.posture, rdy: f.rdy, facing: f.facing,
+      carriedSp: f.carriedSp,
     });
     if (f.flight || f.airPos) {
       formation.air = { phase: f.airPos ? 'ENROUTE' : 'GROUNDED', speed: 'CRUISE',

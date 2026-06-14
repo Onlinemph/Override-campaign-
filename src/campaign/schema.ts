@@ -156,6 +156,7 @@ export function validateCampaign(j: any): string[] {
     if (f.posture !== undefined && !oneOf(f.posture, POSTURES)) err(`${at}: bad posture "${f.posture}"`);
     if (f.alertState !== undefined && !oneOf(f.alertState, ALERTS)) err(`${at}: bad alertState "${f.alertState}"`);
     if (f.rdy !== undefined && (!isNum(f.rdy) || f.rdy < 0 || f.rdy > 10)) err(`${at}: rdy must be 0–10`);
+    if (f.carriedSp !== undefined && (!isNum(f.carriedSp) || f.carriedSp < 0)) err(`${at}: carriedSp must be ≥ 0`);
     if (!Array.isArray(f.units) || f.units.length === 0) err(`${at}: needs at least one unit`);
     (f.units ?? []).forEach((u: Json, k: number) => {
       const au = `${at}.units[${k}]`;

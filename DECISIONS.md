@@ -357,3 +357,54 @@ approach broken by the picket's sweep, and a MATCHED classification at ~2.1 burn
 6. **Audit viewer** replays the log server-side (`replay(events[0..n])`) per request —
    the event-sourced core makes "truth at any moment" a pure function, which IS the
    victory-lap feature. No state is kept; the log remains the only authority.
+
+---
+
+## D-013 ✅ Milestone 7 (Fires & Logistics) interpretive calls
+Roadmap acceptance: the §6.5 chaff trick + an offensive starved by a cut supply line.
+Both pass through the full engine (`test/acceptance/m7-fires-logistics.test.ts`).
+
+1. **`FIRE` is a new GroundOrderKind** (schema extension, like MOVE_CAUTIOUS in D-006):
+   a *standing* fire mission. The §4.1 orders table doesn't name an artillery order, but
+   §9.1 says "a battery with a fire order"; a persistent order matches "once per contact
+   turn / once per pulse at harassment rate" better than a one-shot.
+2. **Artillery Quick Resolution** (core §9.1): when no battle is running the engine
+   resolves fires itself — `2d6 + floor(BR/5) + intel penalty ≥ HIT_TN(6)`, damage by
+   stepping a target unit's damage state (soft targets double, big margins step harder).
+   This is the §7.3/§9.1 "Quick Resolution" path; set-piece batteries still go to the
+   table (the engine freezes during engagements, so FIRE only auto-resolves out of
+   battle). HIT_TN/BIG_MARGIN are ⚙ house-rule knobs in `rules.ts FIRES`.
+3. **Counter-battery = CONTACT, not LOCK.** §9.2 says the firing hex is revealed "at
+   CONTACT level"; §6.5's flavor says "confident, wrong LOCK." The rule (§9.2) wins —
+   CONTACT is the floor; normal detection may then climb it (a unit that just fired is
+   SIG −3, often trivially LOCKed anyway). Counter-battery reach = an enemy whose
+   *sensors or own tube range* covers the firing hex (a battery can range counter-fire
+   even without radar), independent of normal sensor range — "counter-battery radar is a
+   thing."
+4. **The spotter loop** (§9.1): any friendly formation with clear LOS to the target hex
+   removes the intel penalty (forward observer), checked via the same hex-line LOS as
+   ground visual detection.
+5. **Minefield bite** (§9.3): an enemy that *enters* (transient.moved ≠ NONE) a mined hex
+   rolls 2d6 ≥7 to take a hit (soft doubles); your own mines never bite you; the bite
+   reveals the field via a GM note + the damage event. The "Quick Resolution at BR 3" is
+   abstracted to this roll — modest, GM-overridable. Minefields persist after biting.
+6. **Engineer toolkit** is ENGINEER-tag-gated; LAY_MINES 1 pulse, BREACH 2, BUILD_BRIDGE
+   4 (engPulseAcc accumulator, event-sourced); DEMOLISH is instant and loud (strips
+   BRIDGE/RAIL, flags the engineer FIRED for the −3 SIG noise per §9.3).
+7. **Path-based supply** (core §10.2) replaces M2's straight-line test (supersedes
+   D-009.12): a Dijkstra line of friendly-controlled hexes, road/rail cost 1, off-road 2
+   (the "½ off-road" rule → budget 30), routed around hexes holding a live enemy
+   formation (interdiction cuts the line, core §10.3). "Friendly-controlled" is
+   simplified to "not enemy-occupied and passable"; a fuller ZOC/control model is
+   deferred.
+8. **SP economy**: a stocked DEPOT/SPACEPORT/FACTORY, or a convoy carrying SP, is a
+   supply source. Daily, each formation draws 1 SP (×2 if it fought within the last day,
+   core §10.1) from the nearest reachable source; a dry source or a cut line ⇒ out of
+   supply ⇒ −1 RDY/day. A convoy can't ration itself from its own delivery cargo.
+   `carriedSp` is a new Formation field; convoys are mobile depots.
+9. **RESUPPLY** (the convoy pipeline): a convoy co-located with a friendly depot pours
+   its `carriedSp` into the farm (SP_CHANGED) and completes — moving SP from rear to
+   front is now a real, interdiction-vulnerable operation.
+10. **Deferred to a later logistics pass**: cruise-missile fires, ammo depletion from
+    sustained fire missions, rearm/repair SP spend (§10.4 beyond M2 salvage), the
+    factory +2 SP/day generation, and decoy/net-intrusion (§6.5/§11).

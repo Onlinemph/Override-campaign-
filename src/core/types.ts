@@ -132,6 +132,7 @@ export interface Formation {
   digInPulseAcc?: number;         // accumulates pulses toward DUG_IN (core §4.1)
   engPulseAcc?: number;           // ext (M7): engineer task progress in pulses (core §9.3)
   lastBattleTick?: Tick;          // a fighting day costs ×2 supply (core §10.1)
+  carriedSp?: number;             // ext (M7): a supply convoy's onboard SP (core §10.1)
   // ext (M4): space bookkeeping (DEEP SKY) — present on vessels in transit
   space?: {
     burnStartTick?: Tick | null;    // emitting since (1G+ drives are automatic after lag)

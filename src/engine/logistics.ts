@@ -5,10 +5,11 @@
  * effects (SP draw, out-of-supply attrition) are driven off each formation's
  * `lastSuppliedTick` so they fire correctly regardless of clock-compression step size.
  */
-import { CLOCK, COMBAT, RDY, SUPPLY } from '../rules.js';
-import type { Facility, Formation, GroundPos, TruthState } from '../core/types.js';
+import { CLOCK, COMBAT, RDY, SUPPLY, TERRAIN } from '../rules.js';
+import type { Facility, Formation, GroundPos, Id, TruthState } from '../core/types.js';
+import { hexKey } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
-import { hexDistance } from '../hex/axial.js';
+import { neighbors } from '../hex/axial.js';
 
 function asHex(pos: { kind: string }): GroundPos | null {
   return pos.kind === 'ground' ? (pos as GroundPos) : null;
@@ -18,19 +19,74 @@ function isEngineer(s: TruthState, f: Formation): boolean {
   return f.unitIds.some(id => s.units[id]?.tags.includes('ENGINEER'));
 }
 
-/** A stocked friendly depot within straight-line supply range (core §10.2, simplified). */
-function inSupplyRange(s: TruthState, f: Formation): boolean {
+/** A stocked friendly supply source (depot/spaceport/factory, or a convoy with SP). */
+interface Source { kind: 'facility' | 'convoy'; id: Id; q: number; r: number; sp: number }
+function sourcesFor(s: TruthState, sideId: Id, theaterId: Id): Source[] {
+  const out: Source[] = [];
+  for (const fac of Object.values(s.facilities)) {
+    if (fac.sideId !== sideId || fac.pos.kind !== 'ground') continue;
+    if ((fac.pos as GroundPos).theaterId !== theaterId) continue;
+    const depot = fac.tags.includes('DEPOT') || fac.tags.includes('SPACEPORT') || fac.tags.includes('FACTORY');
+    if (depot && fac.supplyPoints > 0) {
+      out.push({ kind: 'facility', id: fac.id, q: fac.pos.q, r: fac.pos.r, sp: fac.supplyPoints });
+    }
+  }
+  for (const f of Object.values(s.formations)) {
+    if (f.destroyed || f.sideId !== sideId || f.pos.kind !== 'ground') continue;
+    if ((f.pos as GroundPos).theaterId !== theaterId) continue;
+    if ((f.carriedSp ?? 0) > 0) {
+      out.push({ kind: 'convoy', id: f.id, q: f.pos.q, r: f.pos.r, sp: f.carriedSp! });
+    }
+  }
+  return out;
+}
+
+/**
+ * Path-based supply (core §10.2): a line of friendly-controlled hexes ≤30 cost connects
+ * the formation to a stocked source. Roads cost 1, off-road 2 ("½ off-road"); a hex
+ * holding a live enemy formation cuts the line (interdiction). Returns the nearest
+ * reachable source, or null.
+ */
+function reachableSource(s: TruthState, f: Formation): Source | null {
   const here = asHex(f.pos);
-  if (!here) return false;
-  const depots = Object.values(s.facilities).filter((fac: Facility) =>
-    fac.sideId === f.sideId && fac.supplyPoints > 0 &&
-    (fac.tags.includes('DEPOT') || fac.tags.includes('SPACEPORT')) &&
-    fac.pos.kind === 'ground');
-  return depots.some(d => {
-    const dp = d.pos as GroundPos;
-    return dp.theaterId === here.theaterId &&
-      hexDistance(dp, here) <= SUPPLY.SUPPLY_LINE_MAX_HEXES;
-  });
+  if (!here) return null;
+  const theater = s.theaters[here.theaterId];
+  if (!theater) return null;
+  // a convoy can't ration itself from its own delivery cargo
+  const sources = sourcesFor(s, f.sideId, here.theaterId).filter(src => src.id !== f.id);
+  if (sources.length === 0) return null;
+  const srcAt: Record<string, Source> = {};
+  for (const src of sources) srcAt[hexKey(src.q, src.r)] = src;
+
+  const enemy = new Set<string>();
+  for (const o of Object.values(s.formations)) {
+    if (o.destroyed || o.sideId === f.sideId || o.pos.kind !== 'ground') continue;
+    if ((o.pos as GroundPos).theaterId !== here.theaterId) continue;
+    enemy.add(hexKey(o.pos.q, o.pos.r));
+  }
+
+  // Dijkstra outward from the formation; the goal is the nearest source hex
+  const cost: Record<string, number> = { [hexKey(here.q, here.r)]: 0 };
+  const open = new Set<string>([hexKey(here.q, here.r)]);
+  while (open.size) {
+    let cur = ''; let best = Infinity;
+    for (const k of open) if (cost[k] < best) { best = cost[k]; cur = k; }
+    open.delete(cur);
+    if (srcAt[cur]) return srcAt[cur];                 // reached a stocked source
+    if (best >= SUPPLY.SUPPLY_LINE_MAX_HEXES) continue; // out of line budget
+    const [cq, cr] = cur.split(',').map(Number);
+    for (const n of neighbors({ q: cq, r: cr })) {
+      const nk = hexKey(n.q, n.r);
+      const hex = theater.hexes[nk];
+      if (!hex || enemy.has(nk)) continue;             // off-map or interdicted
+      const row = TERRAIN[hex.terrain];
+      if (row.ompCost === null) continue;              // impassable to ground supply
+      const step = (hex.infra.includes('ROAD') || hex.infra.includes('RAIL')) ? 1 : 2;
+      const nc = best + step;
+      if (nc < (cost[nk] ?? Infinity)) { cost[nk] = nc; open.add(nk); }
+    }
+  }
+  return null;
 }
 
 export function maintenancePass(s: TruthState, dt: number, emit: (e: GameEvent) => void): void {
@@ -65,10 +121,38 @@ export function maintenancePass(s: TruthState, dt: number, emit: (e: GameEvent) 
              delta: Math.round(rate * pulses), reason: 'rest' });
     }
 
+    // RESUPPLY: a convoy co-located with a friendly depot pours its SP into the farm
+    // (the convoy pipeline — core §10.1). Runs immediately, not on a daily anchor.
+    if (order && !order.completed && order.kind === 'RESUPPLY' && (f.carriedSp ?? 0) > 0
+        && f.pos.kind === 'ground') {
+      const here = f.pos as GroundPos;
+      const depot = Object.values(s.facilities).find(fac => fac.sideId === f.sideId &&
+        fac.pos.kind === 'ground' && (fac.pos as GroundPos).theaterId === here.theaterId &&
+        fac.pos.q === here.q && fac.pos.r === here.r &&
+        (fac.tags.includes('DEPOT') || fac.tags.includes('SPACEPORT') || fac.tags.includes('FACTORY')));
+      if (depot) {
+        emit({ type: 'SP_CHANGED', facilityId: depot.id, delta: f.carriedSp!, reason: `convoy ${f.name} delivery` });
+        emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id, patch: { carriedSp: 0 } });
+        emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
+      }
+    }
+
     // daily supply tick — anchored on lastSuppliedTick so step size doesn't matter
     const sinceSupply = s.tick - f.supply.lastSuppliedTick;
     if (sinceSupply >= CLOCK.TICKS_PER_DAY) {
-      const supplied = inSupplyRange(s, f);
+      const src = reachableSource(s, f);
+      // a fighting/forced-marching day costs double (core §10.1)
+      const fought = f.lastBattleTick !== undefined && s.tick - f.lastBattleTick < CLOCK.TICKS_PER_DAY;
+      const demand = SUPPLY.SP_PER_FORMATION_PER_DAY * (fought ? SUPPLY.COMBAT_OR_FORCED_MARCH_MULT : 1);
+      const supplied = !!src && src.sp >= demand;
+      if (supplied) {
+        if (src!.kind === 'facility') {
+          emit({ type: 'SP_CHANGED', facilityId: src!.id, delta: -demand, reason: `supplies ${f.name}` });
+        } else {
+          emit({ type: 'FORMATION_BOOKKEEPING', formationId: src!.id,
+                 patch: { carriedSp: src!.sp - demand } });
+        }
+      }
       emit({ type: 'SUPPLY_CHANGED', formationId: f.id, inSupply: supplied,
              lastSuppliedTick: f.supply.lastSuppliedTick + CLOCK.TICKS_PER_DAY });
       if (!supplied) {

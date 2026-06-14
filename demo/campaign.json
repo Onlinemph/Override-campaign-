@@ -71,7 +71,7 @@
         { "name": "Castle 4", "model": "Archer ARC-2R", "class": "MECH" }
       ] },
     { "id": "blue-convoy-1", "sideId": "blue", "name": "Supply Convoy Mule",
-      "theaterId": "cavanaugh", "q": 4, "r": 4, "omp": 3, "sigBase": 5,
+      "theaterId": "cavanaugh", "q": 4, "r": 4, "omp": 3, "sigBase": 5, "carriedSp": 30,
       "units": [
         { "name": "Mule 1", "model": "Flatbed Truck", "class": "SUPPORT", "tags": ["WHEELED"] },
         { "name": "Mule 2", "model": "Flatbed Truck", "class": "SUPPORT", "tags": ["WHEELED"] },
