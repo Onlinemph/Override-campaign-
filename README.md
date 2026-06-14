@@ -47,7 +47,10 @@ conditions, opening orders) is documented in **[docs/CAMPAIGN_FORMAT.md](docs/CA
 The loader validates on start and reports any mistakes in plain language
 (`formation "f1": hex 99,1 is outside theater "t1" (8×8)`), so authoring is self-serve.
 Run yours with `npm run dev -- mycampaign.json --log mywar.jsonl`.
-*(A point-and-click campaign editor is the next milestone, built on this validated format.)*
+Or use the **visual editor at `/editor`**: paint terrain/infra/objectives on the map,
+drop units and facilities, set sides and victory conditions, and download a validated
+`campaign.json` (live error-checking as you build). DEEP SKY system graphs, satellites,
+orders and markers round-trip through the editor and can be hand-tuned in the file.
 
 ## Test
 

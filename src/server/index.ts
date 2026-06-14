@@ -18,6 +18,11 @@ import { project } from '../projection/project.js';
 import { loadCampaignFixture } from '../demo.js';
 import { buildMul } from '../handoff/mul.js';
 import { hashPick } from '../core/rng.js';
+import {
+  validateCampaign, TERRAINS, INFRA, NODE_TYPES, UNIT_CLASSES, EMCONS, POSTURES,
+  ALERTS, DAMAGE_STATES, AMMO_STATES, WEATHERS, MARKER_KINDS, GROUND_ORDERS,
+  AIR_ORDERS, SPACE_ORDERS, TRIGGER_WHENS,
+} from '../campaign/schema.js';
 import type { Contact, ContactReport, GroundPos, Order } from '../core/types.js';
 
 /**
@@ -96,6 +101,7 @@ const server = createServer(async (req, res) => {
     // pages & static assets
     if (path === '/' || path === '/gm') return page(res, 'gm.html');
     if (path === '/audit') return page(res, 'audit.html');
+    if (path === '/editor') return page(res, 'editor.html');
     // player page: /player/:sideId/:token (token validated client-side calls below)
     const playerPage = path.match(/^\/player\/([^/]+)(?:\/([^/]+))?$/);
     if (playerPage) {
@@ -306,6 +312,26 @@ const server = createServer(async (req, res) => {
       const result = campaign.issueOrder(order);
       if (result.ok) broadcast();
       return json(res, result.ok ? 200 : 400, result);
+    }
+
+    // ── campaign editor: shared vocab, live validation, a starting template ──
+    if (path === '/api/schema') {
+      return json(res, 200, {
+        terrains: TERRAINS, infra: INFRA, nodeTypes: NODE_TYPES, unitClasses: UNIT_CLASSES,
+        emcons: EMCONS, postures: POSTURES, alerts: ALERTS, damage: DAMAGE_STATES,
+        ammo: AMMO_STATES, weathers: WEATHERS, markerKinds: MARKER_KINDS,
+        groundOrders: GROUND_ORDERS, airOrders: AIR_ORDERS, spaceOrders: SPACE_ORDERS,
+        triggerWhens: TRIGGER_WHENS,
+      });
+    }
+    if (path === '/api/validate' && req.method === 'POST') {
+      const body = await readBody(req);
+      return json(res, 200, { problems: validateCampaign(body) });
+    }
+    if (path === '/api/editor/template') {
+      // the shipped demo, as a starting point to remix
+      res.writeHead(200, { 'content-type': 'application/json' });
+      return res.end(readFileSync(join(here, '../../demo/campaign.json')));
     }
 
     // GM: the shareable per-side player links (token included)

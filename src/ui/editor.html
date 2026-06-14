@@ -1,0 +1,398 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>OVERRIDE — Campaign Editor</title>
+<link rel="stylesheet" href="/ui/style.css">
+<style>
+  .tool { margin: 1px 3px 1px 0; }
+  .tool.active { background: #2f4f78; border-color: #5aa9ff; color: #fff; }
+  .row { display: flex; gap: 6px; align-items: center; margin: 3px 0; flex-wrap: wrap; }
+  .row label { color: var(--dim); min-width: 64px; }
+  input.s { width: 56px; } input.m { width: 110px; }
+  .ent { border-bottom: 1px dotted var(--line); padding: 3px 0; cursor: pointer; }
+  .ent:hover { color: #fff; } .ent.sel { color: var(--accent); }
+  .ok { color: var(--good); } .bad { color: var(--bad); }
+  .swatch { display:inline-block; width:11px; height:11px; border:1px solid #333; vertical-align:middle; margin-right:4px; }
+</style>
+</head>
+<body>
+<h1>OVERRIDE — Campaign Editor
+  <small style="float:right"><a href="/gm">← GM screen</a></small></h1>
+
+<div class="bar">
+  <button onclick="newCampaign()">New</button>
+  <button onclick="loadTemplate()">Start from demo</button>
+  <button onclick="doImport()">Import JSON…</button>
+  <button onclick="doExport()">⤓ Download campaign.json</button>
+  <button onclick="copyJson()">Copy JSON</button>
+  <span id="valid" class="kv"></span>
+</div>
+
+<div class="cols">
+  <div class="col" style="flex:1.9;min-width:520px">
+    <div class="panel">
+      <h2>Map <small id="map-sub"></small></h2>
+      <div class="row">
+        <b class="kv">Tool:</b>
+        <button class="tool" data-tool="select" onclick="setTool('select')">Select</button>
+        <button class="tool" data-tool="terrain" onclick="setTool('terrain')">Terrain</button>
+        <select id="brush-terrain" onchange="setTool('terrain')"></select>
+        <button class="tool" data-tool="infra" onclick="setTool('infra')">Infra</button>
+        <select id="brush-infra" onchange="setTool('infra')"></select>
+        <button class="tool" data-tool="objective" onclick="setTool('objective')">Objective</button>
+        <button class="tool" data-tool="unit" onclick="setTool('unit')">+ Unit</button>
+        <button class="tool" data-tool="facility" onclick="setTool('facility')">+ Facility</button>
+        <button class="tool" data-tool="erase" onclick="setTool('erase')">Erase</button>
+      </div>
+      <div class="row"><b class="kv">Active side:</b> <span id="active-side"></span></div>
+      <div class="mapwrap"><svg id="map" class="map"></svg></div>
+      <div class="maphint">scroll zoom · drag pan · click a hex to apply the tool</div>
+    </div>
+    <div class="panel"><h2>Live validation</h2><pre id="problems" style="max-height:20vh"></pre></div>
+  </div>
+
+  <div class="col">
+    <div class="panel">
+      <h2>Campaign</h2>
+      <div class="row"><label>name</label><input id="c-name" class="m" oninput="meta()"></div>
+      <div class="row"><label>seed</label><input id="c-seed" class="m" oninput="meta()"></div>
+      <div class="row"><label>weather</label><select id="c-weather" onchange="meta()"></select>
+        <label>VP win</label><input id="c-vp" class="s" oninput="meta()">
+        <label>end tick</label><input id="c-end" class="s" oninput="meta()"></div>
+      <h2 style="margin-top:8px">Theater</h2>
+      <div class="row"><label>name</label><input id="t-name" class="m" oninput="theaterMeta()"></div>
+      <div class="row"><label>size</label><input id="t-w" class="s" oninput="theaterMeta()"> ×
+        <input id="t-h" class="s" oninput="theaterMeta()">
+        <label>default</label><select id="t-terrain" onchange="theaterMeta()"></select></div>
+    </div>
+    <div class="panel">
+      <h2>Sides</h2>
+      <div id="sides"></div>
+      <div class="row"><input id="new-side" class="m" placeholder="new side name">
+        <button onclick="addSide()">+ side</button></div>
+    </div>
+    <div class="panel"><h2>Selection</h2><div id="inspector"><small>Nothing selected. Pick the Select
+      tool and click a hex, unit, or facility.</small></div></div>
+  </div>
+
+  <div class="col">
+    <div class="panel"><h2>Formations</h2><div id="formations"></div></div>
+    <div class="panel"><h2>Facilities</h2><div id="facilities"></div></div>
+    <div class="panel"><h2>Notes</h2><small>The map editor covers terrain, forces,
+      facilities, objectives & victory. The DEEP SKY system graph, satellites, orders and
+      markers are preserved from an imported file and round-trip on export — hand-edit
+      those sections (see docs/CAMPAIGN_FORMAT.md) or import the demo to start with them.</small></div>
+  </div>
+</div>
+
+<script src="/ui/hexmap.js"></script>
+<script src="/ui/mapmodel.js"></script>
+<script src="/ui/panzoom.js"></script>
+<script>
+let SCHEMA = null, camp = null, tool = 'select', activeSide = null, sel = null, idSeq = 0;
+const $ = id => document.getElementById(id);
+attachPanZoom($('map'));
+
+function blankCampaign() {
+  return {
+    seed: 'CAMPAIGN-1',
+    config: { name: 'New Campaign', dawnTick: 60, duskTick: 180, weather: 'CLEAR' },
+    theaters: [{ id: 'theater', name: 'Theater', width: 20, height: 14,
+      defaultTerrain: 'CLEAR', overrides: [] }],
+    sides: [{ id: 'blue', name: 'Blue' }, { id: 'red', name: 'Red' }],
+    facilities: [], satellites: [], formations: [], commandNodes: {}, orders: [],
+    system: { nodes: [], lanes: [] }, markers: [],
+  };
+}
+function theater() { return camp.theaters[0]; }
+function sideColorMap() {
+  const m = {}; camp.sides.forEach((s, i) => { m[s.id] = i === 0 ? 'blue' : i === 1 ? 'red' : s.id; });
+  return m;
+}
+function genId(prefix) { return `${prefix}-${++idSeq}`; }
+function fill(sel, arr, cur) {
+  sel.innerHTML = arr.map(v => `<option${v === cur ? ' selected' : ''}>${v}</option>`).join('');
+}
+
+async function boot() {
+  SCHEMA = await (await fetch('/api/schema')).json();
+  fill($('brush-terrain'), SCHEMA.terrains, 'WOODS');
+  fill($('brush-infra'), SCHEMA.infra, 'ROAD');
+  fill($('c-weather'), SCHEMA.weathers, 'CLEAR');
+  fill($('t-terrain'), SCHEMA.terrains, 'CLEAR');
+  camp = blankCampaign();
+  activeSide = camp.sides[0].id;
+  setTool('select');
+  redraw();
+}
+
+function setTool(t) {
+  tool = t;
+  document.querySelectorAll('.tool').forEach(b =>
+    b.classList.toggle('active', b.dataset.tool === t));
+}
+
+function redraw() {
+  // sync meta inputs
+  $('c-name').value = camp.config.name; $('c-seed').value = camp.seed;
+  fill($('c-weather'), SCHEMA.weathers, camp.config.weather || 'CLEAR');
+  $('c-vp').value = camp.config.vpThreshold ?? ''; $('c-end').value = camp.config.endTick ?? '';
+  const t = theater();
+  $('t-name').value = t.name; $('t-w').value = t.width; $('t-h').value = t.height;
+  fill($('t-terrain'), SCHEMA.terrains, t.defaultTerrain);
+  $('map-sub').textContent = `— ${t.name} (${t.width}×${t.height})`;
+
+  // active side chips
+  $('active-side').innerHTML = camp.sides.map(s =>
+    `<button class="tool ${s.id === activeSide ? 'active' : ''}" onclick="activeSide='${s.id}';redraw()">${s.name}</button>`).join('');
+
+  // map
+  const model = buildEditorHexModel(camp, t.id, sideColorMap());
+  if (sel && sel.kind === 'hex') model.highlight = [{ q: sel.q, r: sel.r }];
+  renderHexMap($('map'), model, { onHexClick: paint, showCoords: true });
+
+  renderSides(); renderEntities(); renderInspector(); validate();
+}
+
+// ── painting ──
+function ovFor(q, r) {
+  const t = theater();
+  let o = t.overrides.find(x => x.q === q && x.r === r);
+  if (!o) { o = { q, r }; t.overrides.push(o); }
+  return o;
+}
+function cleanOv() {
+  const t = theater();
+  t.overrides = t.overrides.filter(o =>
+    o.terrain !== undefined || (o.infra && o.infra.length) || o.objective);
+}
+function paint(q, r) {
+  if (tool === 'terrain') { ovFor(q, r).terrain = $('brush-terrain').value; }
+  else if (tool === 'infra') {
+    const o = ovFor(q, r); o.infra = o.infra || [];
+    const tag = $('brush-infra').value;
+    o.infra.includes(tag) ? o.infra = o.infra.filter(x => x !== tag) : o.infra.push(tag);
+  }
+  else if (tool === 'objective') {
+    const o = ovFor(q, r);
+    o.objective = o.objective || { vpPerDay: 2, hidden: false, ownerSideId: activeSide };
+    sel = { kind: 'hex', q, r };
+  }
+  else if (tool === 'erase') {
+    const t = theater(); t.overrides = t.overrides.filter(x => !(x.q === q && x.r === r));
+    camp.formations = camp.formations.filter(f => !(f.theaterId === t.id && f.q === q && f.r === r));
+    camp.facilities = camp.facilities.filter(f => !(f.theaterId === t.id && f.q === q && f.r === r));
+  }
+  else if (tool === 'unit') {
+    const id = genId(activeSide + '-f');
+    camp.formations.push({ id, sideId: activeSide, name: `Formation ${idSeq}`,
+      theaterId: theater().id, q, r, omp: 4, sigBase: 7, emcon: 'PASSIVE', posture: 'NONE', rdy: 10,
+      units: [{ name: 'Unit 1', model: 'GEN-1', class: 'MECH', tags: [] }] });
+    sel = { kind: 'formation', id };
+  }
+  else if (tool === 'facility') {
+    const id = genId(activeSide + '-fac');
+    camp.facilities.push({ id, sideId: activeSide, name: `Facility ${idSeq}`,
+      theaterId: theater().id, q, r, tags: ['DEPOT'], supplyPoints: 20, fuelFarmTons: 0,
+      isCommandNode: true });
+    sel = { kind: 'facility', id };
+  }
+  else { sel = { kind: 'hex', q, r }; }
+  cleanOv();
+  redraw();
+}
+
+// ── forms ──
+function meta() {
+  camp.config.name = $('c-name').value; camp.seed = $('c-seed').value;
+  camp.config.weather = $('c-weather').value;
+  const vp = $('c-vp').value, end = $('c-end').value;
+  if (vp === '') delete camp.config.vpThreshold; else camp.config.vpThreshold = +vp;
+  if (end === '') delete camp.config.endTick; else camp.config.endTick = +end;
+  validate();
+}
+function theaterMeta() {
+  const t = theater();
+  t.name = $('t-name').value; t.width = +$('t-w').value || 1; t.height = +$('t-h').value || 1;
+  t.defaultTerrain = $('t-terrain').value;
+  redraw();
+}
+
+function renderSides() {
+  $('sides').innerHTML = camp.sides.map((s, i) =>
+    `<div class="row"><span class="swatch" style="background:${i===0?'#5aa9ff':i===1?'#ff6b5e':'#ffd75e'}"></span>
+     <input class="m" value="${s.name}" oninput="camp.sides[${i}].name=this.value;validate()">
+     <input class="s" value="${s.id}" title="id" oninput="renameSide(${i},this.value)">
+     VP <input class="s" value="${s.vp ?? 0}" oninput="camp.sides[${i}].vp=+this.value||0">
+     <button class="danger" onclick="delSide(${i})">✕</button></div>`).join('');
+}
+function renameSide(i, newId) {
+  const old = camp.sides[i].id; camp.sides[i].id = newId;
+  camp.formations.forEach(f => { if (f.sideId === old) f.sideId = newId; });
+  camp.facilities.forEach(f => { if (f.sideId === old) f.sideId = newId; });
+  if (activeSide === old) activeSide = newId;
+}
+function addSide() {
+  const name = $('new-side').value.trim(); if (!name) return;
+  camp.sides.push({ id: name.toLowerCase().replace(/\W+/g, '-'), name, vp: 0 });
+  $('new-side').value = ''; redraw();
+}
+function delSide(i) {
+  const id = camp.sides[i].id;
+  if (camp.formations.some(f => f.sideId === id) || camp.facilities.some(f => f.sideId === id)) {
+    if (!confirm('That side still owns forces/facilities. Delete anyway?')) return;
+  }
+  camp.sides.splice(i, 1);
+  if (activeSide === id) activeSide = camp.sides[0] && camp.sides[0].id;
+  redraw();
+}
+
+function renderEntities() {
+  $('formations').innerHTML = camp.formations.map(f =>
+    `<div class="ent ${sel&&sel.id===f.id?'sel':''}" onclick="sel={kind:'formation',id:'${f.id}'};redraw()">
+      ${f.name} <small>[${f.sideId}] @${f.q??'?'},${f.r??'?'}</small></div>`).join('')
+    || '<small>(none — use the + Unit tool)</small>';
+  $('facilities').innerHTML = camp.facilities.map(f =>
+    `<div class="ent ${sel&&sel.id===f.id?'sel':''}" onclick="sel={kind:'facility',id:'${f.id}'};redraw()">
+      ${f.name} <small>[${f.sideId}] @${f.q},${f.r}</small></div>`).join('')
+    || '<small>(none — use the + Facility tool)</small>';
+}
+
+function renderInspector() {
+  const box = $('inspector');
+  if (!sel) { box.innerHTML = '<small>Nothing selected.</small>'; return; }
+  if (sel.kind === 'hex') {
+    const t = theater(); const o = t.overrides.find(x => x.q === sel.q && x.r === sel.r);
+    const obj = o && o.objective;
+    box.innerHTML = `<div class="kv">Hex <b>${sel.q},${sel.r}</b> — ${(o&&o.terrain)||t.defaultTerrain}
+      ${o&&o.infra&&o.infra.length?'['+o.infra.join(',')+']':''}</div>` +
+      (obj ? `<div class="row"><label>objective</label></div>
+        <div class="row"><label>VP/day</label><input class="s" value="${obj.vpPerDay}" oninput="setObj(${sel.q},${sel.r},'vpPerDay',+this.value)"></div>
+        <div class="row"><label>owner</label><select onchange="setObj(${sel.q},${sel.r},'ownerSideId',this.value)">
+          <option value="">none</option>${camp.sides.map(s=>`<option value="${s.id}"${obj.ownerSideId===s.id?' selected':''}>${s.name}</option>`).join('')}</select></div>
+        <div class="row"><label><input type="checkbox" ${obj.hidden?'checked':''} onchange="setObj(${sel.q},${sel.r},'hidden',this.checked)"> hidden</label>
+          <label><input type="checkbox" ${obj.fake?'checked':''} onchange="setObj(${sel.q},${sel.r},'fake',this.checked)"> fake</label>
+          <button class="danger" onclick="delObj(${sel.q},${sel.r})">remove objective</button></div>`
+      : '<small>No objective here. Use the Objective tool to add one.</small>');
+    return;
+  }
+  const arr = sel.kind === 'formation' ? camp.formations : camp.facilities;
+  const e = arr.find(x => x.id === sel.id);
+  if (!e) { box.innerHTML = '<small>Selection gone.</small>'; return; }
+  if (sel.kind === 'formation') box.innerHTML = formationForm(e);
+  else box.innerHTML = facilityForm(e);
+}
+
+function bind(id, expr) { return `oninput="(${expr})(this.value);validate()"`; }
+function setF(id, k) { const e = camp.formations.find(x => x.id === id); return v => { e[k] = v; }; }
+
+function formationForm(f) {
+  const idx = camp.formations.indexOf(f);
+  const set = `v=>{camp.formations[${idx}]`;
+  return `<div class="row"><label>name</label><input class="m" value="${f.name}" oninput="camp.formations[${idx}].name=this.value;redraw()"></div>
+    <div class="row"><label>side</label><select onchange="camp.formations[${idx}].sideId=this.value;redraw()">
+      ${camp.sides.map(s=>`<option value="${s.id}"${f.sideId===s.id?' selected':''}>${s.name}</option>`).join('')}</select></div>
+    <div class="row"><label>SIG / OMP</label><input class="s" value="${f.sigBase}" oninput="camp.formations[${idx}].sigBase=+this.value;validate()">
+      <input class="s" value="${f.omp}" oninput="camp.formations[${idx}].omp=+this.value"></div>
+    <div class="row"><label>EMCON</label><select onchange="camp.formations[${idx}].emcon=this.value;redraw()">
+      ${SCHEMA.emcons.map(x=>`<option${f.emcon===x?' selected':''}>${x}</option>`).join('')}</select>
+      <label>posture</label><select onchange="camp.formations[${idx}].posture=this.value">
+      ${SCHEMA.postures.map(x=>`<option${f.posture===x?' selected':''}>${x}</option>`).join('')}</select></div>
+    <div class="row"><label>RDY</label><input class="s" value="${f.rdy}" oninput="camp.formations[${idx}].rdy=+this.value;validate()">
+      <label><input type="checkbox" ${f._commandNode?'checked':''} onchange="camp.formations[${idx}]._commandNode=this.checked"> command node</label></div>
+    <h2 style="margin-top:6px">Units</h2>
+    ${(f.units||[]).map((u,ui)=>`<div class="row">
+      <input class="m" value="${u.name}" title="name" oninput="camp.formations[${idx}].units[${ui}].name=this.value;redraw()">
+      <input class="m" value="${u.model||''}" title="model" oninput="camp.formations[${idx}].units[${ui}].model=this.value">
+      <select onchange="camp.formations[${idx}].units[${ui}].class=this.value;redraw()">
+        ${SCHEMA.unitClasses.map(c=>`<option${u.class===c?' selected':''}>${c}</option>`).join('')}</select>
+      <input class="m" value="${(u.tags||[]).join(',')}" title="tags (comma)" oninput="camp.formations[${idx}].units[${ui}].tags=this.value.split(',').map(s=>s.trim()).filter(Boolean)">
+      <button class="danger" onclick="camp.formations[${idx}].units.splice(${ui},1);redraw()">✕</button></div>`).join('')}
+    <div class="row"><button onclick="camp.formations[${idx}].units.push({name:'Unit',model:'GEN-1',class:'MECH',tags:[]});redraw()">+ unit</button>
+      <button class="danger" onclick="camp.formations.splice(${idx},1);sel=null;redraw()">delete formation</button></div>`;
+}
+
+function facilityForm(f) {
+  const idx = camp.facilities.indexOf(f);
+  return `<div class="row"><label>name</label><input class="m" value="${f.name}" oninput="camp.facilities[${idx}].name=this.value;redraw()"></div>
+    <div class="row"><label>side</label><select onchange="camp.facilities[${idx}].sideId=this.value;redraw()">
+      ${camp.sides.map(s=>`<option value="${s.id}"${f.sideId===s.id?' selected':''}>${s.name}</option>`).join('')}</select></div>
+    <div class="row"><label>tags</label><input class="m" value="${(f.tags||[]).join(',')}" oninput="camp.facilities[${idx}].tags=this.value.split(',').map(s=>s.trim()).filter(Boolean);redraw()"></div>
+    <div class="row"><label>SP / fuel</label><input class="s" value="${f.supplyPoints||0}" oninput="camp.facilities[${idx}].supplyPoints=+this.value">
+      <input class="s" value="${f.fuelFarmTons||0}" oninput="camp.facilities[${idx}].fuelFarmTons=+this.value"></div>
+    <div class="row"><label><input type="checkbox" ${f.isCommandNode?'checked':''} onchange="camp.facilities[${idx}].isCommandNode=this.checked"> command node</label>
+      <label><input type="checkbox" ${f.sensorStation?'checked':''} onchange="camp.facilities[${idx}].sensorStation=this.checked?{passive:6,active:12}:undefined;redraw()"> sensor station</label></div>
+    <div class="row"><button class="danger" onclick="camp.facilities.splice(${idx},1);sel=null;redraw()">delete facility</button></div>`;
+}
+
+function setObj(q, r, k, v) {
+  const o = theater().overrides.find(x => x.q === q && x.r === r);
+  if (!o || !o.objective) return;
+  if (v === '' || v === false || v === undefined) delete o.objective[k]; else o.objective[k] = v;
+  redraw();
+}
+function delObj(q, r) {
+  const o = theater().overrides.find(x => x.q === q && x.r === r);
+  if (o) delete o.objective;
+  cleanOv(); redraw();
+}
+
+// ── command nodes derived on export ──
+function assemble() {
+  const out = JSON.parse(JSON.stringify(camp));
+  out.commandNodes = {};
+  out.sides.forEach(s => { out.commandNodes[s.id] = []; });
+  out.facilities.forEach(f => { if (f.isCommandNode && out.commandNodes[f.sideId]) out.commandNodes[f.sideId].push(f.id); });
+  out.formations.forEach(f => { if (f._commandNode && out.commandNodes[f.sideId]) out.commandNodes[f.sideId].push(f.id); });
+  out.formations.forEach(f => delete f._commandNode);
+  return out;
+}
+
+let valTimer = null;
+function validate() {
+  clearTimeout(valTimer);
+  valTimer = setTimeout(async () => {
+    const r = await (await fetch('/api/validate', { method: 'POST',
+      headers: { 'content-type': 'application/json' }, body: JSON.stringify(assemble()) })).json();
+    const el = $('valid'), box = $('problems');
+    if (r.problems.length === 0) { el.innerHTML = '<span class="ok">✓ valid</span>'; box.textContent = '✓ no problems — ready to play.'; }
+    else { el.innerHTML = `<span class="bad">✗ ${r.problems.length} problem(s)</span>`;
+      box.textContent = r.problems.map(p => '• ' + p).join('\n'); }
+  }, 250);
+}
+
+// ── file ops ──
+function newCampaign() { camp = blankCampaign(); activeSide = camp.sides[0].id; sel = null; idSeq = 0; redraw(); }
+async function loadTemplate() {
+  camp = await (await fetch('/api/editor/template')).json();
+  if (!camp.system) camp.system = { nodes: [], lanes: [] };
+  activeSide = camp.sides[0].id; sel = null; bumpSeq(); redraw();
+}
+function bumpSeq() {
+  const ids = [...camp.formations, ...camp.facilities].map(e => e.id);
+  ids.forEach(id => { const m = /-(\d+)$/.exec(id); if (m) idSeq = Math.max(idSeq, +m[1]); });
+}
+function doImport() {
+  const txt = prompt('Paste campaign JSON:');
+  if (!txt) return;
+  try { camp = JSON.parse(txt); if (!camp.system) camp.system = { nodes: [], lanes: [] };
+    activeSide = camp.sides[0].id; sel = null; bumpSeq(); redraw(); }
+  catch (e) { alert('Invalid JSON: ' + e.message); }
+}
+function doExport() {
+  const blob = new Blob([JSON.stringify(assemble(), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (camp.config.name || 'campaign').toLowerCase().replace(/\W+/g, '-') + '.json';
+  a.click();
+}
+async function copyJson() {
+  await navigator.clipboard.writeText(JSON.stringify(assemble(), null, 2));
+  $('valid').innerHTML = '<span class="ok">copied ✓</span>';
+}
+
+boot();
+</script>
+</body>
+</html>

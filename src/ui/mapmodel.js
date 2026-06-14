@@ -135,6 +135,43 @@
     return { cols, rows, hexes, markers, corridors };
   };
 
+  // ── EDITOR: an authoring campaign object → the hex renderer model ──────────
+  window.buildEditorHexModel = function (camp, theaterId, sideColors) {
+    const t = (camp.theaters || []).find(x => x.id === theaterId) || (camp.theaters || [])[0];
+    if (!t) return { cols: 1, rows: 1, hexes: [], markers: [] };
+    const ov = {};
+    (t.overrides || []).forEach(o => { ov[o.q + ',' + o.r] = o; });
+    const hexes = [];
+    for (let r = 0; r < t.height; r++) {
+      for (let q = 0; q < t.width; q++) {
+        const o = ov[q + ',' + r];
+        hexes.push({ q, r, terrain: (o && o.terrain) || t.defaultTerrain || 'CLEAR',
+          infra: (o && o.infra) || [],
+          objective: o && o.objective ? { vp: o.objective.vpPerDay,
+            hidden: o.objective.hidden, fake: o.objective.fake } : undefined });
+      }
+    }
+    const markers = [];
+    const sideOf = id => (sideColors && sideColors[id]) || id;
+    (camp.formations || []).forEach(f => {
+      if (f.theaterId !== t.id || f.q === undefined) return;
+      const cls = (f.units && f.units[0] && f.units[0].class) || '';
+      const L = cls === 'MECH' ? 'M' : cls === 'VEHICLE' ? 'V' : cls === 'INFANTRY' ? 'I'
+        : cls === 'VTOL' ? 'R' : (cls === 'ASF' || cls === 'CONV_FIGHTER') ? 'A'
+        : cls.startsWith('DROP') || cls.endsWith('SHIP') ? 'D' : '●';
+      markers.push({ q: f.q, r: f.r, kind: 'formation', side: sideOf(f.sideId),
+        label: L, sub: f.name, dark: f.emcon === 'DARK', title: `${f.name} [${f.sideId}]` });
+    });
+    (camp.facilities || []).forEach(fc => {
+      if (fc.theaterId !== t.id || fc.q === undefined) return;
+      const tags = fc.tags || [];
+      markers.push({ q: fc.q, r: fc.r, kind: 'facility', side: sideOf(fc.sideId),
+        label: tags.includes('AIRSTRIP') ? 'A' : tags.includes('SPACEPORT') ? 'P'
+          : tags.includes('SENSOR_STATION') ? '⌖' : 'F', title: `${fc.name} [${fc.sideId}]` });
+    });
+    return { cols: t.width, rows: t.height, hexes, markers };
+  };
+
   window.buildTruthSysModel = function (t) {
     const nodes = Object.values(t.system.nodes);
     if (!nodes.length) return null;
