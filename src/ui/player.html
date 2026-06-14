@@ -58,8 +58,11 @@
           then <select id="c-kind"><option>STRIKE</option><option>HIDE</option>
             <option>MOVE</option><option>FORCED_MARCH</option><option>DIG_IN</option>
             <option>REST</option><option>SWEEP</option></select>
+          EMCON <select id="c-emcon"><option value="">keep</option><option>DARK</option>
+            <option>PASSIVE</option><option>ACTIVE</option></select>
           target <select id="c-target"><option value="">—</option></select>
-          path <input id="c-path" size="12"></div>
+          path <input id="c-path" size="12">
+          <div class="kv" style="opacity:.7">PASSIVE/ACTIVE here = "come back on net" when the trigger fires (move back into a node's reach too).</div></div>
       </details>
       <div style="margin-top:6px"><button onclick="sendOrder()">Issue order</button>
         <span id="o-result" class="kv"></span></div>
@@ -190,6 +193,8 @@ async function sendOrder() {
       path: parsePath(document.getElementById('c-path').value) };
     const ct = document.getElementById('c-target').value;
     if (ct) body.conditional.targetContactId = ct;
+    const cEmcon = document.getElementById('c-emcon').value;
+    if (cEmcon) body.conditional.emconOverride = cEmcon;
   }
   const r = await (await fetch(`/api/side/${sideId}/order?${q}`, { method: 'POST',
     headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })).json();

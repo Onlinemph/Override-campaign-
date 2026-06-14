@@ -1,6 +1,7 @@
 /** M2 — conditional order triggers (spec §2.6, §3.3). */
 import { describe, expect, it } from 'vitest';
 import { evalTrigger, triggerPass } from '../../src/engine/triggers.js';
+import { isFormationOnNet } from '../../src/engine/net.js';
 import { applyEvent, type GameEvent } from '../../src/core/events.js';
 import { addMechFormation, baseTruth, gp, moveOrder } from '../helpers.js';
 import type { Order, TruthState } from '../../src/core/types.js';
@@ -110,5 +111,35 @@ describe('M2 — trigger pass', () => {
       estPos: gp(20, 5), posErrorHexes: 0, staleAsOfTick: 10,
     };
     expect(run(truth).filter(e => e.type === 'TRIGGER_FIRED')).toHaveLength(1);
+  });
+
+  it('a conditional thenOrder can carry emconOverride to bring a DARK unit back on net', () => {
+    const truth = baseTruth();
+    truth.tick = 360;
+    const f = addMechFormation(truth, { id: 'f', sideId: 'blue', pos: gp(8, 5) });
+    // dark & off-net by the EMCON gate, even though it would otherwise be netted
+    f.emcon = 'DARK';
+    f.onNet = true;
+    expect(isFormationOnNet(truth, f)).toBe(false);
+
+    const order: Order = {
+      ...moveOrder('o', f, 'HIDE', []),
+      conditionals: [{
+        trigger: { when: 'TICK_REACHED', param: 360 },
+        thenOrder: { id: 'p', sideId: 'blue', formationId: 'f', issuedTick: 0,
+                     effectiveTick: 0, kind: 'MOVE', path: [gp(7, 5)],
+                     emconOverride: 'PASSIVE' } as Order,
+      }],
+    };
+    activate(truth, order);
+
+    const fired = run(truth)[0] as Extract<GameEvent, { type: 'TRIGGER_FIRED' }>;
+    expect(fired.newOrder.emconOverride).toBe('PASSIVE'); // forwarded through the spread
+
+    // activating the spawned order flips EMCON, un-gating the net
+    applyEvent(truth, { type: 'ORDER_ACTIVATED', orderId: fired.newOrder.id,
+                        formationId: 'f', tick: truth.tick });
+    expect(truth.formations['f'].emcon).toBe('PASSIVE');
+    expect(isFormationOnNet(truth, truth.formations['f'])).toBe(true);
   });
 });

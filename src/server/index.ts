@@ -317,6 +317,7 @@ const server = createServer(async (req, res) => {
           kind: b.conditional.kind,
           ...(b.conditional.path ? { path: toPath(b.conditional.path) } : {}),
           ...(b.conditional.targetContactId ? { targetContactId: b.conditional.targetContactId } : {}),
+          ...(b.conditional.emconOverride ? { emconOverride: b.conditional.emconOverride } : {}),
         } as Order,
       }] : [];
       // M3: air-mission extras — a station on the high-altitude grid, speed, loiter

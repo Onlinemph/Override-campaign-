@@ -89,6 +89,11 @@ A quick vocabulary of what you'll be moving around:
   point) that pay VP each day, racing to a threshold or being ahead when time runs out.
 - **EMCON** — your emissions posture: **DARK** (silent, hard to find, but off-net),
   **PASSIVE** (normal), or **ACTIVE** (radar blazing — you see far, and everyone sees *you*).
+  DARK is sticky: a unit stays dark and out of contact until an order flips it back to
+  PASSIVE/ACTIVE. Since you can't reach a dark unit live, attach that flip to a
+  **conditional** before it goes silent — e.g. *"at PULSE 600, move to Hill 204 and go
+  PASSIVE"* (set EMCON in the conditional's *then* row). When the trigger fires it surfaces
+  itself and re-nets, provided it's also back inside a command node's reach.
 
 If a term ever stops you, jump to the **Glossary** at the end.
 
