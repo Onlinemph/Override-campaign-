@@ -110,6 +110,7 @@ export function emptyTruth(seed: string, config?: Partial<CampaignConfig>): Trut
     engagements: {}, pendingEngagementId: null, handoffs: {},
     system: { nodes: {}, lanes: {}, lastSweepTick: 0 },
     emissions: {}, jumpDrives: {},
+    lastScoredTick: 0,
   };
 }
 

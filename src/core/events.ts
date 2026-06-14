@@ -95,6 +95,11 @@ export type GameEvent =
   | { type: 'MISJUMP'; formationId: Id; targetNodeId: Id; roll: number; tick: Tick }
   | { type: 'NODE_SURVEYED'; nodeId: Id; sideId: Id; tick: Tick }
   | { type: 'REPRISAL_OWED'; sideId: Id; reason: string; tick: Tick }
+  // ── M6: VP scoring & endings (core §12) ──
+  | { type: 'OBJECTIVE_CONTROL'; theaterId: Id; hexKey: string; ownerSideId: Id; tick: Tick }
+  | { type: 'NODE_CONTROL'; nodeId: Id; ownerSideId: Id; tick: Tick }
+  | { type: 'DAY_SCORED'; tick: Tick }            // advances the daily-accrual anchor
+  | { type: 'CAMPAIGN_ENDED'; winnerSideId: Id | null; reason: string; tick: Tick }
   | { type: 'CLOCK_ADVANCED'; dt: number; tick: Tick }; // tick = NEW absolute tick
 
 export interface LoggedEvent { index: number; event: GameEvent }
@@ -549,6 +554,26 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
       s.sides[e.sideId].reprisalsOwed += 1;
       break;
 
+    case 'OBJECTIVE_CONTROL': {
+      const hex = s.theaters[e.theaterId]?.hexes[e.hexKey];
+      if (hex?.objective) hex.objective.ownerSideId = e.ownerSideId;
+      break;
+    }
+
+    case 'NODE_CONTROL': {
+      const node = s.system.nodes[e.nodeId];
+      if (node?.objective) node.objective.ownerSideId = e.ownerSideId;
+      break;
+    }
+
+    case 'DAY_SCORED':
+      s.lastScoredTick = e.tick;
+      break;
+
+    case 'CAMPAIGN_ENDED':
+      s.ended = { winnerSideId: e.winnerSideId, reason: e.reason, tick: e.tick };
+      break;
+
     case 'CLOCK_ADVANCED':
       s.tick = e.tick;
       break;
@@ -575,6 +600,9 @@ export function isInterestingEvent(e: GameEvent): boolean {
     case 'EMISSION_OBSERVED':
     case 'JUMP_EXECUTED':
     case 'MISJUMP':
+    case 'OBJECTIVE_CONTROL':
+    case 'NODE_CONTROL':
+    case 'CAMPAIGN_ENDED':
       return true;
     default:
       return false;

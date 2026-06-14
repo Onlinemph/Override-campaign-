@@ -16,6 +16,7 @@ import { engagementPass } from './engagement.js';
 import { maintenancePass } from './logistics.js';
 import { airDetectionPass, airPass } from './air.js';
 import { spacePass } from './space.js';
+import { scoringPass } from './scoring.js';
 
 export interface StepResult {
   truth: TruthState;
@@ -52,7 +53,8 @@ function applyDueOrders(s: TruthState, emit: (e: GameEvent) => void): void {
 export function step(truth: TruthState): StepResult {
   // Frozen on a pending engagement (spec §3.1): the campaign does not advance until the
   // GM exports the handoff and ingests a result. step() is a no-op while paused.
-  if (truth.pendingEngagementId) {
+  // Likewise once the campaign has ended (core §12.2).
+  if (truth.pendingEngagementId || truth.ended) {
     return { truth, events: [], interesting: false, dt: 0, paused: true };
   }
 
@@ -76,6 +78,7 @@ export function step(truth: TruthState): StepResult {
   deliverReportsPass(work, emit);
   scoutPass(work, emit);
   maintenancePass(work, dt, emit);
+  scoringPass(work, emit);      // objective control, daily VP, endings (M6)
   triggerPass(work, emit);      // conditionals react to this step's contacts/positions
   engagementPass(work, emit);   // may freeze the campaign (sets pendingEngagementId)
 
@@ -84,6 +87,6 @@ export function step(truth: TruthState): StepResult {
   return {
     truth: work, events, dt,
     interesting: events.some(isInterestingEvent),
-    paused: !!work.pendingEngagementId,
+    paused: !!work.pendingEngagementId || !!work.ended,
   };
 }

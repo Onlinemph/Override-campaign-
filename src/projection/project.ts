@@ -173,6 +173,8 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
     clockMode: truth.clockMode,
     isNight: isNight(truth, now),
     vp: side.vp,
+    ...(truth.config.vpThreshold !== undefined ? { vpThreshold: truth.config.vpThreshold } : {}),
+    ...(truth.ended ? { ended: { ...truth.ended } } : {}),
     ownFormations,
     contacts,
     reports,

@@ -57,6 +57,9 @@ export interface SysNode {
   theaterId?: Id;      // PLANET/MOON nodes embed a Module-0 theater
   surveyedBy: Id[];    // sides holding the survey (pirate points)
   secret: boolean;     // pirate points start true
+  // M6: a held system objective scores VP/day (jump point, recharge station, gas
+  // giant refinery, shipyard — DEEP SKY §9). ownerSideId flips on uncontested control.
+  objective?: { vpPerDay: number; ownerSideId?: Id };
 }
 export interface SysLane { id: Id; a: Id; b: Id; distanceAU: number }
 
@@ -317,6 +320,10 @@ export interface CampaignConfig {
   // ext (M3): which high-altitude air hex sits over each theater (SKYWATCH §1:
   // one high-altitude hex covers an entire low-altitude theater map)
   airHexByTheater?: Record<Id, { q: number; r: number }>;
+  // ext (M6): victory conditions (core §12.2). First side to reach vpThreshold wins;
+  // at endTick the campaign ends and the highest VP wins (ties → draw).
+  vpThreshold?: number;
+  endTick?: Tick;
 }
 
 export interface TruthState {
@@ -346,6 +353,9 @@ export interface TruthState {
             lastSweepTick: Tick };           // watch-cadence anchor for space detection
   emissions: Record<Id, Emission>;           // jump flashes & drive burns in flight
   jumpDrives: Record<Id, JumpDrive>;         // keyed by vessel unit id
+  // M6: VP scoring & endings
+  lastScoredTick: Tick;                      // daily-accrual anchor (core §12.1)
+  ended?: { winnerSideId: Id | null; reason: string; tick: Tick }; // campaign over (§12.2)
 }
 
 /** Something bright happened in space; every observer sees it `lag` later (DEEP SKY §4). */

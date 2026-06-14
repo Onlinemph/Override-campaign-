@@ -1,7 +1,8 @@
 {
   "seed": "OVERRIDE-DEMO-1",
   "config": { "name": "The Cavanaugh Salient (demo)", "dawnTick": 60, "duskTick": 180, "weather": "CLEAR",
-              "airHexByTheater": { "cavanaugh": { "q": 0, "r": 0 } } },
+              "airHexByTheater": { "cavanaugh": { "q": 0, "r": 0 } },
+              "vpThreshold": 25, "endTick": 2400 },
   "theaters": [
     {
       "id": "cavanaugh", "name": "Cavanaugh Valley", "width": 24, "height": 16,
@@ -23,8 +24,9 @@
         { "q": 11, "r": 9,  "terrain": "WOODS" },
         { "q": 14, "r": 6,  "terrain": "HILLS" },
         { "q": 15, "r": 6,  "terrain": "HILLS" },
-        { "q": 3,  "r": 10, "infra": ["SPACEPORT", "DEPOT"], "objective": { "vpPerDay": 3, "hidden": false } },
-        { "q": 18, "r": 11, "terrain": "WOODS", "objective": { "vpPerDay": 2, "hidden": true } },
+        { "q": 3,  "r": 10, "infra": ["SPACEPORT", "DEPOT"], "objective": { "vpPerDay": 3, "hidden": false, "ownerSideId": "blue" } },
+        { "q": 18, "r": 11, "terrain": "WOODS", "objective": { "vpPerDay": 2, "hidden": true, "ownerSideId": "blue" } },
+        { "q": 4,  "r": 4,  "objective": { "vpPerDay": 3, "hidden": false } },
         { "q": 6,  "r": 7,  "infra": ["SENSOR_STATION"] },
         { "q": 4,  "r": 9,  "infra": ["AIRSTRIP"] }
       ]
@@ -116,7 +118,7 @@
     "nodes": [
       { "id": "zenith", "type": "JUMP_ZENITH", "name": "Zenith Point" },
       { "id": "cavanaugh-ii", "type": "PLANET", "name": "Cavanaugh II", "theaterId": "cavanaugh" },
-      { "id": "mistral", "type": "GAS_GIANT", "name": "Mistral" },
+      { "id": "mistral", "type": "GAS_GIANT", "name": "Mistral", "objective": { "vpPerDay": 1 } },
       { "id": "cavanaugh-l1", "type": "PIRATE_POINT", "name": "Cavanaugh L1", "secret": true }
     ],
     "lanes": [

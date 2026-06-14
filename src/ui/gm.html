@@ -88,8 +88,13 @@ async function refresh() {
   document.getElementById('clock').textContent =
     `t${t.tick} · ${t.clockMode} · day ${Math.floor(t.tick / 240)} ` +
     `${String(Math.floor((t.tick % 240) / 10)).padStart(2, '0')}00`;
+  const thr = t.config.vpThreshold;
   document.getElementById('vp-bar').innerHTML = Object.values(t.sides).map(side =>
-    `<span class="pill">${side.name}: <b>${side.vp} VP</b>${side.reprisalsOwed ? ' · reprisal owed' : ''}</span>`).join('');
+    `<span class="pill">${side.name}: <b>${side.vp} VP</b>${thr ? ' / ' + thr : ''}` +
+    `${side.reprisalsOwed ? ' · reprisal owed' : ''}</span>`).join('') +
+    (t.config.endTick ? `<span class="pill">ends t${t.config.endTick}</span>` : '') +
+    (t.ended ? `<span class="pill" style="border-color:#7c3338;color:#ffd6d6">CAMPAIGN OVER — ${
+      t.ended.winnerSideId ? (t.sides[t.ended.winnerSideId]?.name + ' wins') : 'draw'} (${t.ended.reason})</span>` : '');
 
   // selectors (once)
   const sides = Object.keys(s.views);

@@ -93,6 +93,8 @@ export interface ViewState {
   clockMode: ClockMode;
   isNight: boolean;
   vp: number;
+  vpThreshold?: number;          // M6: the finish line, if the campaign has one
+  ended?: { winnerSideId: Id | null; reason: string; tick: Tick };
   ownFormations: OwnFormationView[];
   contacts: ContactView[];
   reports: ReportView[];

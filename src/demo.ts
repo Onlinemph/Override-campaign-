@@ -11,7 +11,8 @@ import {
 interface FixtureJson {
   seed: string;
   config: { name: string; dawnTick: number; duskTick: number; weather: 'CLEAR' | 'RAIN' | 'STORM';
-            airHexByTheater?: Record<string, { q: number; r: number }> };
+            airHexByTheater?: Record<string, { q: number; r: number }>;
+            vpThreshold?: number; endTick?: number };
   theaters: Array<{ id: string; name: string; width: number; height: number;
                     defaultTerrain: string; overrides: HexOverride[] }>;
   sides: Array<{ id: string; name: string }>;
@@ -54,11 +55,15 @@ export function loadCampaignFixture(path: string): TruthState {
       nextPassTick: sat.nextPassTick ?? 0,
     });
   }
+  if (j.config.vpThreshold !== undefined) truth.config.vpThreshold = j.config.vpThreshold;
+  if (j.config.endTick !== undefined) truth.config.endTick = j.config.endTick;
   for (const n of j.system?.nodes ?? []) {
     truth.system.nodes[n.id] = {
       id: n.id, type: n.type, name: n.name ?? n.id,
       surveyedBy: n.surveyedBy ?? [], secret: n.secret ?? false,
       ...(n.theaterId ? { theaterId: n.theaterId } : {}),
+      ...(n.objective ? { objective: { vpPerDay: n.objective.vpPerDay,
+                                       ownerSideId: n.objective.ownerSideId } } : {}),
     };
   }
   for (const l of j.system?.lanes ?? []) {

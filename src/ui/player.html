@@ -78,7 +78,10 @@ let plotted = [];
 async function refresh() {
   const v = await (await fetch(`/api/side/${sideId}/view`)).json();
   document.getElementById('title').textContent =
-    `OVERRIDE — ${sideId.toUpperCase()} · t${v.now} · ${v.clockMode} · ${v.isNight ? 'NIGHT' : 'DAY'} · ${v.vp} VP`;
+    `OVERRIDE — ${sideId.toUpperCase()} · t${v.now} · ${v.clockMode} · ${v.isNight ? 'NIGHT' : 'DAY'} · ` +
+    `${v.vp} VP${v.vpThreshold ? ' / ' + v.vpThreshold : ''}` +
+    (v.ended ? `  ·  ${v.ended.winnerSideId === sideId ? '★ VICTORY' :
+      v.ended.winnerSideId ? 'DEFEAT' : 'DRAW'} (${v.ended.reason})` : '');
 
   // the map
   const model = buildPlayerHexModel(v, v.theaters[0] && v.theaters[0].id);
