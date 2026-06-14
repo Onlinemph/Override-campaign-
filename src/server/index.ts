@@ -13,16 +13,30 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
 import { Campaign, replay } from '../core/truth.js';
-import { MemoryEventStore } from '../core/log.js';
+import { JsonlEventStore, MemoryEventStore } from '../core/log.js';
 import { project } from '../projection/project.js';
 import { loadCampaignFixture } from '../demo.js';
 import { buildMul } from '../handoff/mul.js';
 import type { Contact, ContactReport, GroundPos, Order } from '../core/types.js';
 
+// CLI: `dev [fixture.json] [--log campaign.jsonl]`
+const argv = process.argv.slice(2);
+const logIdx = argv.indexOf('--log');
+const logPath = logIdx >= 0 ? argv[logIdx + 1] : process.env.OVERRIDE_LOG;
+const positional = argv.filter((a, i) => a !== '--log' && argv[i - 1] !== '--log');
+
 const here = dirname(fileURLToPath(import.meta.url));
-const fixturePath = process.argv[2] ?? join(here, '../../demo/campaign.json');
-const campaign = Campaign.create(loadCampaignFixture(fixturePath), new MemoryEventStore());
-console.log(`Campaign loaded from ${fixturePath} (seed: ${campaign.truth.seed})`);
+const fixturePath = positional[0] ?? join(here, '../../demo/campaign.json');
+
+const store = logPath ? new JsonlEventStore(logPath) : new MemoryEventStore();
+const { campaign, resumed } = Campaign.resumeOrCreate(store, () => loadCampaignFixture(fixturePath));
+if (logPath) {
+  console.log(resumed
+    ? `Resumed campaign from ${logPath} (${store.length()} events, tick ${campaign.truth.tick})`
+    : `New campaign in ${logPath} from ${fixturePath} (seed: ${campaign.truth.seed})`);
+} else {
+  console.log(`Campaign loaded from ${fixturePath} (in-memory; pass --log <file> to persist)`);
+}
 
 const wss = new WebSocketServer({ noServer: true });
 const sockets = new Set<WebSocket>();

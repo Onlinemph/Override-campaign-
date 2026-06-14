@@ -49,6 +49,19 @@ export class Campaign {
     return new Campaign(store);
   }
 
+  /**
+   * Resume a campaign from a non-empty store, or create one from `initial()` into an
+   * empty store (M6 persistence). `initial` is a thunk so the fixture is only built when
+   * actually starting fresh. Returns the campaign plus whether it resumed.
+   */
+  static resumeOrCreate(store: EventStore, initial: () => TruthState):
+      { campaign: Campaign; resumed: boolean } {
+    if (store.length() > 0) {
+      return { campaign: Campaign.fromStore(store), resumed: true };
+    }
+    return { campaign: Campaign.create(initial(), store), resumed: false };
+  }
+
   /** One engine step. Returns the emitted events. */
   step(): GameEvent[] {
     const r = step(this.truth);
