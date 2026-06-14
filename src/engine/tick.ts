@@ -18,6 +18,7 @@ import { airDetectionPass, airPass } from './air.js';
 import { spacePass } from './space.js';
 import { scoringPass } from './scoring.js';
 import { firesPass } from './fires.js';
+import { engineeringPass } from './engineering.js';
 
 export interface StepResult {
   truth: TruthState;
@@ -69,6 +70,7 @@ export function step(truth: TruthState): StepResult {
 
   applyDueOrders(work, emit);
   movementPass(work, dt, emit);
+  engineeringPass(work, dt, emit); // minefield bites on movers + engineer toolkit (M7)
   airPass(work, dt, emit);      // flight ledgers, launches, chases, thresholds (M3)
   spacePass(work, dt, emit);    // lanes, light lag, jump board, skimming (M4)
   netPass(work, emit);          // positions changed: recompute nets before detection

@@ -130,6 +130,7 @@ export interface Formation {
   // ext (M2): rout & combat bookkeeping
   routUntilTick?: Tick | null;    // RDY≤1: uncommandable until this tick (core §3.2/§7.4)
   digInPulseAcc?: number;         // accumulates pulses toward DUG_IN (core §4.1)
+  engPulseAcc?: number;           // ext (M7): engineer task progress in pulses (core §9.3)
   lastBattleTick?: Tick;          // a fighting day costs ×2 supply (core §10.1)
   // ext (M4): space bookkeeping (DEEP SKY) — present on vessels in transit
   space?: {

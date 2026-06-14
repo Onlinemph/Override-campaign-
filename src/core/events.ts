@@ -61,7 +61,7 @@ export type GameEvent =
   | { type: 'SUPPLY_CHANGED'; formationId: Id; inSupply: boolean; lastSuppliedTick: Tick }
   // ── replay-safe engine bookkeeping (fractional accumulators, anchors) ──
   | { type: 'FORMATION_BOOKKEEPING'; formationId: Id;
-      patch: Partial<Pick<Formation, 'forcedMarchPulseAcc' | 'digInPulseAcc'>> &
+      patch: Partial<Pick<Formation, 'forcedMarchPulseAcc' | 'digInPulseAcc' | 'engPulseAcc'>> &
              { air?: Partial<NonNullable<Formation['air']>>;
                space?: Partial<NonNullable<Formation['space']>> } }
   // ── M3: SKYWATCH — flights, ledgers, alerts, turnaround ──
