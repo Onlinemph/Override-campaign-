@@ -39,6 +39,16 @@ airbase, a supply convoy, hidden and contested objectives, a system layer with a
 picket, and a red probe force already moving. Click **Run until event** a few times.
 Pass `--log <file>` to make it survive a restart.
 
+## Build your own campaign
+
+Campaigns are plain JSON — copy `demo/campaign.json` and edit it, or write one from
+scratch. Every field (terrain, forces, facilities, the system graph, objectives, victory
+conditions, opening orders) is documented in **[docs/CAMPAIGN_FORMAT.md](docs/CAMPAIGN_FORMAT.md)**.
+The loader validates on start and reports any mistakes in plain language
+(`formation "f1": hex 99,1 is outside theater "t1" (8×8)`), so authoring is self-serve.
+Run yours with `npm run dev -- mycampaign.json --log mywar.jsonl`.
+*(A point-and-click campaign editor is the next milestone, built on this validated format.)*
+
 ## Test
 
 ```sh

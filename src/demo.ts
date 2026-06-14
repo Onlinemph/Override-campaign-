@@ -2,11 +2,12 @@
  * demo.ts — load a declarative campaign fixture (demo/campaign.json) into a TruthState.
  */
 import { readFileSync } from 'node:fs';
-import type { GroundPos, Order, TruthState } from './core/types.js';
+import type { GroundPos, Marker, Order, Position, TruthState } from './core/types.js';
 import {
   addFormation, emptyTruth, mkFacility, mkFormation, mkSatellite, mkSide,
   mkTheater, mkUnit, type HexOverride,
 } from './fixtures.js';
+import { validateCampaign } from './campaign/schema.js';
 
 interface FixtureJson {
   seed: string;
@@ -22,10 +23,19 @@ interface FixtureJson {
   commandNodes: Record<string, string[]>;
   orders: Array<Record<string, any>>;
   system?: { nodes: Array<Record<string, any>>; lanes: Array<Record<string, any>> };
+  markers?: Array<Record<string, any>>;
 }
 
 export function loadCampaignFixture(path: string): TruthState {
-  const j: FixtureJson = JSON.parse(readFileSync(path, 'utf8'));
+  return buildCampaign(JSON.parse(readFileSync(path, 'utf8')), path);
+}
+
+/** Build truth from a parsed campaign object, validating first with friendly errors. */
+export function buildCampaign(j: FixtureJson, source = 'campaign'): TruthState {
+  const problems = validateCampaign(j);
+  if (problems.length > 0) {
+    throw new Error(`${source} has ${problems.length} problem(s):\n  - ` + problems.join('\n  - '));
+  }
   const truth = emptyTruth(j.seed, j.config);
 
   for (const t of j.theaters) {
@@ -34,6 +44,7 @@ export function loadCampaignFixture(path: string): TruthState {
   }
   for (const s of j.sides) {
     truth.sides[s.id] = mkSide(s.id, s.name, j.commandNodes[s.id] ?? []);
+    if ((s as any).vp !== undefined) truth.sides[s.id].vp = (s as any).vp;
   }
   for (const f of j.facilities) {
     truth.facilities[f.id] = mkFacility({
@@ -83,6 +94,7 @@ export function loadCampaignFixture(path: string): TruthState {
       omp: f.omp ?? 0, sigBase: f.sigBase,
       sns: f.sns, emcon: f.emcon ?? 'PASSIVE',
       alertState: f.alertState,
+      posture: f.posture, rdy: f.rdy, facing: f.facing,
     });
     if (f.flight || f.airPos) {
       formation.air = { phase: f.airPos ? 'ENROUTE' : 'GROUNDED', speed: 'CRUISE',
@@ -92,21 +104,49 @@ export function loadCampaignFixture(path: string): TruthState {
       const unit = mkUnit({
         id: `${f.id}-u${i + 1}`,
         sideId: f.sideId, name: u.name, model: u.model, class: u.class, tags: u.tags ?? [],
-        safeThrust: u.safeThrust,
-        fuel: u.fuelFp ? { fp: u.fuelFp, fpPerTon: 80, tons: u.fuelTons ?? u.fuelFp / 80 }
-          : u.fuelTons ? { fp: 0, fpPerTon: 30, tons: u.fuelTons,
+        safeThrust: u.safeThrust, maxThrust: u.maxThrust,
+        damage: u.damage, ammoState: u.ammoState,
+        bv: u.bv, pv: u.pv, walkOrCruise: u.walkOrCruise, run: u.run, jump: u.jump,
+        fuel: u.fuelFp ? { fp: u.fuelFp, fpPerTon: u.fpPerTon ?? 80,
+                           tons: u.fuelTons ?? u.fuelFp / (u.fpPerTon ?? 80) }
+          : u.fuelTons ? { fp: 0, fpPerTon: u.fpPerTon ?? 30, tons: u.fuelTons,
                            tonsPerBurnDay: u.tonsPerBurnDay ?? 1.84 } : undefined,
-        maxThrust: u.maxThrust,
       });
+      // pilot: a bare name string (regular 4/5) or a full object
       if (u.pilot) {
-        const pilot = { id: `${f.id}-pilot-${i + 1}`, name: u.pilot, gunnery: 4, piloting: 5,
-                        kills: 0, ace: false, fatigue: 0, status: 'OK' as const };
+        const pj = typeof u.pilot === 'string' ? { name: u.pilot } : u.pilot;
+        const pilot = { id: `${f.id}-pilot-${i + 1}`, name: pj.name ?? `${f.id} crew ${i + 1}`,
+          gunnery: pj.gunnery ?? 4, piloting: pj.piloting ?? 5,
+          kills: pj.kills ?? 0, ace: pj.ace ?? false, fatigue: pj.fatigue ?? 0,
+          status: pj.status ?? 'OK' as const };
         truth.pilots[pilot.id] = pilot;
         unit.pilotIds = [pilot.id];
+      }
+      // K-F drive on a jump-capable hull
+      if (u.drive) {
+        truth.jumpDrives[unit.id] = {
+          vesselUnitId: unit.id, chargePct: u.drive.chargePct ?? 0,
+          chargeRateHrsTo100: u.drive.chargeRateHrsTo100 ?? 180,
+          sail: u.drive.sail ?? 'STOWED', kfDamage: u.drive.kfDamage ?? 'NONE',
+          ...(u.drive.lfBatteryCharged !== undefined ? { lfBatteryCharged: u.drive.lfBatteryCharged } : {}),
+        };
       }
       return unit;
     });
     addFormation(truth, formation, units);
+  }
+
+  // ── markers (minefields, downed crew, fuel caches, sentinel drones, wrecks) ──
+  for (const m of j.markers ?? []) {
+    const pos: Position = m.nodeId
+      ? { kind: 'node', nodeId: m.nodeId }
+      : { kind: 'ground', theaterId: m.theaterId, q: m.q, r: m.r };
+    const marker: Marker = {
+      id: m.id, kind: m.kind, pos, payload: m.payload ?? {},
+      ...(m.sideId ? { sideId: m.sideId } : {}),
+      ...(m.beaconActive !== undefined ? { beaconActive: m.beaconActive } : {}),
+    };
+    truth.markers[marker.id] = marker;
   }
   for (const o of j.orders) {
     const theaterId = truth.formations[o.formationId].pos.kind === 'ground'
