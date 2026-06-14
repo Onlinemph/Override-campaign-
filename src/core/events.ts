@@ -9,6 +9,7 @@ import type {
   NodePos, Order, Pilot, Posture, SalvageToken, TruthState, Tick, Unit,
 } from './types.js';
 import { SKYWATCH } from '../rules.js';
+import { hexKey as hexKeyOf } from './types.js';
 
 export type GameEvent =
   | { type: 'CAMPAIGN_INIT'; state: TruthState }
@@ -49,6 +50,10 @@ export type GameEvent =
       fpRemaining?: number /* M3: tabletop fuel comes home on the record sheet */ }
   | { type: 'PILOT_STATE_CHANGED'; pilotId: Id; status: Pilot['status'] }
   | { type: 'MARKER_ADDED'; marker: Marker }
+  | { type: 'MARKER_REMOVED'; markerId: Id }
+  | { type: 'FORMATION_FIRED'; formationId: Id; tick: Tick }      // M7: fired this turn (SIG −3)
+  | { type: 'HEX_INFRA_CHANGED'; theaterId: Id; hexKey: string; infra: string[] }  // M7: demo/build
+  | { type: 'SP_CHANGED'; facilityId: Id; delta: number; reason: string }          // M7: supply economy
   | { type: 'VP_CHANGED'; sideId: Id; delta: number; reason: string }
   | { type: 'ROUT_STARTED'; formationId: Id; untilTick: Tick; tick: Tick }
   | { type: 'SALVAGE_CREATED'; token: SalvageToken }
@@ -335,7 +340,41 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
 
     case 'MARKER_ADDED':
       s.markers[e.marker.id] = e.marker;
+      // a minefield is registered on its hex so movers can hit it (core §9.3)
+      if (e.marker.kind === 'MINEFIELD' && e.marker.pos.kind === 'ground') {
+        const hex = s.theaters[e.marker.pos.theaterId]?.hexes[hexKeyOf(e.marker.pos.q, e.marker.pos.r)];
+        if (hex && !hex.minefieldIds.includes(e.marker.id)) hex.minefieldIds.push(e.marker.id);
+      }
       break;
+
+    case 'MARKER_REMOVED': {
+      const m = s.markers[e.markerId];
+      if (m && m.kind === 'MINEFIELD' && m.pos.kind === 'ground') {
+        const hex = s.theaters[m.pos.theaterId]?.hexes[hexKeyOf(m.pos.q, m.pos.r)];
+        if (hex) hex.minefieldIds = hex.minefieldIds.filter(id => id !== e.markerId);
+      }
+      delete s.markers[e.markerId];
+      break;
+    }
+
+    case 'FORMATION_FIRED': {
+      const f = s.formations[e.formationId];
+      if (f) f.transient = { moved: f.transient?.moved ?? 'NONE',
+        onRoad: f.transient?.onRoad ?? false, fired: true };
+      break;
+    }
+
+    case 'HEX_INFRA_CHANGED': {
+      const hex = s.theaters[e.theaterId]?.hexes[e.hexKey];
+      if (hex) hex.infra = e.infra as typeof hex.infra;
+      break;
+    }
+
+    case 'SP_CHANGED': {
+      const fac = s.facilities[e.facilityId];
+      if (fac) fac.supplyPoints = Math.max(0, fac.supplyPoints + e.delta);
+      break;
+    }
 
     case 'VP_CHANGED':
       s.sides[e.sideId].vp += e.delta;
@@ -603,6 +642,7 @@ export function isInterestingEvent(e: GameEvent): boolean {
     case 'OBJECTIVE_CONTROL':
     case 'NODE_CONTROL':
     case 'CAMPAIGN_ENDED':
+    case 'UNIT_STATE_CHANGED':   // M7: arty/minefield damage is worth a look
       return true;
     default:
       return false;

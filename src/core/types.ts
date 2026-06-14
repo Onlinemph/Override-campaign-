@@ -215,7 +215,9 @@ export interface ContactReport {
 export type GroundOrderKind =
   'MOVE' | 'FORCED_MARCH' | 'MOVE_CAUTIOUS' /* ext: D-006 GM ruling */
   | 'HIDE' | 'DIG_IN' | 'PATROL' | 'SCREEN'
-  | 'STRIKE' | 'SHADOW' | 'RESUPPLY' | 'REST' | 'REPAIR';
+  | 'STRIKE' | 'SHADOW' | 'RESUPPLY' | 'REST' | 'REPAIR'
+  // ext (M7, core §9): a standing fire mission, and the engineer toolkit
+  | 'FIRE' | 'LAY_MINES' | 'BREACH' | 'DEMOLISH' | 'BUILD_BRIDGE';
 export type AirMission =
   'CAP' | 'ORBITAL_STANDBY' | 'STRIKE_AIR' | 'CAS' | 'SWEEP' | 'ESCORT'
   | 'RECON' | 'INTERDICTION' | 'FERRY' | 'TANKER' | 'SAR';

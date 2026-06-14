@@ -207,6 +207,14 @@ export const ARTILLERY_TAG_RANGE: Record<string, number> = {
   LONG_TOM: ARTILLERY_RANGE_HEXES.LONG_TOM,
 };
 export const COUNTER_BATTERY_AUTO_CONTACT_LEVEL = 3; // firing hex revealed at CONTACT
+// ── Fire missions (core §9.1) — Quick-Resolution artillery when no battle is running ──
+export const FIRES = {
+  BR_DIVISOR: 5,            // 2d6 + battery BR/5 (core §9.1)
+  HIT_TN: 6,               // ⚙ quick-resolution difficulty; set-piece batteries go to the table
+  BIG_MARGIN: 4,           // ⚙ a margin ≥ this steps damage an extra notch
+  SOFT_DOUBLE: true,       // infantry & soft vehicles suffer double (core §9.1)
+  HARASSMENT_PER_PULSE: true,
+} as const;
 
 // ── Engineers & minefields (core §9.3) — parked for M2 ─────────────────────
 export const ENGINEERING = {

@@ -17,6 +17,7 @@ import { maintenancePass } from './logistics.js';
 import { airDetectionPass, airPass } from './air.js';
 import { spacePass } from './space.js';
 import { scoringPass } from './scoring.js';
+import { firesPass } from './fires.js';
 
 export interface StepResult {
   truth: TruthState;
@@ -71,6 +72,7 @@ export function step(truth: TruthState): StepResult {
   airPass(work, dt, emit);      // flight ledgers, launches, chases, thresholds (M3)
   spacePass(work, dt, emit);    // lanes, light lag, jump board, skimming (M4)
   netPass(work, emit);          // positions changed: recompute nets before detection
+  firesPass(work, emit);        // artillery shoots, counter-battery reveals it (M7)
   detectionPass(work, emit);
   airDetectionPass(work, emit); // radar horizon + air-to-air (M3)
   satellitePass(work, emit);
