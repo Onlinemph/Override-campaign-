@@ -27,7 +27,7 @@
 
   <div class="col">
     <div class="panel"><h2>Own forces</h2><pre id="own"></pre></div>
-    <div class="panel"><h2>Contacts <small>(staleness in ticks)</small></h2><pre id="contacts"></pre></div>
+    <div class="panel"><h2>Contacts <small>— dimmer = staler intel</small></h2><pre id="contacts"></pre></div>
   </div>
 
   <div class="col">
@@ -64,9 +64,25 @@
           path <input id="c-path" size="12">
           <div class="kv" style="opacity:.7">PASSIVE/ACTIVE here = "come back on net" when the trigger fires (move back into a node's reach too).</div></div>
       </details>
+      <div id="order-preview" class="legend" style="margin-top:8px;border-top:1px solid var(--line);padding-top:6px"></div>
       <div style="margin-top:6px"><button onclick="sendOrder()">Issue order</button>
         <span id="o-result" class="kv"></span></div>
     </div>
+    <details class="panel">
+      <summary style="cursor:pointer;color:var(--dim)">▸ Reading your screen</summary>
+      <div class="legend" style="margin-top:8px;line-height:1.6">
+        <b>Contacts</b> climb a ladder as you detect more: <b>GHOST</b> (something's there,
+        ±1 hex) → <b>SHADOW</b> (size &amp; heading) → <b>CONTACT</b> (composition) →
+        <b>LOCK</b> (full roster). They fade a rung each hour you don't re-detect.<br>
+        <b>"X old / late"</b> is how stale the intel is — a report travels at courier speed
+        and only arrives when its sender is on-net, so you may be seeing the past.<br>
+        <b>ON-NET</b> formations take new orders instantly; <b>OFF-NET</b> ones run on their
+        last orders and conditionals until they're back in a command node's reach.<br>
+        <b>EMCON</b>: DARK (silent, off-net, hard to find) · PASSIVE (normal) · ACTIVE
+        (radar blazing). A <b>conditional</b> lets you pre-plot a reaction for when you
+        can't reach a formation live.
+      </div>
+    </details>
     <div class="panel"><h2>Scouted terrain notes</h2><pre id="terrain" style="max-height:18vh"></pre></div>
   </div>
 </div>
@@ -177,6 +193,48 @@ async function refresh() {
     const t = document.getElementById(id); const tv = t.value;
     t.innerHTML = opts; if (tv) t.value = tv;
   }
+  previewOrder();
+}
+
+// plain-language preview of the order being built
+function previewOrder() {
+  const sel = document.getElementById('o-formation');
+  const who = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '(formation)';
+  const kind = document.getElementById('o-kind').value;
+  const path = document.getElementById('o-path').value.trim();
+  const emcon = document.getElementById('o-emcon').value;
+  const tSel = document.getElementById('o-target');
+  const tgt = tSel.value ? tSel.options[tSel.selectedIndex].text : '';
+  const verb = {
+    MOVE: 'move', FORCED_MARCH: 'force-march', MOVE_CAUTIOUS: 'move cautiously',
+    HIDE: 'hide (EMCON dark)', DIG_IN: 'dig in', PATROL: 'patrol', SCREEN: 'hold a screen line',
+    STRIKE: 'strike', REST: 'rest & refit', CAP: 'fly combat air patrol', SWEEP: 'fly a sweep',
+    RECON: 'fly recon', FERRY: 'ferry',
+  }[kind] || (kind || '').toLowerCase();
+  let s = `<b>${who}</b> will ${verb}`;
+  if (path && ['MOVE', 'FORCED_MARCH', 'MOVE_CAUTIOUS', 'PATROL', 'SCREEN'].includes(kind)) {
+    const pts = path.split(';').filter(Boolean);
+    s += ` to ${pts[pts.length - 1]}` + (pts.length > 1 ? ` (via ${pts.length} hexes)` : '');
+  }
+  if (kind === 'STRIKE' && tgt) s += ` ${tgt}`;
+  if (emcon) s += `, going EMCON ${emcon}`;
+  s += '.';
+  const when = document.getElementById('c-when').value;
+  if (when) {
+    const param = document.getElementById('c-param').value;
+    const ckind = (document.getElementById('c-kind').value || '').toLowerCase();
+    const cemcon = document.getElementById('c-emcon').value;
+    const cond = {
+      CONTACT_WITHIN: `an enemy comes within ${param || 'N'} hexes`,
+      DETECTED_SELF: 'an enemy detects it',
+      RDY_BELOW: `readiness drops below ${param || 'N'}`,
+      TICK_REACHED: `the clock reaches ${param ? clock(+param) : 'a set time'}`,
+      HEX_REACHED: `it reaches hex ${param || '(q,r)'}`,
+      ALLY_ENGAGED: `an ally is engaged within ${param || 'N'} hexes`,
+    }[when] || when;
+    s += ` <span style="color:var(--accent)">Then if ${cond}: ${ckind}${cemcon ? ` (EMCON ${cemcon})` : ''}.</span>`;
+  }
+  document.getElementById('order-preview').innerHTML = s;
 }
 
 function clearPath() { plotted = []; document.getElementById('o-path').value = ''; refresh(); }
@@ -214,6 +272,12 @@ async function sendOrder() {
   document.getElementById('o-result').textContent = r.ok ? '✓ order accepted' : `✗ ${r.reason}`;
   if (r.ok) { plotted = []; document.getElementById('o-path').value = ''; }
   refresh();
+}
+
+for (const id of ['o-formation', 'o-kind', 'o-path', 'o-emcon', 'o-target',
+                  'c-when', 'c-param', 'c-kind', 'c-emcon', 'c-target', 'c-path']) {
+  const el = document.getElementById(id);
+  if (el) { el.addEventListener('input', previewOrder); el.addEventListener('change', previewOrder); }
 }
 
 const ws = new WebSocket(`ws://${location.host}`);

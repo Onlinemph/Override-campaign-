@@ -75,6 +75,7 @@ function gmState() {
     eventCount: campaign.store.length(),
     pendingEngagement: eng,
     salvage: Object.values(campaign.truth.salvage),
+    persist: logPath ? { path: logPath, events: campaign.store.length() } : null,
   };
 }
 

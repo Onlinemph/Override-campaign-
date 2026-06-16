@@ -15,15 +15,37 @@
   <span class="kv">belief overlay:
     <select id="belief" onchange="refresh()"><option value="">truth only</option></select></span>
   <span id="vp-bar" class="kv"></span>
+  <span id="persist" class="kv" style="float:right"></span>
 </div>
+<div id="gm-msg" class="kv" style="min-height:1.2em;margin:-4px 0 8px"></div>
+
+<details class="panel" style="margin-bottom:12px">
+  <summary style="cursor:pointer;color:var(--dim)">▸ How to run a turn</summary>
+  <div class="legend" style="margin-top:8px;line-height:1.6">
+    <b>Step</b> advances time by one tick. <b>Run until event</b> fast-forwards and pauses
+    at the next thing worth your attention (a new contact, a battle, an ending).<br>
+    <b>Clock tiers</b> (picked automatically): <b>WATCH</b> = 6-hour jumps when nothing's
+    near, <b>PULSE</b> = 1 hour, <b>CONTACT</b> = 6-minute turns once forces are close.<br>
+    <b>Contact ladder</b>: GHOST (something's there) → SHADOW (size &amp; heading) →
+    CONTACT (composition) → LOCK (full roster; artillery/air can target it).<br>
+    <b>EMCON</b>: DARK (silent, off-net, hard to find) · PASSIVE (normal) · ACTIVE (radar
+    blazing — sees far, seen far).<br>
+    <b>Status log colors</b>: dimmed = routine · gold = battles &amp; endings ·
+    amber = warnings (off-net, cut supply) · red = losses. Tick <b>show detail</b> for the
+    full dice-by-dice firehose.<br>
+    When a <b>battle</b> triggers the campaign freezes: resolve evasion, or export the
+    handoff, fight it on the table, and paste the result back in.
+  </div>
+</details>
 
 <div id="engagement" class="banner" style="display:none">
   <h2>⚔ Pending engagement — campaign frozen</h2>
-  <pre id="eng-detail" style="max-height:18vh"></pre>
+  <div id="eng-detail" style="max-height:22vh;overflow:auto"></div>
   <div class="bar">
     <button onclick="evade()">Resolve evasion (2d6)</button>
     <button onclick="exportHandoff()">Export handoff</button>
     <span id="mul-links"></span>
+    <span id="eng-msg" class="kv"></span>
   </div>
   <pre id="handoff-out" style="max-height:22vh"></pre>
   <div class="kv">BattleResult JSON:</div>
@@ -146,15 +168,7 @@ async function refresh() {
   const engDiv = document.getElementById('engagement');
   if (s.pendingEngagement) {
     engDiv.style.display = '';
-    const e = s.pendingEngagement;
-    document.getElementById('eng-detail').textContent = JSON.stringify({
-      id: e.id, trigger: e.trigger, domain: e.domain || 'GROUND', status: e.status,
-      at: e.hex ? `${e.hex.q},${e.hex.r}` : e.airPos ? `air ${e.airPos.gridQ},${e.airPos.gridR}` :
-          (e.classification && e.classification.nodeId) || 'deep space',
-      attacker: `${e.attackerSideId}: ${e.attackerFormationIds.join(', ')}`,
-      defender: `${e.defenderSideId}: ${e.defenderFormationIds.join(', ')}`,
-      classification: e.classification,
-    }, null, 1);
+    document.getElementById('eng-detail').innerHTML = engBriefing(s.pendingEngagement);
     document.getElementById('mul-links').innerHTML = e.handoffId
       ? sides.map(x => `<a href="/api/gm/handoff/${encodeURIComponent(e.handoffId)}/mul/${x}" download="${x}.mul">⤓ ${x}.mul</a>`).join(' · ')
       : '';
@@ -193,13 +207,26 @@ async function refresh() {
      <button onclick="editReport('${r.id}')">save</button></div>`).join('')
     : '<small>(nothing in transit)</small>';
 
-  // side views
+  // side views — what each side has actually been told (mirrors the player screen)
   document.getElementById('views').innerHTML = sides.map(x => {
     const v = s.views[x];
-    return `<details><summary>${x} — ${v.contacts.length} contacts · ${v.reports.length} reports</summary>
-      <pre style="max-height:30vh">${JSON.stringify({ contacts: v.contacts, reports: v.reports.slice(-6) }, null, 1)
-        .replace(/</g, '&lt;')}</pre></details>`;
+    const contacts = v.contacts.length
+      ? v.contacts.map(c => `<div>${contactLine(c)}</div>`).join('')
+      : '<div class="kv">(no contacts)</div>';
+    const reports = v.reports.length
+      ? v.reports.slice(-6).reverse().map(r =>
+          `<div class="kv">${esc(r.text)} <small>· ${clock(r.deliveredTick)}` +
+          `${r.deliveredTick > r.generatedTick ? ' · ' + ago(r.deliveredTick - r.generatedTick) + ' late' : ''}</small></div>`).join('')
+      : '<div class="kv">(inbox empty)</div>';
+    return `<details><summary>${up(x)} — ${v.contacts.length} contacts · ${v.reports.length} reports</summary>
+      <div style="margin:4px 0 2px;color:var(--dim)">contacts</div>${contacts}
+      <div style="margin:6px 0 2px;color:var(--dim)">recent reports</div>${reports}</details>`;
   }).join('');
+
+  // persistence indicator
+  document.getElementById('persist').innerHTML = s.persist
+    ? `<span style="color:var(--good)">● saving</span> to ${esc(s.persist.path)} (${s.persist.events} events)`
+    : `<span style="color:var(--warn)">● in-memory</span> — not saved (restart with <b>--log file.jsonl</b>)`;
 
   // status log — a readable chronicle (toggle "show detail" for the raw firehose)
   const detail = document.getElementById('log-detail').checked;
@@ -250,6 +277,58 @@ function evTick(e) {
   if (e.report && e.report.generatedTick != null) return e.report.generatedTick;
   if (e.contact && e.contact.lastConfirmedTick != null) return e.contact.lastConfirmedTick;
   return null;
+}
+function ago(ticks) {
+  const min = ticks * 6;
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60), m = min % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
+}
+
+// a transient status line instead of jarring alert() popups
+function notify(text, kind) {
+  const el = document.getElementById('gm-msg');
+  el.textContent = text;
+  el.style.color = kind === 'bad' ? 'var(--bad)' : kind === 'good' ? 'var(--good)' : 'var(--ink)';
+}
+
+// one readable contact line for the side-views mirror
+function contactLine(c) {
+  const at = esc(posText(c.estPos) || '?');
+  const lvl = esc(c.levelName || LADDER[c.level] || '');
+  const tail = [];
+  if (c.estSizeClass) tail.push(esc(c.estSizeClass));
+  if (c.estVector !== undefined && c.estVector !== null) tail.push(`hdg ${c.estVector}°`);
+  if (c.estComposition) tail.push(esc(c.estComposition));
+  const age = c.ageTicks ? ` <small>· ${ago(c.ageTicks)} old</small>` : '';
+  return `<b>${lvl}</b> @ ${at}${c.posErrorHexes ? ' ±' + c.posErrorHexes : ''}` +
+         (tail.length ? ' · ' + tail.join(' · ') : '') + age;
+}
+
+// the pending engagement as a plain-language briefing
+function engBriefing(e) {
+  const why = {
+    SAME_HEX: 'both forces occupy the same hex',
+    SCREEN: 'a screen line intercepted a mover',
+    STRIKE: 'a strike order reached its target',
+    AIR_INTERCEPT: 'an air interception merged',
+    SPACE_INTERCEPT: 'a deep-space intercept',
+  }[e.trigger] || e.trigger;
+  const where = e.hex ? `hex ${e.hex.q},${e.hex.r}`
+    : e.airPos ? `air ${e.airPos.gridQ},${e.airPos.gridR} ${e.airPos.band}`
+    : (e.classification && e.classification.nodeId) || 'deep space';
+  const atk = (e.attackerFormationIds || []).map(fname).join(', ') || up(e.attackerSideId);
+  const def = (e.defenderFormationIds || []).map(fname).join(', ') || up(e.defenderSideId);
+  const rows = [
+    `<b>${up(e.attackerSideId)}</b> attacks at <b>${where}</b> — ${why}.`,
+    `Attacker: ${esc(atk)} &nbsp;·&nbsp; Defender: ${esc(def)}`,
+  ];
+  if (e.classification) {
+    const cl = e.classification;
+    rows.push(`Geometry: <b>${cl.type}</b>${cl.marginBurnDays != null ? ` · ~${cl.marginBurnDays.toFixed(1)} burn-day margin` : ''}.`);
+  }
+  rows.push(`<span class="kv">Resolve evasion, or export the handoff, fight it on the table, and paste the result back in.</span>`);
+  return rows.map(r => `<div style="margin:2px 0">${r}</div>`).join('');
 }
 
 function humanize(e) {
@@ -374,8 +453,9 @@ async function post(path, body) {
 async function advance(untilEvent) { await post('/api/gm/advance', { untilEvent }); refresh(); }
 async function evade() {
   const r = await post('/api/gm/evade', {});
-  alert(r.success ? 'Evasion SUCCEEDED — defender slipped away'
-                  : 'Evasion failed' + (r.reason ? ` (${r.reason})` : '') + ' — to the table');
+  document.getElementById('eng-msg').textContent = r.success
+    ? '✓ evasion succeeded — defender slipped away'
+    : '✗ evasion failed' + (r.reason ? ` (${r.reason})` : '') + ' — to the table';
   refresh();
 }
 async function exportHandoff() {
@@ -420,21 +500,33 @@ async function editReport(id) {
 async function setAlert(formationId, state) {
   if (!state) return;
   const r = await post('/api/gm/alert', { formationId, state });
-  if (!r.ok) alert(r.reason);
+  notify(r.ok ? `${fname(formationId)} → ${state}` : `✗ ${r.reason}`, r.ok ? '' : 'bad');
   refresh();
 }
 async function turnaround(formationId, mode) {
   const r = await post('/api/gm/turnaround', { formationId, mode });
-  alert(r.ok ? `turnaround started, ready t${r.readyTick}${r.mishap ? ' — MISHAP on the pad!' : ''}` : r.reason);
+  notify(r.ok
+    ? `${fname(formationId)} turnaround started — ready ${clock(r.readyTick)}${r.mishap ? ' · MISHAP on the pad!' : ''}`
+    : `✗ ${r.reason}`, r.ok ? (r.mishap ? 'bad' : 'good') : 'bad');
   refresh();
 }
 async function resolveSalvage(tokenId) {
   const r = await post('/api/gm/salvage', { tokenId });
-  alert('Recovered as: ' + (r.outcome || r.error));
+  notify(r.outcome ? `salvage recovered → ${r.outcome === 'UNIT' ? 'repairable unit' : 'spare parts'}` : `✗ ${r.error}`,
+    r.outcome ? 'good' : 'bad');
   refresh();
 }
-function caMsg(r) { document.getElementById('ca-msg').textContent =
-  r.ok === false ? '✗ ' + r.reason : JSON.stringify(r); refresh(); }
+function caMsg(r) {
+  let msg;
+  if (r.ok === false) msg = '✗ ' + r.reason;
+  else if (r.landing) msg = `✓ dropped at ${r.landing.q},${r.landing.r}` + (r.scatter ? ` (scattered ${r.scatter} hex${r.scatter === 1 ? '' : 'es'})` : ' — on target');
+  else if (r.held !== undefined) msg = r.held ? '✓ transponder holds — squawk is consistent' : '✓ false flag blown — the burn gives it away';
+  else if (r.pilotId) msg = `✓ crew recovered (${r.pilotId})`;
+  else if (r.fpDelivered !== undefined) msg = `✓ offloaded — ${r.fpDelivered} FP delivered`;
+  else msg = '✓ done';
+  document.getElementById('ca-msg').textContent = msg;
+  refresh();
+}
 async function doDrop() {
   const h = document.getElementById('d-hex').value.split(',');
   caMsg(await post('/api/gm/drop', { carrierId: document.getElementById('d-carrier').value,
