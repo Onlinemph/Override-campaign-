@@ -85,11 +85,24 @@ let plotted = [];
 attachPanZoom(document.getElementById('map'));
 attachPanZoom(document.getElementById('sysmap'));
 
+// readable time: ticks are 6 min each, 240/day; dawn (tick 60) = 06:00
+function clock(tick) {
+  if (tick == null) return '—';
+  const day = Math.floor(tick / 240) + 1, tod = ((tick % 240) + 240) % 240;
+  return `Day ${day} ${String(Math.floor(tod / 10)).padStart(2, '0')}:${String((tod % 10) * 6).padStart(2, '0')}`;
+}
+function ago(ticks) {
+  const min = ticks * 6;
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60), m = min % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
+}
+
 async function refresh() {
   const v = await (await fetch(`/api/side/${sideId}/view?${q}`)).json();
   if (v.error) { document.getElementById('title').textContent = 'OVERRIDE — ' + v.error; return; }
   document.getElementById('title').textContent =
-    `OVERRIDE — ${sideId.toUpperCase()} · t${v.now} · ${v.clockMode} · ${v.isNight ? 'NIGHT' : 'DAY'} · ` +
+    `OVERRIDE — ${sideId.toUpperCase()} · ${clock(v.now)} · ${v.clockMode} · ${v.isNight ? 'NIGHT' : 'DAY'} · ` +
     `${v.vp} VP${v.vpThreshold ? ' / ' + v.vpThreshold : ''}` +
     (v.ended ? `  ·  ${v.ended.winnerSideId === sideId ? '★ VICTORY' :
       v.ended.winnerSideId ? 'DEFEAT' : 'DRAW'} (${v.ended.reason})` : '');
@@ -137,12 +150,12 @@ async function refresh() {
       (c.estVector !== undefined ? ` · hdg ${c.estVector}°` : '') +
       (c.estComposition ? `\n   ${c.estComposition}` : '') +
       (c.toe ? '\n   ' + c.toe.map(u => `${u.name} (${u.model}) ${u.damage}`).join('\n   ') : '') +
-      `\n   as of t${c.staleAsOfTick} (${c.ageTicks} stale)`;
+      `\n   as of ${clock(c.staleAsOfTick)}${c.ageTicks ? ` · ${ago(c.ageTicks)} old` : ''}`;
   }).join('\n\n') || '(no contacts — the silence is information too)';
 
   document.getElementById('inbox').innerHTML = v.reports.slice().reverse().map(r =>
-    `<div class="report">${r.text}<div class="meta">received t${r.deliveredTick}` +
-    (r.deliveredTick > r.generatedTick ? ` · <span class="stale">${r.deliveredTick - r.generatedTick} ticks late</span>` : '') +
+    `<div class="report">${r.text}<div class="meta">received ${clock(r.deliveredTick)}` +
+    (r.deliveredTick > r.generatedTick ? ` · <span class="stale">${ago(r.deliveredTick - r.generatedTick)} late</span>` : '') +
     `</div></div>`).join('') || '<small>(inbox empty)</small>';
 
   document.getElementById('terrain').textContent =

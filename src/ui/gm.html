@@ -83,8 +83,8 @@
   </div>
 
   <div class="col">
-    <div class="panel"><h2>Event log <small>(latest 200)</small></h2>
-      <pre id="log" style="max-height:78vh"></pre></div>
+    <div class="panel"><h2>Status log <small>(latest 200) · <label><input type="checkbox" id="log-detail" onchange="refresh()"> show detail</label></small></h2>
+      <div id="log" class="log" style="max-height:78vh"></div></div>
   </div>
 </div>
 
@@ -112,8 +112,7 @@ async function refresh() {
   lastState = s;
   const t = s.truth;
   document.getElementById('clock').textContent =
-    `t${t.tick} · ${t.clockMode} · day ${Math.floor(t.tick / 240)} ` +
-    `${String(Math.floor((t.tick % 240) / 10)).padStart(2, '0')}00`;
+    `${clock(t.tick).replace('D', 'Day ')} · ${t.clockMode}`;
   const thr = t.config.vpThreshold;
   document.getElementById('vp-bar').innerHTML = Object.values(t.sides).map(side =>
     `<span class="pill">${side.name}: <b>${side.vp} VP</b>${thr ? ' / ' + thr : ''}` +
@@ -189,7 +188,7 @@ async function refresh() {
   // pending reports — the noise editor
   const pending = Object.values(t.reports).filter(r => r.deliveredTick === null && !r.lost);
   document.getElementById('pending').innerHTML = pending.length ? pending.map(r =>
-    `<div class="report"><small>${r.sideId} · gen t${r.generatedTick} · via ${r.sourceFormationId}</small><br>
+    `<div class="report"><small>to ${up(r.sideId)} · sent ${clock(r.generatedTick)} · via ${fname(r.sourceFormationId)}</small><br>
      <input style="width:78%" id="rt-${r.id}" value="${r.text.replace(/"/g, '&quot;')}">
      <button onclick="editReport('${r.id}')">save</button></div>`).join('')
     : '<small>(nothing in transit)</small>';
@@ -202,9 +201,154 @@ async function refresh() {
         .replace(/</g, '&lt;')}</pre></details>`;
   }).join('');
 
-  // event log
-  document.getElementById('log').textContent = s.eventLog.map(l =>
-    `#${l.index} ${l.event.type} ${summ(l.event)}`).join('\n');
+  // status log — a readable chronicle (toggle "show detail" for the raw firehose)
+  const detail = document.getElementById('log-detail').checked;
+  const logEl = document.getElementById('log');
+  const nearBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 40;
+  let lastTick = null, prevKey = '';
+  const rows = [];
+  for (const l of s.eventLog) {
+    const t = evTick(l.event);
+    if (t != null) lastTick = t;
+    const h = humanize(l.event);
+    if (!h) continue;                       // dropped noise (progress accumulators, etc.)
+    if (h.cls === 'noise' && !detail) continue;
+    const key = lastTick + '|' + h.msg;
+    if (key === prevKey) continue;          // collapse repeats (re-confirmed locks, etc.)
+    prevKey = key;
+    const ts = h.cls === 'head' ? '' : clock(lastTick);
+    rows.push(`<div class="ev ${h.cls}"><span class="ts">${ts}</span>` +
+              `<span class="ic">${h.icon || ''}</span><span class="msg">${esc(h.msg)}</span></div>`);
+  }
+  logEl.innerHTML = rows.join('') || '<div class="kv">(nothing logged yet — press Step)</div>';
+  if (nearBottom) logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ── humanizing the event stream ──────────────────────────────────────────────
+const LADDER = ['—', 'GHOST', 'SHADOW', 'CONTACT', 'LOCK'];
+function esc(s) { return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+function clock(tick) {
+  if (tick == null) return '';
+  const day = Math.floor(tick / 240) + 1, tod = ((tick % 240) + 240) % 240;
+  return `D${day} ${String(Math.floor(tod / 10)).padStart(2, '0')}:${String((tod % 10) * 6).padStart(2, '0')}`;
+}
+function fname(id) { const f = lastState && lastState.truth.formations[id]; return f ? f.name : id; }
+function facname(id) { const f = lastState && lastState.truth.facilities[id]; return f ? f.name : id; }
+function up(id) { return String(id || '').toUpperCase(); }
+function posText(p) {
+  if (!p) return '';
+  if (p.kind === 'ground') return `hex ${p.q},${p.r}`;
+  if (p.kind === 'air') return `air ${p.gridQ},${p.gridR} ${p.band}`;
+  if (p.kind === 'node') return p.nodeId;
+  if (p.kind === 'lane') return `${p.laneId} ${p.progressAU.toFixed(1)}AU`;
+  return '';
+}
+function cparts(cid) { const a = String(cid || '').split(':'); return { obs: a[1], tgt: a[2] }; }
+function evTick(e) {
+  if (e.tick != null) return e.tick;
+  if (e.roll && e.roll.tick != null) return e.roll.tick;
+  if (e.report && e.report.generatedTick != null) return e.report.generatedTick;
+  if (e.contact && e.contact.lastConfirmedTick != null) return e.contact.lastConfirmedTick;
+  return null;
+}
+
+function humanize(e) {
+  const F = fname;
+  switch (e.type) {
+    case 'STEP_BEGAN': return { cls: 'head', msg: `${e.mode} watch` };
+    case 'CAMPAIGN_INIT': return { cls: 'head', msg: 'campaign begins' };
+    case 'CLOCK_ADVANCED': return null;
+    case 'MOVE_PROGRESS': case 'FORMATION_BOOKKEEPING': case 'SPACE_SWEEP':
+    case 'REPORT_QUEUED': case 'DAY_SCORED': case 'UNIT_STATE_CHANGED':
+    case 'PILOT_STATE_CHANGED': return null;
+
+    case 'DIE_ROLLED':
+      return { cls: 'noise', icon: '🎲', msg: `${e.roll.result} — ${e.roll.purpose}` };
+
+    case 'FORMATION_MOVED': {
+      const how = { NORMAL: 'moves to', CAUTIOUS: 'eases to', FORCED: 'force-marches to',
+                    SPRINT: 'sprints to' }[e.movedKind] || 'moves to';
+      return { cls: '', icon: '→', msg: `${F(e.formationId)} ${how} ${e.to.q},${e.to.r}${e.onRoad ? ' (road)' : ''}` };
+    }
+    case 'CONTACT_UPGRADED': {
+      const c = e.contact, lock = c.level >= 4, at = posText(c.estPos);
+      return { cls: lock ? 'warn' : '', icon: lock ? '🔒' : '•',
+        msg: `${up(c.observerSideId)} ${lock ? 'LOCKS' : 'gets ' + (LADDER[c.level] || 'L' + c.level) + ' on'} ${F(c.targetFormationId)}${at ? ` (${at})` : ''}` };
+    }
+    case 'CONTACT_FADED': { const p = cparts(e.contactId);
+      return { cls: 'noise', icon: '·', msg: `${up(p.obs)}'s track on ${F(p.tgt)} fades to ${LADDER[e.level] || 'L' + e.level}` }; }
+    case 'CONTACT_REMOVED': { const p = cparts(e.contactId);
+      return { cls: 'noise', icon: '·', msg: `${up(p.obs)} loses the track on ${F(p.tgt)}` }; }
+    case 'REPORT_DELIVERED': return null;
+    case 'REPORT_EDITED': return { cls: 'warn', icon: '✎', msg: 'GM rewrote a report in transit' };
+    case 'REPORTS_LOST': return { cls: 'noise', icon: '✕', msg: `${e.reportIds.length} report(s) lost — ${e.reason}` };
+
+    case 'NET_CHANGED':
+      return { cls: e.onNet ? '' : 'warn', icon: e.onNet ? '📡' : '⚠',
+        msg: `${F(e.formationId)} ${e.onNet ? 'is back on-net' : 'drops off-net'}` };
+    case 'EMCON_CHANGED': return { cls: '', icon: '·', msg: `${F(e.formationId)} goes EMCON ${e.emcon}` };
+    case 'POSTURE_CHANGED': return { cls: 'noise', icon: '·', msg: `${F(e.formationId)} → ${e.posture}` };
+    case 'HEXES_SCOUTED': return { cls: 'noise', icon: '·', msg: `${up(e.sideId)} scouts ${e.keys.length} hex(es)` };
+    case 'SAT_PASS': return { cls: 'noise', icon: '🛰', msg: `satellite ${e.satelliteId} sweeps overhead` };
+    case 'FORMATION_FIRED': return { cls: 'noise', icon: '✸', msg: `${F(e.formationId)} fires (gives away its hex)` };
+
+    case 'ORDER_ISSUED': return { cls: 'noise', icon: '✎', msg: `${up(e.order.sideId)} orders ${F(e.order.formationId)}: ${e.order.kind}` };
+    case 'ORDER_ACTIVATED': return null;
+    case 'ORDER_COMPLETED': return { cls: 'noise', icon: '✓', msg: `${F(e.formationId)} completes its order` };
+    case 'ORDER_SUPERSEDED': return null;
+    case 'TRIGGER_FIRED': return { cls: '', icon: '⚙', msg: `${F(e.formationId)}'s conditional fires → ${e.newOrder.kind}` };
+
+    case 'ENGAGEMENT_TRIGGERED': { const g = e.engagement;
+      const a = (g.attackerFormationIds || []).map(F).join(', ');
+      const d = (g.defenderFormationIds || []).map(F).join(', ');
+      return { cls: 'big', icon: '⚔', msg: `BATTLE — ${a || up(g.attackerSideId)} vs ${d || up(g.defenderSideId)}${g.hex ? ` at ${g.hex.q},${g.hex.r}` : ''} (campaign frozen)` }; }
+    case 'EVASION_RESOLVED':
+      return { cls: e.success ? 'good' : 'warn', icon: e.success ? '↯' : '⚔',
+        msg: e.success ? `defender slips away${e.slipTo ? ` to ${e.slipTo.q},${e.slipTo.r}` : ''}` : 'evasion fails — to the table' };
+    case 'HANDOFF_EXPORTED': return { cls: 'big', icon: '⇄', msg: 'handoff exported — fight it on the table' };
+    case 'BATTLE_RESULT_INGESTED': return { cls: 'big', icon: '⇄', msg: 'battle result ingested — campaign resumes' };
+    case 'ROUT_STARTED': return { cls: 'bad', icon: '✦', msg: `${F(e.formationId)} routs (uncommandable a while)` };
+    case 'FORMATION_DESTROYED': return { cls: 'bad', icon: '☠', msg: `${F(e.formationId)} destroyed — ${e.reason}` };
+    case 'SALVAGE_CREATED': return { cls: 'noise', icon: '⚙', msg: 'salvage token left on the field' };
+    case 'SALVAGE_RESOLVED': return { cls: '', icon: '⚙', msg: `salvage hauled in → ${e.outcome === 'UNIT' ? 'repairable unit' : 'spare parts'}` };
+
+    case 'RDY_CHANGED': return { cls: 'noise', icon: '·', msg: `${F(e.formationId)} readiness ${e.delta > 0 ? '+' : ''}${e.delta} (${e.reason})` };
+    case 'SUPPLY_CHANGED': return { cls: e.inSupply ? 'noise' : 'warn', icon: e.inSupply ? '·' : '⚠',
+      msg: `${F(e.formationId)} ${e.inSupply ? 'is resupplied' : 'is cut off from supply'}` };
+    case 'SP_CHANGED': return { cls: 'noise', icon: '·', msg: `${facname(e.facilityId)} supply ${e.delta > 0 ? '+' : ''}${e.delta} (${e.reason})` };
+    case 'BLOCKADE_STATE': return { cls: e.blockaded ? 'warn' : 'good', icon: e.blockaded ? '⚓' : '⚓',
+      msg: `${up(e.sideId)} ${e.blockaded ? 'is blockaded — off-world supply cut' : 'breaks the blockade'}` };
+    case 'TRANSPONDER_REVEALED': return { cls: 'warn', icon: '⚑', msg: `${F(e.formationId)}'s false flag is blown` };
+
+    case 'VP_CHANGED': return { cls: '', icon: '★', msg: `${up(e.sideId)} ${e.delta > 0 ? '+' : ''}${e.delta} VP — ${e.reason}` };
+    case 'OBJECTIVE_CONTROL': return { cls: '', icon: '★', msg: `${up(e.ownerSideId)} takes the objective at ${e.hexKey}` };
+    case 'NODE_CONTROL': return { cls: '', icon: '★', msg: `${up(e.ownerSideId)} controls ${e.nodeId}` };
+    case 'CAMPAIGN_ENDED': return { cls: 'big', icon: '🏁',
+      msg: e.winnerSideId ? `CAMPAIGN OVER — ${up(e.winnerSideId)} wins (${e.reason})` : `CAMPAIGN OVER — draw (${e.reason})` };
+
+    case 'AIR_LAUNCHED': return { cls: '', icon: '✈', msg: `${F(e.formationId)} launches` };
+    case 'AIR_LANDED': return { cls: '', icon: '✈', msg: `${F(e.formationId)} lands at ${facname(e.facilityId)}` };
+    case 'AIR_MOVED': return { cls: 'noise', icon: '✈', msg: `${F(e.formationId)} flies to ${e.pos.gridQ},${e.pos.gridR} (−${e.fpPaid} FP)` };
+    case 'AIR_PHASE': return { cls: 'noise', icon: '✈', msg: `${F(e.formationId)} → ${e.phase}` };
+    case 'ALERT_CHANGED': return { cls: 'noise', icon: '✈', msg: `${F(e.formationId)} alert: ${e.alertState}` };
+    case 'FUEL_THRESHOLD': return { cls: 'warn', icon: '⛽', msg: `${F(e.formationId)} hits ${e.threshold} fuel` };
+    case 'FUEL_SPENT': case 'TONS_BURNED': case 'TONS_GAINED': case 'PILOT_FATIGUE':
+    case 'TURNAROUND_STARTED': return null;
+
+    case 'JUMP_EXECUTED': return { cls: '', icon: '✦', msg: `${F(e.formationId)} jumps to ${e.toNodeId}` };
+    case 'MISJUMP': return { cls: 'bad', icon: '✦', msg: `${F(e.formationId)} MISJUMPS (rolled ${e.roll})` };
+    case 'ARRIVED_AT_NODE': return { cls: '', icon: '⛢', msg: `${F(e.formationId)} arrives at ${e.pos.nodeId}` };
+    case 'LANE_PROGRESS': return { cls: 'noise', icon: '·', msg: `${F(e.formationId)} ${e.pos.progressAU.toFixed(1)} AU out` };
+    case 'NODE_SURVEYED': return { cls: 'noise', icon: '·', msg: `${up(e.sideId)} surveys ${e.nodeId}` };
+    case 'EMISSION_OBSERVED': return { cls: 'noise', icon: '·', msg: `${up(e.sideId)} catches a distant flash` };
+
+    case 'GM_NOTE': return { cls: '', icon: '✎', msg: e.text };
+    default: {
+      const id = e.formationId || (e.order && e.order.formationId);
+      return { cls: 'noise', icon: '·',
+        msg: e.type.toLowerCase().replace(/_/g, ' ') + (id ? ` — ${F(id)}` : '') };
+    }
+  }
 }
 
 function inspectHex(q, r) {
@@ -221,19 +365,6 @@ function inspectHex(q, r) {
     (hex && hex.objective ? ` ★${hex.objective.vpPerDay}VP${hex.objective.hidden ? ' (hidden)' : ''}${hex.objective.fake ? ' (FAKE)' : ''}` : '') +
     here.map(f => `\n  ${f.name} [${f.sideId}] RDY ${f.rdy} ${f.emcon}/${f.posture}${f.destroyed ? ' ✕' : ''}`).join('') +
     fac.map(f => `\n  ${f.name} [${f.sideId}] farm ${f.fuelFarmTons}t · ${f.supplyPoints} SP`).join('');
-}
-
-function summ(e) {
-  if (e.type === 'DIE_ROLLED') return `${e.roll.result} (${e.roll.purpose})`;
-  if (e.type === 'FORMATION_MOVED') return `${e.formationId} → ${e.to.q},${e.to.r}`;
-  if (e.type === 'AIR_MOVED') return `${e.formationId} → air ${e.pos.gridQ},${e.pos.gridR} (−${e.fpPaid} FP)`;
-  if (e.type === 'LANE_PROGRESS') return `${e.formationId} ${e.pos.progressAU.toFixed(2)} AU @ ${Math.round(e.pos.velocityKps)} kps`;
-  if (e.type === 'CONTACT_UPGRADED') return `${e.contact.id} → L${e.contact.level}`;
-  if (e.type === 'REPORT_DELIVERED') return e.reportId;
-  if (e.type === 'STEP_BEGAN') return `t${e.tick} ${e.mode}`;
-  if (e.type === 'CLOCK_ADVANCED') return `→ t${e.tick}`;
-  if (e.type === 'GM_NOTE') return e.text;
-  return JSON.stringify(e).slice(0, 110);
 }
 
 async function post(path, body) {
