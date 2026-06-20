@@ -8,8 +8,8 @@
  * state change. Nothing player-facing is ever persisted (spec §4).
  */
 import { createServer } from 'node:http';
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { readFileSync, readdirSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
 import { Campaign, replay } from '../core/truth.js';
@@ -49,7 +49,11 @@ const here = dirname(fileURLToPath(import.meta.url));
 const fixturePath = positional[0] ?? join(here, '../../demo/campaign.json');
 
 const store = logPath ? new JsonlEventStore(logPath) : new MemoryEventStore();
-const { campaign, resumed } = Campaign.resumeOrCreate(store, () => loadCampaignFixture(fixturePath));
+// `campaign`/`activeLogPath` are reassigned when the GM loads another campaign at runtime
+const boot = Campaign.resumeOrCreate(store, () => loadCampaignFixture(fixturePath));
+let campaign = boot.campaign;
+const resumed = boot.resumed;
+let activeLogPath: string | undefined = logPath;
 if (logPath) {
   console.log(resumed
     ? `Resumed campaign from ${logPath} (${store.length()} events, tick ${campaign.truth.tick})`
@@ -75,8 +79,28 @@ function gmState() {
     eventCount: campaign.store.length(),
     pendingEngagement: eng,
     salvage: Object.values(campaign.truth.salvage),
-    persist: logPath ? { path: logPath, events: campaign.store.length() } : null,
+    persist: activeLogPath ? { path: activeLogPath, events: campaign.store.length() } : null,
+    campaignName: campaign.truth.config.name,
   };
+}
+
+/** Campaign files the GM can switch to: validated *.json in the fixture & demo dirs. */
+function listCampaigns(): Array<{ path: string; name: string }> {
+  const dirs = [dirname(fixturePath), join(here, '../../demo')];
+  const out: Array<{ path: string; name: string }> = [];
+  const seen = new Set<string>();
+  for (const d of dirs) {
+    let files: string[];
+    try { files = readdirSync(d).filter(f => f.endsWith('.json')); } catch { continue; }
+    for (const f of files) {
+      const p = resolve(d, f);
+      if (seen.has(p)) continue;
+      seen.add(p);
+      try { out.push({ path: p, name: loadCampaignFixture(p).config.name }); }
+      catch { /* not a valid campaign file — skip */ }
+    }
+  }
+  return out;
 }
 
 function json(res: any, code: number, body: unknown) {
@@ -131,6 +155,26 @@ const server = createServer(async (req, res) => {
         : campaign.step();
       broadcast();
       return json(res, 200, { tick: campaign.truth.tick, events: events.length });
+    }
+    if (path === '/api/gm/undo' && req.method === 'POST') {
+      const r = campaign.rewindOneStep();
+      if (r) broadcast();
+      return json(res, 200, r ? { ok: true, tick: r.tick } : { ok: false, reason: 'nothing to undo' });
+    }
+    if (path === '/api/gm/campaigns' && req.method === 'GET') {
+      return json(res, 200, { campaigns: listCampaigns(), current: fixturePath });
+    }
+    if (path === '/api/gm/load' && req.method === 'POST') {
+      const b = await readBody(req);
+      try {
+        const truth = loadCampaignFixture(String(b.path));
+        campaign = Campaign.create(truth);          // fresh in-memory session
+        activeLogPath = undefined;                  // not persisted unless restarted with --log
+        broadcast();
+        return json(res, 200, { ok: true, name: truth.config.name });
+      } catch (e: any) {
+        return json(res, 200, { ok: false, reason: String(e?.message ?? e).slice(0, 400) });
+      }
     }
     if (path === '/api/gm/inject-report' && req.method === 'POST') {
       // GM noise injection: a hand-written report straight into a side's inbox

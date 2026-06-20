@@ -447,3 +447,16 @@ inspection, a blockade, a combat drop that takes a spaceport, and a SAR pickup
    artifact, sentinel drones, passive arrays, water cracking, scheduled JumpShip convoy
    arrivals, hard-burn medical rolls, orbital fire support, and customs interception as a
    full scenario generator.
+
+## D-015 ✅ GM time-travel (undo / rewind)
+The event log is append-only on the normal play path (D-001), but running a real game
+night needs an undo. `EventStore.truncate(n)` is the single sanctioned exception: keep the
+first `n` events, drop the rest. `Campaign.rewind(n)` truncates then rebuilds truth by
+replaying the surviving prefix; `Campaign.rewindOneStep()` rewinds to just before the last
+`STEP_BEGAN`, undoing exactly one tick (press repeatedly to walk back through a
+`runUntilEvent` jump). Because truth is a pure fold over the log, a rewind followed by
+re-stepping reproduces the original forward state byte-for-byte — undo doesn't break
+determinism or replay, it just shortens the log. The JSONL store rewrites its file, so the
+rewind survives a restart. Undo cannot pass the tick-0 setup (genesis + initial net/scout
+events stay). Loading a different campaign at runtime starts a fresh in-memory session and
+is therefore *not* persisted unless the server was launched with `--log`.

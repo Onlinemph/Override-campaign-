@@ -22,10 +22,12 @@ const dir = mkdtempSync(join(tmpdir(), 'override-log-'));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
 describe('B2 — event log & replay', () => {
-  it('stores expose no update/delete API (append-only by construction)', () => {
+  it('append-only on the play path; truncate is the only history mutation (D-015 rewind)', () => {
     const store = new MemoryEventStore();
+    // no in-place update/delete of individual events; the sole history-shortening method
+    // is `truncate`, used exclusively by GM undo/rewind (Campaign.rewind).
     expect(Object.getOwnPropertyNames(Object.getPrototypeOf(store)).sort())
-      .toEqual(['all', 'append', 'constructor', 'length']);
+      .toEqual(['all', 'append', 'constructor', 'length', 'truncate']);
   });
 
   it('truth = fold(applyEvent, genesis, events): replay reproduces live state exactly', () => {

@@ -12,6 +12,7 @@
 <div class="bar">
   <button onclick="advance(false)">Step</button>
   <button onclick="advance(true)">Run until event</button>
+  <button onclick="undoStep()" title="Rewind the last step">↶ Undo step</button>
   <span class="kv">belief overlay:
     <select id="belief" onchange="refresh()"><option value="">truth only</option></select></span>
   <span id="vp-bar" class="kv"></span>
@@ -35,6 +36,30 @@
     full dice-by-dice firehose.<br>
     When a <b>battle</b> triggers the campaign freezes: resolve evasion, or export the
     handoff, fight it on the table, and paste the result back in.
+  </div>
+</details>
+
+<details class="panel" style="margin-bottom:12px">
+  <summary style="cursor:pointer;color:var(--dim)">▸ Session setup &amp; campaign</summary>
+  <div style="margin-top:8px">
+    <div class="kv" style="margin-bottom:8px">
+      Campaign: <select id="camp-select"></select>
+      <button onclick="loadCampaign()">Load (resets session)</button>
+      <span id="camp-msg" class="kv"></span>
+    </div>
+    <div class="legend" style="line-height:1.7">
+      <b>Session-zero checklist</b><br>
+      ① Pick the campaign above (or build one in the <a href="/editor">editor</a>).<br>
+      ② Agree a default <b>battle resolution</b> mode — Full BattleTech, Alpha Strike, or
+      Quick Resolution (GM roll-off) — and any house rules.<br>
+      ③ Confirm <b>victory conditions</b> (VP threshold / end day) — shown in the bar above.<br>
+      ④ Send each player their <b>private link</b> from the Player links panel; they only
+      ever see their own side.<br>
+      ⑤ Restart with <b>--log file.jsonl</b> if you want the session saved (see the header
+      indicator).<br>
+      ⑥ Start the clock with <b>Run until event</b>; <b>↶ Undo step</b> rewinds if you
+      advanced too far.
+    </div>
   </div>
 </details>
 
@@ -451,6 +476,27 @@ async function post(path, body) {
     body: JSON.stringify(body || {}) })).json();
 }
 async function advance(untilEvent) { await post('/api/gm/advance', { untilEvent }); refresh(); }
+async function undoStep() {
+  const r = await post('/api/gm/undo', {});
+  notify(r.ok ? `↶ rewound to ${clock(r.tick).replace('D', 'Day ')}` : `nothing to undo`, r.ok ? '' : 'bad');
+  refresh();
+}
+let campaignsLoaded = false;
+async function loadCampaignList() {
+  const r = await (await fetch('/api/gm/campaigns')).json();
+  const sel = document.getElementById('camp-select');
+  sel.innerHTML = (r.campaigns || []).map(c =>
+    `<option value="${esc(c.path)}">${esc(c.name)}</option>`).join('') || '<option value="">(none found)</option>';
+  campaignsLoaded = true;
+}
+async function loadCampaign() {
+  const path = document.getElementById('camp-select').value;
+  if (!path) return;
+  if (!confirm('Load this campaign? The current session is replaced (and is not saved unless you launched with --log).')) return;
+  const r = await post('/api/gm/load', { path });
+  document.getElementById('camp-msg').textContent = r.ok ? `✓ loaded ${r.name}` : `✗ ${r.reason}`;
+  refresh();
+}
 async function evade() {
   const r = await post('/api/gm/evade', {});
   document.getElementById('eng-msg').textContent = r.success
@@ -548,6 +594,7 @@ async function doTanker() {
 const ws = new WebSocket(`ws://${location.host}`);
 ws.onmessage = refresh;
 refresh();
+loadCampaignList();
 </script>
 </body>
 </html>

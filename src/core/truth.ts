@@ -86,6 +86,32 @@ export class Campaign {
     return collected;
   }
 
+  /**
+   * GM time-travel (D-015): drop every event after the first `eventCount` and rebuild
+   * truth from the surviving prefix. The log is otherwise append-only; this is the one
+   * sanctioned rewind, used by undo.
+   */
+  rewind(eventCount: number): void {
+    this.store.truncate(eventCount);
+    this.truth = replay(this.store.all());
+  }
+
+  /**
+   * Undo the most recent engine step: rewind to just before the last STEP_BEGAN, so one
+   * tick's worth of events comes off. Returns the new tick, or null if there's nothing
+   * before the first step (only genesis + tick-0 setup remain).
+   */
+  rewindOneStep(): { tick: number } | null {
+    const all = this.store.all();
+    let idx = -1;
+    for (let i = all.length - 1; i >= 0; i--) {
+      if (all[i].event.type === 'STEP_BEGAN') { idx = i; break; }
+    }
+    if (idx <= 0) return null;
+    this.rewind(idx);
+    return { tick: this.truth.tick };
+  }
+
   get pendingEngagement() {
     return this.truth.pendingEngagementId
       ? this.truth.engagements[this.truth.pendingEngagementId] : null;
