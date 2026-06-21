@@ -24,13 +24,14 @@
       <h2>The sky, then</h2><svg id="sysmap" class="map"></svg></div>
   </div>
   <div class="col">
-    <div class="panel"><h2>What was happening</h2><pre id="feed" style="max-height:74vh"></pre></div>
+    <div class="panel"><h2>What was happening</h2><div id="feed" class="log" style="max-height:74vh"></div></div>
   </div>
 </div>
 
 <script src="/ui/hexmap.js"></script>
 <script src="/ui/sysmap.js"></script>
 <script src="/ui/mapmodel.js"></script>
+<script src="/ui/format.js"></script>
 <script>
 let max = 0, timer = null;
 
@@ -44,7 +45,7 @@ async function seek(n) {
   document.getElementById('max').textContent = max;
   const t = s.truth;
   document.getElementById('when').textContent =
-    `t${t.tick} · day ${Math.floor(t.tick / 240)} ${String(Math.floor((t.tick % 240) / 10)).padStart(2, '0')}00`;
+    `${Fmt.clock(t.tick).replace('D', 'Day ')} · ${t.clockMode || ''}`;
 
   const theaterId = Object.keys(t.theaters)[0];
   const model = buildTruthHexModel(t, theaterId, {});
@@ -53,20 +54,19 @@ async function seek(n) {
   document.getElementById('sys-panel').style.display = sysModel ? '' : 'none';
   if (sysModel) renderSysMap(document.getElementById('sysmap'), sysModel);
 
-  document.getElementById('feed').textContent = s.window.map(l =>
-    `${l.index === +n ? '▶' : ' '} #${l.index} ${l.event.type} ${summ(l.event)}`).join('\n');
-}
-
-function summ(e) {
-  if (e.type === 'DIE_ROLLED') return `${e.roll.result} — ${e.roll.purpose}`;
-  if (e.type === 'FORMATION_MOVED') return `${e.formationId} → ${e.to.q},${e.to.r}`;
-  if (e.type === 'CONTACT_UPGRADED') return `${e.contact.id} → L${e.contact.level}`;
-  if (e.type === 'REPORT_QUEUED') return e.report.text;
-  if (e.type === 'REPORT_DELIVERED') return e.reportId;
-  if (e.type === 'GM_NOTE') return e.text;
-  if (e.type === 'STEP_BEGAN') return `t${e.tick} ${e.mode}`;
-  if (e.type === 'CLOCK_ADVANCED') return `→ t${e.tick}`;
-  return JSON.stringify(e).slice(0, 100);
+  // readable chronicle, with the scrubbed-to event highlighted
+  let lastTick = null;
+  document.getElementById('feed').innerHTML = s.window.map(l => {
+    const tk = Fmt.evTick(l.event);
+    if (tk != null) lastTick = tk;
+    const h = Fmt.humanize(l.event, t);
+    if (!h) return '';
+    const here = l.index === +n;
+    const ts = h.cls === 'head' ? '' : Fmt.clock(lastTick);
+    return `<div class="ev ${h.cls}" style="${here ? 'background:rgba(90,169,255,0.12)' : ''}">` +
+      `<span class="ts">${here ? '▶' : ''} ${ts}</span>` +
+      `<span class="ic">${h.icon || ''}</span><span class="msg">${Fmt.esc(h.msg)}</span></div>`;
+  }).filter(Boolean).join('');
 }
 
 function play() {
