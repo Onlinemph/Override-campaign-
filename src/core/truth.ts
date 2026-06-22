@@ -283,8 +283,10 @@ export class Campaign {
   /** GM: spawn an arriving formation (reinforcements, raiders, drop arrivals). */
   spawnFormation(formation: import('./types.js').Formation,
                  units: import('./types.js').Unit[],
-                 pilots: import('./types.js').Pilot[] = []): void {
-    this.inject({ type: 'FORMATION_SPAWNED', formation, units, pilots, tick: this.truth.tick });
+                 pilots: import('./types.js').Pilot[] = [],
+                 jumpDrives: import('./types.js').JumpDrive[] = []): void {
+    this.inject({ type: 'FORMATION_SPAWNED', formation, units, pilots, jumpDrives,
+                  tick: this.truth.tick });
   }
 
   /**

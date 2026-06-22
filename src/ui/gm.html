@@ -124,6 +124,18 @@
       <div class="kv">tanker: from <input id="k-from" size="9"> to <input id="k-to" size="9">
         tons <input id="k-tons" size="4"> <button onclick="doTanker()">Offload</button></div>
       <div id="ca-msg" class="kv"></div></div>
+    <div class="panel"><h2>Reinforcements <small>— drop a new formation into the running game</small></h2>
+      <div class="kv">name <input id="rf-name" size="16" placeholder="Relief Company">
+        side <select id="rf-side"></select></div>
+      <div class="kv">theater <select id="rf-theater"></select>
+        hex <input id="rf-hex" size="6" placeholder="q,r">
+        SIG <input id="rf-sig" size="3" value="7"> EMCON <select id="rf-emcon">
+          <option>PASSIVE</option><option>DARK</option><option>ACTIVE</option></select></div>
+      <div class="kv">units <small>(one per line: <code>Name | Model | CLASS</code>)</small></div>
+      <textarea id="rf-units" rows="3" style="width:100%"
+        placeholder="Vixen 1 | Stinger STG-3R | MECH&#10;Vixen 2 | Wasp WSP-1A | MECH"></textarea>
+      <div style="margin-top:4px"><button onclick="doSpawn()">Spawn reinforcement</button>
+        <span id="rf-msg" class="kv"></span></div></div>
     <div class="panel"><h2>Player links <small>— share each side's private URL</small></h2>
       <div id="links"></div></div>
     <div class="panel"><h2>Side views</h2><div id="views"></div></div>
@@ -171,11 +183,15 @@ async function refresh() {
 
   // selectors (once)
   const sides = Object.keys(s.views);
-  for (const id of ['belief', 'inj-side', 'ph-side', 'i-side']) {
+  for (const id of ['belief', 'inj-side', 'ph-side', 'i-side', 'rf-side']) {
     const sel = document.getElementById(id);
     if (sel.options.length <= (id === 'belief' ? 1 : 0)) {
-      sides.forEach(x => sel.add(new Option(x, x)));
+      sides.forEach(x => sel.add(new Option(t.sides[x].name, x)));
     }
+  }
+  const rfTheater = document.getElementById('rf-theater');
+  if (!rfTheater.options.length) {
+    Object.values(t.theaters).forEach(th => rfTheater.add(new Option(th.name, th.id)));
   }
 
   // maps
@@ -435,6 +451,28 @@ async function doSar() {
 async function doTanker() {
   caMsg(await post('/api/gm/tanker', { tankerId: document.getElementById('k-from').value,
     receiverId: document.getElementById('k-to').value, tons: +document.getElementById('k-tons').value }));
+}
+async function doSpawn() {
+  // units textarea: one per line "Name | Model | CLASS"
+  const units = document.getElementById('rf-units').value.split('\n')
+    .map(l => l.trim()).filter(Boolean).map(l => {
+      const [name, model, cls] = l.split('|').map(s => (s || '').trim());
+      return { name, model: model || undefined, class: (cls || 'MECH').toUpperCase() };
+    });
+  const hex = document.getElementById('rf-hex').value.split(',');
+  const r = await post('/api/gm/spawn', {
+    name: document.getElementById('rf-name').value,
+    sideId: document.getElementById('rf-side').value,
+    theaterId: document.getElementById('rf-theater').value,
+    q: +hex[0], r: +hex[1],
+    sigBase: +document.getElementById('rf-sig').value,
+    emcon: document.getElementById('rf-emcon').value,
+    units,
+  });
+  document.getElementById('rf-msg').textContent = r.ok
+    ? `✓ ${r.name} (${r.units} unit${r.units === 1 ? '' : 's'}) deployed` : `✗ ${r.reason}`;
+  if (r.ok) document.getElementById('rf-units').value = '';
+  refresh();
 }
 
 const ws = new WebSocket(`ws://${location.host}`);

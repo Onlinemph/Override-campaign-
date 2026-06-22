@@ -2,7 +2,9 @@
  * demo.ts — load a declarative campaign fixture (demo/campaign.json) into a TruthState.
  */
 import { readFileSync } from 'node:fs';
-import type { GroundPos, Marker, Order, Position, TruthState } from './core/types.js';
+import type {
+  Formation, GroundPos, JumpDrive, Marker, Order, Pilot, Position, TruthState, Unit,
+} from './core/types.js';
 import {
   addFormation, emptyTruth, mkFacility, mkFormation, mkSatellite, mkSide,
   mkTheater, mkUnit, type HexOverride,
@@ -28,6 +30,73 @@ interface FixtureJson {
 
 export function loadCampaignFixture(path: string): TruthState {
   return buildCampaign(JSON.parse(readFileSync(path, 'utf8')), path);
+}
+
+/**
+ * Build the entities for one declarative formation spec (the same shape used in
+ * `formations[]` of a campaign file). Returns the pieces without touching any TruthState,
+ * so it serves both the bulk loader and runtime GM reinforcement (Campaign.spawnFormation).
+ * The formation comes back with `unitIds` populated, as FORMATION_SPAWNED expects.
+ */
+export function buildFormationEntities(f: any):
+    { formation: Formation; units: Unit[]; pilots: Pilot[]; jumpDrives: JumpDrive[] } {
+  const pos = f.nodeId
+    ? { kind: 'node' as const, nodeId: f.nodeId }
+    : f.airPos
+    ? { kind: 'air' as const, gridQ: f.airPos.q, gridR: f.airPos.r,
+        band: (f.airPos.band ?? 'HIGH') as 'HIGH', altLevel: f.airPos.altLevel ?? 6,
+        velocity: 2, vectorDeg: 0 }
+    : { kind: 'ground' as const, theaterId: f.theaterId, q: f.q, r: f.r };
+  const formation = mkFormation({
+    id: f.id, sideId: f.sideId, name: f.name, pos,
+    omp: f.omp ?? 0, sigBase: f.sigBase,
+    sns: f.sns, emcon: f.emcon ?? 'PASSIVE',
+    alertState: f.alertState,
+    posture: f.posture, rdy: f.rdy, facing: f.facing,
+    carriedSp: f.carriedSp, squawk: f.squawk, neutral: f.neutral,
+    ...(f.mountedOn ? { mounted: { carrierFormationId: f.mountedOn } } : {}),
+  });
+  if (f.flight || f.airPos) {
+    formation.air = { phase: f.airPos ? 'ENROUTE' : 'GROUNDED', speed: 'CRUISE',
+                      homeFacilityId: f.flight?.homeFacilityId };
+  }
+  const pilots: Pilot[] = [];
+  const jumpDrives: JumpDrive[] = [];
+  const units = (f.units ?? []).map((u: any, i: number) => {
+    const unit = mkUnit({
+      id: `${f.id}-u${i + 1}`,
+      sideId: f.sideId, name: u.name, model: u.model, class: u.class, tags: u.tags ?? [],
+      safeThrust: u.safeThrust, maxThrust: u.maxThrust,
+      damage: u.damage, ammoState: u.ammoState,
+      bv: u.bv, pv: u.pv, walkOrCruise: u.walkOrCruise, run: u.run, jump: u.jump,
+      fuel: u.fuelFp ? { fp: u.fuelFp, fpPerTon: u.fpPerTon ?? 80,
+                         tons: u.fuelTons ?? u.fuelFp / (u.fpPerTon ?? 80) }
+        : u.fuelTons ? { fp: 0, fpPerTon: u.fpPerTon ?? 30, tons: u.fuelTons,
+                         tonsPerBurnDay: u.tonsPerBurnDay ?? 1.84 } : undefined,
+    });
+    // pilot: a bare name string (regular 4/5) or a full object
+    if (u.pilot) {
+      const pj = typeof u.pilot === 'string' ? { name: u.pilot } : u.pilot;
+      const pilot: Pilot = { id: `${f.id}-pilot-${i + 1}`, name: pj.name ?? `${f.id} crew ${i + 1}`,
+        gunnery: pj.gunnery ?? 4, piloting: pj.piloting ?? 5,
+        kills: pj.kills ?? 0, ace: pj.ace ?? false, fatigue: pj.fatigue ?? 0,
+        status: pj.status ?? 'OK' };
+      pilots.push(pilot);
+      unit.pilotIds = [pilot.id];
+    }
+    // K-F drive on a jump-capable hull
+    if (u.drive) {
+      jumpDrives.push({
+        vesselUnitId: unit.id, chargePct: u.drive.chargePct ?? 0,
+        chargeRateHrsTo100: u.drive.chargeRateHrsTo100 ?? 180,
+        sail: u.drive.sail ?? 'STOWED', kfDamage: u.drive.kfDamage ?? 'NONE',
+        ...(u.drive.lfBatteryCharged !== undefined ? { lfBatteryCharged: u.drive.lfBatteryCharged } : {}),
+      });
+    }
+    return unit;
+  });
+  formation.unitIds = units.map((u: Unit) => u.id);
+  return { formation, units, pilots, jumpDrives };
 }
 
 /** Build truth from a parsed campaign object, validating first with friendly errors. */
@@ -84,59 +153,9 @@ export function buildCampaign(j: FixtureJson, source = 'campaign'): TruthState {
     truth.system.lanes[id] = { id, a: l.a, b: l.b, distanceAU: l.distanceAU };
   }
   for (const f of j.formations) {
-    const pos = f.nodeId
-      ? { kind: 'node' as const, nodeId: f.nodeId }
-      : f.airPos
-      ? { kind: 'air' as const, gridQ: f.airPos.q, gridR: f.airPos.r,
-          band: (f.airPos.band ?? 'HIGH') as 'HIGH', altLevel: f.airPos.altLevel ?? 6,
-          velocity: 2, vectorDeg: 0 }
-      : { kind: 'ground' as const, theaterId: f.theaterId, q: f.q, r: f.r };
-    const formation = mkFormation({
-      id: f.id, sideId: f.sideId, name: f.name, pos,
-      omp: f.omp ?? 0, sigBase: f.sigBase,
-      sns: f.sns, emcon: f.emcon ?? 'PASSIVE',
-      alertState: f.alertState,
-      posture: f.posture, rdy: f.rdy, facing: f.facing,
-      carriedSp: f.carriedSp, squawk: f.squawk, neutral: f.neutral,
-      ...(f.mountedOn ? { mounted: { carrierFormationId: f.mountedOn } } : {}),
-    });
-    if (f.flight || f.airPos) {
-      formation.air = { phase: f.airPos ? 'ENROUTE' : 'GROUNDED', speed: 'CRUISE',
-                        homeFacilityId: f.flight?.homeFacilityId };
-    }
-    const units = (f.units ?? []).map((u: any, i: number) => {
-      const unit = mkUnit({
-        id: `${f.id}-u${i + 1}`,
-        sideId: f.sideId, name: u.name, model: u.model, class: u.class, tags: u.tags ?? [],
-        safeThrust: u.safeThrust, maxThrust: u.maxThrust,
-        damage: u.damage, ammoState: u.ammoState,
-        bv: u.bv, pv: u.pv, walkOrCruise: u.walkOrCruise, run: u.run, jump: u.jump,
-        fuel: u.fuelFp ? { fp: u.fuelFp, fpPerTon: u.fpPerTon ?? 80,
-                           tons: u.fuelTons ?? u.fuelFp / (u.fpPerTon ?? 80) }
-          : u.fuelTons ? { fp: 0, fpPerTon: u.fpPerTon ?? 30, tons: u.fuelTons,
-                           tonsPerBurnDay: u.tonsPerBurnDay ?? 1.84 } : undefined,
-      });
-      // pilot: a bare name string (regular 4/5) or a full object
-      if (u.pilot) {
-        const pj = typeof u.pilot === 'string' ? { name: u.pilot } : u.pilot;
-        const pilot = { id: `${f.id}-pilot-${i + 1}`, name: pj.name ?? `${f.id} crew ${i + 1}`,
-          gunnery: pj.gunnery ?? 4, piloting: pj.piloting ?? 5,
-          kills: pj.kills ?? 0, ace: pj.ace ?? false, fatigue: pj.fatigue ?? 0,
-          status: pj.status ?? 'OK' as const };
-        truth.pilots[pilot.id] = pilot;
-        unit.pilotIds = [pilot.id];
-      }
-      // K-F drive on a jump-capable hull
-      if (u.drive) {
-        truth.jumpDrives[unit.id] = {
-          vesselUnitId: unit.id, chargePct: u.drive.chargePct ?? 0,
-          chargeRateHrsTo100: u.drive.chargeRateHrsTo100 ?? 180,
-          sail: u.drive.sail ?? 'STOWED', kfDamage: u.drive.kfDamage ?? 'NONE',
-          ...(u.drive.lfBatteryCharged !== undefined ? { lfBatteryCharged: u.drive.lfBatteryCharged } : {}),
-        };
-      }
-      return unit;
-    });
+    const { formation, units, pilots, jumpDrives } = buildFormationEntities(f);
+    for (const p of pilots) truth.pilots[p.id] = p;
+    for (const d of jumpDrives) truth.jumpDrives[d.vesselUnitId] = d;
     addFormation(truth, formation, units);
   }
 

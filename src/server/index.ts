@@ -15,7 +15,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { Campaign, replay } from '../core/truth.js';
 import { JsonlEventStore, MemoryEventStore } from '../core/log.js';
 import { project } from '../projection/project.js';
-import { loadCampaignFixture } from '../demo.js';
+import { loadCampaignFixture, buildFormationEntities } from '../demo.js';
 import { buildMul } from '../handoff/mul.js';
 import { hashPick } from '../core/rng.js';
 import {
@@ -163,6 +163,36 @@ const server = createServer(async (req, res) => {
     }
     if (path === '/api/gm/campaigns' && req.method === 'GET') {
       return json(res, 200, { campaigns: listCampaigns(), current: fixturePath });
+    }
+    if (path === '/api/gm/spawn' && req.method === 'POST') {
+      // GM reinforcement: drop a new formation into the running campaign (logged, replay-safe)
+      const b = await readBody(req);
+      try {
+        const t = campaign.truth;
+        const id = String(b.id || `reinf:${t.tick}:${Date.now().toString(36)}`);
+        if (t.formations[id]) throw new Error(`formation id "${id}" already exists`);
+        if (!t.sides[b.sideId]) throw new Error(`unknown side "${b.sideId}"`);
+        const theater = t.theaters[b.theaterId];
+        if (!theater) throw new Error(`unknown theater "${b.theaterId}"`);
+        const q = Number(b.q), r = Number(b.r);
+        if (!theater.hexes[`${q},${r}`]) throw new Error(`hex ${q},${r} is outside theater "${b.theaterId}"`);
+        const units = Array.isArray(b.units) ? b.units : [];
+        if (!units.length) throw new Error('needs at least one unit');
+        for (const u of units) {
+          if (!u.name) throw new Error('every unit needs a name');
+          if (!UNIT_CLASSES.includes(u.class)) throw new Error(`bad unit class "${u.class}" (one of ${UNIT_CLASSES.join(', ')})`);
+        }
+        const spec = { id, sideId: b.sideId, name: b.name || 'Reinforcement',
+          theaterId: b.theaterId, q, r,
+          sigBase: Number(b.sigBase ?? 7), omp: Number(b.omp ?? 4),
+          emcon: EMCONS.includes(b.emcon) ? b.emcon : 'PASSIVE', units };
+        const { formation, units: built, pilots, jumpDrives } = buildFormationEntities(spec);
+        campaign.spawnFormation(formation, built, pilots, jumpDrives);
+        broadcast();
+        return json(res, 200, { ok: true, id, name: spec.name, units: built.length });
+      } catch (e: any) {
+        return json(res, 200, { ok: false, reason: String(e?.message ?? e).slice(0, 300) });
+      }
     }
     if (path === '/api/gm/load' && req.method === 'POST') {
       const b = await readBody(req);

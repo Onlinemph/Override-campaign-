@@ -210,6 +210,11 @@ carries the bookkeeping so you can focus on the drama. A few GM powers worth kno
 - **Special actions** (the combined-arms panel): order a **combat drop** (DropShip releases
   troops onto a hex, with scatter), a **SAR** pickup of a downed crew, a **tanker** fuel
   transfer, or a customs **inspection** of a suspicious "merchant."
+- **Reinforcements** (the reinforcements panel): drop a brand-new formation into the
+  running game — pick a side, theater, and hex, then list the units one per line as
+  `Name | Model | CLASS`. It arrives logged like everything else, so it shows up on the
+  right player's screen and replays exactly. (For richer units — pilots, fuel, jump drives —
+  author them in the campaign file; the panel covers the common case.)
 - **Air & space**: set fighter **alert states** and run **turnarounds** at airbases; the
   deep-space layer tracks fuel-by-the-day, jump-drive charging, and blockades.
 
