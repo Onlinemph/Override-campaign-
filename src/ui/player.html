@@ -131,22 +131,8 @@ async function refresh() {
   if (sysModel) renderSysMap(document.getElementById('sysmap'), sysModel);
 
   // panels
-  document.getElementById('own').textContent = v.ownFormations.map(f => {
-    const where = f.flight?.airPos
-      ? `AIR ${f.flight.airPos.q},${f.flight.airPos.r} ${f.flight.airPos.band}`
-      : f.vessel?.spacePos
-      ? (f.vessel.spacePos.kind === 'node' ? f.vessel.spacePos.nodeId
-         : `${f.vessel.spacePos.laneId} ${f.vessel.spacePos.progressAU.toFixed(1)}AU`)
-      : (f.pos ? f.pos.q + ',' + f.pos.r : '?');
-    const extra = f.flight
-      ? `\n   ✈ ${f.flight.phase} ${f.flight.speed} · FP ${f.flight.fpMin} · JOKER ${f.flight.jokerFp} · BINGO ${f.flight.bingoFp} · fatigue ${f.flight.fatigueMax}${f.alertState ? ' · ' + f.alertState : ''}`
-      : f.vessel
-      ? `\n   ⛁ ${f.vessel.fuelTons} t (${f.vessel.burnDaysRemaining} burn-days)` +
-        f.vessel.drives.map(d => ` · KF ${d.chargePct}% sail:${d.sail}`).join('')
-      : '';
-    return `${f.name} @ ${where} · RDY ${f.rdy} · ${f.emcon}/${f.posture} · ${f.onNet ? 'ON-NET' : 'OFF-NET'}` +
-      (f.currentOrder ? ` · [${f.currentOrder.kind}]` : '') + extra;
-  }).join('\n\n') || '(none)';
+  document.getElementById('own').textContent =
+    v.ownFormations.map(Fmt.ownForce).join('\n\n') || '(none)';
 
   document.getElementById('contacts').textContent = v.contacts.map(c => {
     const at = c.estPos.kind === 'air' ? `AIR ${c.estPos.gridQ},${c.estPos.gridR}`

@@ -301,11 +301,20 @@ function inspectHex(q, r) {
     f.pos.kind === 'ground' && f.pos.q === q && f.pos.r === r);
   const fac = Object.values(t.facilities).filter(f =>
     f.pos.kind === 'ground' && f.pos.q === q && f.pos.r === r);
+  const terrain = hex ? hex.terrain.toLowerCase() : 'unknown';
+  const infra = hex && hex.infra.length ? `, ${hex.infra.join(', ').toLowerCase()}` : '';
+  const obj = hex && hex.objective
+    ? ` · ★ ${hex.objective.vpPerDay} VP/day objective${hex.objective.hidden ? ' (hidden)' : ''}${hex.objective.fake ? ' (decoy)' : ''}`
+    : '';
   document.getElementById('inspect').textContent =
-    `[${q},${r}] ${hex ? hex.terrain : '?'} ${hex && hex.infra.length ? hex.infra.join(',') : ''}` +
-    (hex && hex.objective ? ` ★${hex.objective.vpPerDay}VP${hex.objective.hidden ? ' (hidden)' : ''}${hex.objective.fake ? ' (FAKE)' : ''}` : '') +
-    here.map(f => `\n  ${f.name} [${f.sideId}] RDY ${f.rdy} ${f.emcon}/${f.posture}${f.destroyed ? ' ✕' : ''}`).join('') +
-    fac.map(f => `\n  ${f.name} [${f.sideId}] farm ${f.fuelFarmTons}t · ${f.supplyPoints} SP`).join('');
+    `Hex ${q},${r} — ${terrain}${infra}${obj}` +
+    here.map(f => {
+      const post = Fmt.postureWord(f.posture);
+      return `\n  ${f.name} (${up(f.sideId)})${f.destroyed ? ' — destroyed' : ''} · ` +
+        `readiness ${f.rdy}/10 · ${Fmt.emconWord(f.emcon)}${post ? ', ' + post : ''}`;
+    }).join('') +
+    fac.map(f => `\n  ${f.name} (${up(f.sideId)}) · ${f.supplyPoints} SP` +
+      (f.fuelFarmTons ? ` · fuel farm ${f.fuelFarmTons} t` : '')).join('');
 }
 
 async function post(path, body) {

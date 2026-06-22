@@ -40,6 +40,48 @@
 
   function cparts(cid) { const a = String(cid || '').split(':'); return { obs: a[1], tgt: a[2] }; }
 
+  // plain-language status words
+  function emconWord(e) {
+    return { DARK: 'silent (EMCON dark)', PASSIVE: 'passive emissions', ACTIVE: 'active radar' }[e] || e;
+  }
+  function postureWord(p) {
+    const w = { NONE: '', HIDE: 'hidden', DIGGING: 'digging in', DUG_IN: 'dug in',
+                FORTIFIED: 'fortified' }[p];
+    return w !== undefined ? w : (p ? String(p).toLowerCase() : '');
+  }
+  function rdyWord(r) { return r >= 8 ? 'fresh' : r >= 5 ? 'worn' : r >= 2 ? 'spent' : 'broken'; }
+  function orderWords(kind) { return String(kind || '').toLowerCase().replace(/_/g, ' '); }
+
+  // a player's own formation as readable plain text (multi-line)
+  function ownForce(f) {
+    const where = f.flight && f.flight.airPos
+      ? `airborne ${f.flight.airPos.q},${f.flight.airPos.r} ${f.flight.airPos.band}`
+      : f.vessel && f.vessel.spacePos
+      ? (f.vessel.spacePos.kind === 'node' ? f.vessel.spacePos.nodeId
+         : `${f.vessel.spacePos.laneId} ${f.vessel.spacePos.progressAU.toFixed(1)} AU`)
+      : (f.pos ? `hex ${f.pos.q},${f.pos.r}` : 'position unknown');
+    const post = postureWord(f.posture);
+    const head = [
+      `${f.name} — ${where}`,
+      `readiness ${f.rdy}/10 (${rdyWord(f.rdy)})`,
+      emconWord(f.emcon) + (post ? `, ${post}` : ''),
+      f.onNet ? 'linked to command net' : 'off-net — running on standing orders',
+    ];
+    if (f.currentOrder) head.push(`ordered to ${orderWords(f.currentOrder.kind)}`);
+    let line = head.join(' · ');
+    if (f.flight) {
+      const fl = f.flight;
+      line += `\n   ✈ ${orderWords(fl.phase)} (${orderWords(fl.speed)}) · fuel ${fl.fpMin} ` +
+        `(joker ${fl.jokerFp} / bingo ${fl.bingoFp}) · fatigue ${fl.fatigueMax}` +
+        (f.alertState ? ` · alert ${f.alertState}` : '');
+    } else if (f.vessel) {
+      const v = f.vessel;
+      line += `\n   ⛁ ${v.fuelTons} t fuel (${v.burnDaysRemaining} burn-days)` +
+        (v.drives || []).map(d => ` · jump drive ${d.chargePct}% charged, sail ${orderWords(d.sail)}`).join('');
+    }
+    return line;
+  }
+
   function evTick(e) {
     if (e.tick != null) return e.tick;
     if (e.roll && e.roll.tick != null) return e.roll.tick;
@@ -189,5 +231,6 @@
   }
 
   global.Fmt = { LADDER, esc, clock, ago, up, fname, facname, posText, cparts, evTick,
-                 contactLine, engBriefing, humanize };
+                 contactLine, engBriefing, humanize,
+                 emconWord, postureWord, rdyWord, orderWords, ownForce };
 })(window);
