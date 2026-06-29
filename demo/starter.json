@@ -1,0 +1,119 @@
+{
+  "seed": "STARTER-001",
+  "config": {
+    "name": "Skirmish at Pellar Gap (starter)",
+    "dawnTick": 60,
+    "duskTick": 180,
+    "weather": "CLEAR",
+    "vpThreshold": 15,
+    "endTick": 720
+  },
+
+  "theaters": [
+    {
+      "id": "pellar",
+      "name": "Pellar Gap",
+      "width": 12,
+      "height": 10,
+      "defaultTerrain": "CLEAR",
+      "overrides": [
+        { "q": 2, "r": 5, "infra": ["DEPOT", "ROAD"] },
+        { "q": 3, "r": 5, "infra": ["ROAD"] },
+        { "q": 4, "r": 5, "infra": ["ROAD"] },
+        { "q": 5, "r": 5, "infra": ["ROAD"] },
+        { "q": 6, "r": 5, "terrain": "URBAN", "infra": ["TOWN", "ROAD"],
+          "objective": { "vpPerDay": 5, "hidden": false, "ownerSideId": "blue" } },
+        { "q": 7, "r": 5, "infra": ["ROAD"] },
+        { "q": 8, "r": 5, "infra": ["ROAD"] },
+        { "q": 4, "r": 3, "terrain": "WOODS" },
+        { "q": 5, "r": 3, "terrain": "WOODS" },
+        { "q": 4, "r": 4, "terrain": "WOODS" },
+        { "q": 7, "r": 6, "terrain": "WOODS" },
+        { "q": 8, "r": 6, "terrain": "WOODS" },
+        { "q": 3, "r": 6, "terrain": "HILLS" },
+        { "q": 9, "r": 4, "terrain": "HILLS" },
+        { "q": 9, "r": 6, "terrain": "HILLS" }
+      ]
+    }
+  ],
+
+  "sides": [
+    { "id": "blue", "name": "Federated Guard" },
+    { "id": "red", "name": "Combine Raiders" }
+  ],
+
+  "commandNodes": {
+    "blue": ["fob-keystone"],
+    "red": ["red-hq"]
+  },
+
+  "facilities": [
+    {
+      "id": "fob-keystone", "sideId": "blue", "name": "FOB Keystone",
+      "theaterId": "pellar", "q": 2, "r": 5,
+      "tags": ["DEPOT"], "supplyPoints": 40, "isCommandNode": true,
+      "sensorStation": { "passive": 6, "active": 12 }, "activeSweep": true
+    }
+  ],
+
+  "formations": [
+    {
+      "id": "blue-recon", "sideId": "blue", "name": "Vixen Lance",
+      "theaterId": "pellar", "q": 4, "r": 4,
+      "omp": 6, "sigBase": 7, "sns": { "passive": 3, "active": 5 },
+      "emcon": "PASSIVE", "posture": "NONE", "rdy": 10,
+      "units": [
+        { "name": "Vixen 1", "model": "Stinger STG-3R", "class": "MECH", "tags": ["BEAGLE"],
+          "pilot": { "name": "Lt. Okafor", "gunnery": 3, "piloting": 4 } },
+        { "name": "Vixen 2", "model": "Wasp WSP-1A", "class": "MECH" }
+      ]
+    },
+    {
+      "id": "blue-line", "sideId": "blue", "name": "Hammer Company",
+      "theaterId": "pellar", "q": 3, "r": 6,
+      "omp": 4, "sigBase": 6, "sns": { "passive": 2, "active": 4 },
+      "emcon": "PASSIVE", "posture": "DUG_IN", "rdy": 10,
+      "units": [
+        { "name": "Hammer 1", "model": "Hunchback HBK-4G", "class": "MECH",
+          "pilot": { "name": "Cpt. Reyes", "gunnery": 3, "piloting": 4 } },
+        { "name": "Hammer 2", "model": "Enforcer ENF-4R", "class": "MECH" },
+        { "name": "Hammer 3", "model": "Manticore", "class": "VEHICLE" }
+      ]
+    },
+    {
+      "id": "red-hq", "sideId": "red", "name": "Raider Command",
+      "theaterId": "pellar", "q": 11, "r": 5,
+      "omp": 4, "sigBase": 7, "sns": { "passive": 4, "active": 8 },
+      "emcon": "PASSIVE", "posture": "NONE", "rdy": 10,
+      "units": [
+        { "name": "Mobile HQ", "model": "Mobile HQ", "class": "VEHICLE", "tags": ["HQ"] },
+        { "name": "Escort", "model": "Panther PNT-9R", "class": "MECH" }
+      ]
+    },
+    {
+      "id": "red-strike", "sideId": "red", "name": "Akuma Company",
+      "theaterId": "pellar", "q": 10, "r": 6,
+      "omp": 5, "sigBase": 6, "sns": { "passive": 2, "active": 4 },
+      "emcon": "PASSIVE", "posture": "NONE", "rdy": 10,
+      "units": [
+        { "name": "Akuma 1", "model": "Dragon DRG-1N", "class": "MECH",
+          "pilot": { "name": "Tai-i Sato", "gunnery": 3, "piloting": 4 } },
+        { "name": "Akuma 2", "model": "Panther PNT-9R", "class": "MECH" },
+        { "name": "Akuma 3", "model": "Jenner JR7-D", "class": "MECH" }
+      ]
+    }
+  ],
+
+  "orders": [
+    {
+      "id": "order-red-strike", "sideId": "red", "formationId": "red-strike",
+      "kind": "MOVE", "effectiveTick": 0,
+      "path": [ {"q":9,"r":6}, {"q":8,"r":5}, {"q":7,"r":5}, {"q":6,"r":5} ],
+      "conditionals": [
+        { "trigger": { "when": "CONTACT_WITHIN", "param": 3 },
+          "then": { "kind": "FORCED_MARCH",
+                    "path": [ {"q":8,"r":5}, {"q":7,"r":5}, {"q":6,"r":5} ] } }
+      ]
+    }
+  ]
+}

@@ -118,11 +118,20 @@ OVERRIDE GM Tool — http://localhost:8420/gm
 
 - Open the **/gm** link yourself — that's the GameMaster's console (it shows the truth).
 - **Hand each player their own link.** The long code is a token so one player can't peek at
-  the other's screen. (Same network / same room is the assumption — this isn't built for the
-  public internet.)
+  the other's screen.
 
 For a real campaign you'd run `npm run dev -- demo/campaign.json --log mywar.jsonl` so the
 game is saved to a file and survives closing the program. Everything below works either way.
+There's also a small original scenario at `demo/starter.json` to start from.
+
+**Playing online with friends.** Start the server, then expose it with a tunnel
+(`cloudflared tunnel --url http://localhost:8420`, or `ngrok http 8420`) — that gives an
+HTTPS link anyone can reach. **Protect the GM screen first**: run with
+`--gm-key <passphrase>` so `/gm`, `/audit`, and `/editor` require it; otherwise a player
+who has their own link can just open `/gm` and see everything. Open the tunnel URL + `/gm`,
+copy the player links from the **Player links** panel (they use the public address
+automatically), and DM each friend only their own. Get everyone on voice; you drive the
+clock, they play from their links.
 
 ---
 

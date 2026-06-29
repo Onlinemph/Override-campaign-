@@ -26,6 +26,24 @@ describe('validator — the shipped demo is valid', () => {
   it('demo/campaign.json passes with zero problems', () => {
     expect(validateCampaign(demo())).toEqual([]);
   });
+  it('demo/starter.json passes and builds', () => {
+    const starter = JSON.parse(readFileSync(join(__dirname, '../../demo/starter.json'), 'utf8'));
+    expect(validateCampaign(starter)).toEqual([]);
+    expect(() => buildCampaign(starter, 'starter')).not.toThrow();
+  });
+});
+
+describe('loader — optional sections may be omitted entirely', () => {
+  it('builds with no facilities / satellites / orders / commandNodes / markers', () => {
+    const j = minimal();
+    delete j.facilities; delete j.satellites; delete j.orders;
+    delete j.commandNodes; delete j.markers;
+    expect(validateCampaign(j)).toEqual([]);
+    let truth: any;
+    expect(() => { truth = buildCampaign(j, 'minimal'); }).not.toThrow();
+    expect(Object.keys(truth.formations)).toEqual(['blue-1']);
+    expect(truth.sides.blue.commandNodes).toEqual([]); // defaulted, not crashed
+  });
 });
 
 describe('validator — catches authoring mistakes with readable messages', () => {

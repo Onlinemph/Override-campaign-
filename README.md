@@ -29,8 +29,15 @@ Event-sourced fog-of-war engine:
 ```sh
 npm install
 npm run dev                          # in-memory demo campaign
+npm run dev -- demo/starter.json --log war.jsonl    # a small, original starter scenario
 npm run dev -- demo/campaign.json --log war.jsonl   # persist + resume from war.jsonl
+npm run dev -- demo/campaign.json --gm-key sekret    # require a passphrase for the GM screen
 ```
+
+`--gm-key <phrase>` (or `OVERRIDE_GM_KEY`) gates `/gm`, `/audit`, `/editor`, and the
+`/api/gm/*` endpoints behind a passphrase while player links stay token-only — set it
+before exposing the server to the internet (e.g. through a tunnel), or any player who has
+their own link can open `/gm` and see the whole truth.
 
 Then open `http://localhost:8420/gm` — the GM screen (truth map with belief overlays,
 event log, step / run-until-event, noise injection, VP & endings). The GM screen lists

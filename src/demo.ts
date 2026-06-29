@@ -19,11 +19,11 @@ interface FixtureJson {
   theaters: Array<{ id: string; name: string; width: number; height: number;
                     defaultTerrain: string; overrides: HexOverride[] }>;
   sides: Array<{ id: string; name: string }>;
-  facilities: Array<Record<string, any>>;
-  satellites: Array<Record<string, any>>;
+  facilities?: Array<Record<string, any>>;
+  satellites?: Array<Record<string, any>>;
   formations: Array<Record<string, any>>;
-  commandNodes: Record<string, string[]>;
-  orders: Array<Record<string, any>>;
+  commandNodes?: Record<string, string[]>;
+  orders?: Array<Record<string, any>>;
   system?: { nodes: Array<Record<string, any>>; lanes: Array<Record<string, any>> };
   markers?: Array<Record<string, any>>;
 }
@@ -112,12 +112,12 @@ export function buildCampaign(j: FixtureJson, source = 'campaign'): TruthState {
       t.id, t.name, t.width, t.height, t.defaultTerrain as any, t.overrides);
   }
   for (const s of j.sides) {
-    truth.sides[s.id] = mkSide(s.id, s.name, j.commandNodes[s.id] ?? []);
+    truth.sides[s.id] = mkSide(s.id, s.name, j.commandNodes?.[s.id] ?? []);
     if ((s as any).vp !== undefined) truth.sides[s.id].vp = (s as any).vp;
     if ((s as any).importSpPerDay !== undefined) truth.sides[s.id].importSpPerDay = (s as any).importSpPerDay;
     if ((s as any).homeDepotId !== undefined) truth.sides[s.id].homeDepotId = (s as any).homeDepotId;
   }
-  for (const f of j.facilities) {
+  for (const f of j.facilities ?? []) {
     truth.facilities[f.id] = mkFacility({
       id: f.id, sideId: f.sideId, name: f.name,
       pos: { kind: 'ground', theaterId: f.theaterId, q: f.q, r: f.r },
@@ -130,7 +130,7 @@ export function buildCampaign(j: FixtureJson, source = 'campaign'): TruthState {
       turnaroundCrews: { total: f.turnaroundCrews ?? 1, busyUntil: [] },
     });
   }
-  for (const sat of j.satellites) {
+  for (const sat of j.satellites ?? []) {
     truth.satellites[sat.id] = mkSatellite({
       id: sat.id, sideId: sat.sideId, kind: sat.kind, theaterId: sat.theaterId,
       corridor: sat.corridor, periodPulses: sat.periodPulses,
@@ -171,7 +171,7 @@ export function buildCampaign(j: FixtureJson, source = 'campaign'): TruthState {
     };
     truth.markers[marker.id] = marker;
   }
-  for (const o of j.orders) {
+  for (const o of j.orders ?? []) {
     const theaterId = truth.formations[o.formationId].pos.kind === 'ground'
       ? (truth.formations[o.formationId].pos as GroundPos).theaterId : j.theaters[0].id;
     const airStation = o.airStation

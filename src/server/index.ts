@@ -8,6 +8,7 @@
  * state change. Nothing player-facing is ever persisted (spec §4).
  */
 import { createServer } from 'node:http';
+import { timingSafeEqual } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -39,11 +40,15 @@ function tokenFor(sideId: string): string {
   return out;
 }
 
-// CLI: `dev [fixture.json] [--log campaign.jsonl]`
+// CLI: `dev [fixture.json] [--log campaign.jsonl] [--gm-key passphrase]`
 const argv = process.argv.slice(2);
-const logIdx = argv.indexOf('--log');
-const logPath = logIdx >= 0 ? argv[logIdx + 1] : process.env.OVERRIDE_LOG;
-const positional = argv.filter((a, i) => a !== '--log' && argv[i - 1] !== '--log');
+const FLAGS = new Set(['--log', '--gm-key']);
+const flagVal = (name: string) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
+const logPath = flagVal('--log') ?? process.env.OVERRIDE_LOG;
+// GM passphrase: when set, /gm /audit /editor and /api/gm/* require it (player links stay
+// token-only). Unset ⇒ open, as before — fine for local play, risky when tunnelled.
+const gmKey = flagVal('--gm-key') ?? process.env.OVERRIDE_GM_KEY;
+const positional = argv.filter((a, i) => !FLAGS.has(a) && !FLAGS.has(argv[i - 1]));
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixturePath = positional[0] ?? join(here, '../../demo/campaign.json');
@@ -108,6 +113,37 @@ function json(res: any, code: number, body: unknown) {
   res.end(JSON.stringify(body));
 }
 
+// ── GM access gate (only active when a gmKey is configured) ──────────────────
+function safeEq(a: string, b: string): boolean {
+  const ab = Buffer.from(a), bb = Buffer.from(b);
+  return ab.length === bb.length && timingSafeEqual(ab, bb);
+}
+function parseCookies(header?: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const part of (header ?? '').split(';')) {
+    const i = part.indexOf('=');
+    if (i > 0) out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+  }
+  return out;
+}
+function gmAuthed(req: any): boolean {
+  if (!gmKey) return true; // gate disabled
+  const cookie = parseCookies(req.headers.cookie)['gmkey'];
+  if (cookie && safeEq(cookie, gmKey)) return true;
+  const hdr = req.headers['x-gm-key'];
+  return typeof hdr === 'string' && safeEq(hdr, gmKey);
+}
+const GM_PAGES = new Set(['/', '/gm', '/audit', '/editor']);
+const isGmRoute = (path: string) => GM_PAGES.has(path) || path.startsWith('/api/gm/');
+const LOGIN_HTML = `<!doctype html><meta charset="utf-8"><title>OVERRIDE — GM access</title>
+<link rel="stylesheet" href="/ui/style.css"><body style="padding:48px;max-width:420px">
+<h1>OVERRIDE — GM access</h1>
+<form method="GET"><p class="kv">This screen is private. Enter the GM passphrase.</p>
+<input name="key" type="password" autofocus style="padding:6px;min-width:240px">
+<button>Enter</button></form>
+<p class="kv" style="margin-top:14px">Players don't need this — they use their own tokenized link.</p>
+</body>`;
+
 function page(res: any, file: string) {
   res.writeHead(200, { 'content-type': 'text/html' });
   res.end(readFileSync(join(here, '../ui', file)));
@@ -123,6 +159,21 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', 'http://localhost');
   const path = url.pathname;
   try {
+    // GM access gate: protect truth surfaces; player links & assets stay open
+    if (gmKey && isGmRoute(path) && !gmAuthed(req)) {
+      const provided = url.searchParams.get('key');
+      if (provided && safeEq(provided, gmKey)) {
+        res.writeHead(302, {
+          'set-cookie': `gmkey=${encodeURIComponent(gmKey)}; HttpOnly; Path=/; SameSite=Lax`,
+          location: path,
+        });
+        return res.end();
+      }
+      if (path.startsWith('/api/gm/')) return json(res, 401, { error: 'GM passphrase required' });
+      res.writeHead(401, { 'content-type': 'text/html' });
+      return res.end(LOGIN_HTML);
+    }
+
     // pages & static assets
     if (path === '/' || path === '/gm') return page(res, 'gm.html');
     if (path === '/audit') return page(res, 'audit.html');
@@ -462,6 +513,9 @@ const PORT = Number(process.env.PORT ?? 8420);
 server.listen(PORT, () => {
   const sides = Object.keys(campaign.truth.sides);
   console.log(`OVERRIDE GM Tool — http://localhost:${PORT}/gm`);
+  console.log(gmKey
+    ? '  GM screen is passphrase-protected (--gm-key set) ✓'
+    : '  ⚠ GM screen is OPEN — anyone with the URL sees the truth. Pass --gm-key <phrase> before exposing it to the internet.');
   for (const s of sides) {
     console.log(`  ${campaign.truth.sides[s].name}: http://localhost:${PORT}/player/${s}/${tokenFor(s)}`);
   }
