@@ -17,7 +17,8 @@
         <b>◯</b> your formations (dashed ring = EMCON DARK) · <b>▢</b> facilities ·
         <b>◇</b> contacts <b>G/S/C/L</b> (dimmer = staler; dashed circle = ±1) ·
         <b>★</b> objective · <b>⌁</b> satellite track ·
-        <b style="color:#5aa9ff">⬡ dashed area</b> = command-net coverage (your forces are on-net inside it)
+        <b style="color:#5aa9ff">⬡ blue area</b> = command-net coverage ·
+        <b style="color:#4fd0b8">⬡ teal area</b> = sensor-station range · hover a hex for distance from your selected unit
       </div>
     </div>
     <div class="panel" id="sys-panel" style="display:none">
@@ -129,6 +130,8 @@ async function refresh() {
     const selFid = document.getElementById('o-formation').value;
     const selMe = (v.ownFormations || []).find(f => f.id === selFid);
     model.highlight = [...(selMe && selMe.pos ? [{ q: selMe.pos.q, r: selMe.pos.r }] : []), ...plotted];
+    // hover any hex to read its distance (hexes + km) from the selected formation
+    model.distanceFrom = selMe && selMe.pos ? { q: selMe.pos.q, r: selMe.pos.r } : null;
     // committed routes (green, from the model) + the route being plotted now (bright
     // yellow), drawn from the SELECTED formation so it starts at the unit and follows hexes
     if (plotted.length >= 1) {

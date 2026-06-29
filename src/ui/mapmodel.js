@@ -106,6 +106,11 @@
       paths.push({ points: routeThrough(f.pos, wp), color: '#7ad07a' });
     });
     const zones = netZones(v.netNodes, th.id, '#5aa9ff'); // own command-net coverage
+    // sensor-station detection coverage (fixed early-warning radar)
+    const sensorNodes = (v.ownFacilities || [])
+      .filter(fc => fc.sensor && fc.pos && fc.pos.theaterId === th.id)
+      .map(fc => ({ q: fc.pos.q, r: fc.pos.r, theaterId: th.id, radius: fc.sensor.passive }));
+    zones.push(...netZones(sensorNodes, th.id, '#4fd0b8'));
     return { cols: th.cols, rows: th.rows, hexes, markers, corridors, paths, zones };
   };
 
@@ -205,6 +210,11 @@
     for (const sid of Object.keys(byside)) {
       zones.push(...netZones(byside[sid], th.id, sid === 'blue' ? '#5aa9ff' : '#ff8a6b'));
     }
+    // sensor-station detection coverage (all sides; GM sees everything)
+    const sensorNodes = Object.values(t.facilities)
+      .filter(fc => fc.sensorStation && fc.pos.kind === 'ground' && fc.pos.theaterId === th.id)
+      .map(fc => ({ q: fc.pos.q, r: fc.pos.r, theaterId: th.id, radius: fc.sensorStation.passive }));
+    zones.push(...netZones(sensorNodes, th.id, '#4fd0b8'));
     return { cols, rows, hexes, markers, corridors, paths, zones };
   };
 

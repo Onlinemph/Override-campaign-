@@ -51,6 +51,7 @@ export interface SystemView {
 export interface OwnFacilityView {
   id: Id; name: string; pos: GroundPos; tags: string[];
   fuelFarmTons: number; supplyPoints: number; isCommandNode: boolean;
+  sensor?: { passive: number; active: number };
 }
 export interface OwnSatelliteView {
   id: Id; kind: 'RECON' | 'COMM'; theaterId: Id;

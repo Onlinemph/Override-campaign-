@@ -83,8 +83,13 @@
           poly.style.cursor = 'crosshair';
           poly.addEventListener('click', () => opts.onHexClick(q, r));
         }
-        const title = fogged ? `${q},${r} — unscouted`
+        let title = fogged ? `${q},${r} — unscouted`
           : `${q},${r} ${hx.terrain}${(hx.infra || []).length ? ' [' + hx.infra.join(',') + ']' : ''}`;
+        if (model.distanceFrom) {
+          const dq = q - model.distanceFrom.q, dr = r - model.distanceFrom.r;
+          const d = (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2;
+          title += ` · ${d} hex (${d * 18} km) from selected`;
+        }
         poly.appendChild(el('title', {}, title));
         gTerrain.appendChild(poly);
 
