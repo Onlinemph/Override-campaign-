@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Double-blind campaign manager for tabletop BattleTech (OVERRIDE / SKYWATCH / DEEP SKY)",
   "scripts": {
-    "dev": "tsx src/server/index.ts demo/campaign.json",
+    "dev": "tsx src/server/index.ts",
+    "dev:watch": "tsx watch src/server/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
