@@ -179,13 +179,11 @@
       gPaths.appendChild(el('polyline', { points: pts, fill: 'none', stroke: color,
         'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round',
         'stroke-dasharray': '4 3', opacity: 0.95 }));
-      // waypoint dots, and a ring on the destination
-      cs.forEach((c, i) => {
-        const last = i === cs.length - 1;
-        gPaths.appendChild(el('circle', { cx: c.x, cy: c.y, r: last ? s * 0.2 : s * 0.1,
-          fill: last ? 'none' : color, stroke: color,
-          'stroke-width': last ? 2 : 0, opacity: 0.95 }));
-      });
+      // a small dot at the start, a ring at the destination (no per-hex clutter)
+      const a = cs[0], z = cs[cs.length - 1];
+      gPaths.appendChild(el('circle', { cx: a.x, cy: a.y, r: s * 0.1, fill: color, opacity: 0.9 }));
+      gPaths.appendChild(el('circle', { cx: z.x, cy: z.y, r: s * 0.2, fill: 'none',
+        stroke: color, 'stroke-width': 2, opacity: 0.95 }));
     });
     svg.appendChild(gPaths);
 

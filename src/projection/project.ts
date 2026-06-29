@@ -33,8 +33,10 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
         currentOrder: f.currentOrderId && truth.orders[f.currentOrderId]
           ? { id: f.currentOrderId, kind: truth.orders[f.currentOrderId].kind,
               completed: !!truth.orders[f.currentOrderId].completed,
-              // own order: safe to expose the plotted route so the map can draw it
+              // own order: expose only the REMAINING waypoints (from where the unit is now)
+              // so the map can draw a route that starts at the formation, not behind it
               path: (truth.orders[f.currentOrderId].path ?? [])
+                .slice(f.pathIndex ?? 0)
                 .filter((p): p is GroundPos => p.kind === 'ground')
                 .map(p => ({ q: p.q, r: p.r })) }
           : undefined,

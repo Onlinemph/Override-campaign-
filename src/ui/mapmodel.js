@@ -6,6 +6,40 @@
 (function () {
   const LV = ['', 'G', 'S', 'C', 'L'];
 
+  // ── hex-line math (mirrors src/hex/axial.ts) so routes follow the hexes ──────
+  function hexDistance(a, b) {
+    const dq = a.q - b.q, dr = a.r - b.r;
+    return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2;
+  }
+  function cubeRound(qf, rf) {
+    const sf = -qf - rf;
+    let q = Math.round(qf), r = Math.round(rf), s = Math.round(sf);
+    const dq = Math.abs(q - qf), dr = Math.abs(r - rf), ds = Math.abs(s - sf);
+    if (dq > dr && dq > ds) q = -r - s; else if (dr > ds) r = -q - s;
+    return { q, r };
+  }
+  function hexLine(a, b) {
+    const n = hexDistance(a, b);
+    if (n === 0) return [{ q: a.q, r: a.r }];
+    const out = [];
+    for (let i = 0; i <= n; i++) {
+      const t = i / n;
+      out.push(cubeRound(a.q + (b.q - a.q) * t + 1e-6, a.r + (b.r - a.r) * t + 1e-6));
+    }
+    return out;
+  }
+  /** Contiguous hex-by-hex polyline from `start` through each waypoint. */
+  function routeThrough(start, waypoints) {
+    const pts = [{ q: start.q, r: start.r }];
+    let cur = { q: start.q, r: start.r };
+    for (const wp of waypoints || []) {
+      const seg = hexLine(cur, wp);
+      for (let i = 1; i < seg.length; i++) pts.push(seg[i]);
+      cur = wp;
+    }
+    return pts;
+  }
+
   function classLetter(units) {
     const c = (units && units[0] && (units[0].class || units[0])) || '';
     if (c === 'MECH' || c === 'PROTO') return 'M';
@@ -52,12 +86,13 @@
       .filter(s => s.theaterId === th.id && s.alive)
       .map(s => ({ points: s.corridor, color: '#7ad0d8',
                    label: `${s.id} next pass t${s.nextPassTick}` }));
-    // committed movement routes: a line from each own formation through its order waypoints
+    // committed movement routes: hex-by-hex from each own formation through its
+    // remaining order waypoints (so the line starts at the unit and follows the terrain)
     const paths = [];
     (v.ownFormations || []).forEach(f => {
       const wp = (f.currentOrder && f.currentOrder.path) || [];
       if (!f.pos || wp.length === 0) return;
-      paths.push({ points: [{ q: f.pos.q, r: f.pos.r }, ...wp], color: '#7ad07a' });
+      paths.push({ points: routeThrough(f.pos, wp), color: '#7ad07a' });
     });
     return { cols: th.cols, rows: th.rows, hexes, markers, corridors, paths };
   };
@@ -139,15 +174,17 @@
     const corridors = Object.values(t.satellites || {})
       .filter(s => s.theaterId === th.id && s.alive)
       .map(s => ({ points: s.corridor, color: s.sideId === 'blue' ? '#7ad0d8' : '#d88a7a' }));
-    // committed movement routes for every formation, coloured by side (GM sees all)
+    // committed movement routes for every formation, coloured by side (GM sees all):
+    // hex-by-hex from the unit through its remaining waypoints
     const paths = [];
     Object.values(t.formations).forEach(f => {
       if (f.destroyed || f.pos.kind !== 'ground' || f.pos.theaterId !== th.id) return;
       const order = f.currentOrderId && t.orders[f.currentOrderId];
       if (!order || order.completed || !order.path) return;
-      const wp = order.path.filter(p => p.kind === 'ground').map(p => ({ q: p.q, r: p.r }));
+      const wp = order.path.slice(f.pathIndex || 0)
+        .filter(p => p.kind === 'ground').map(p => ({ q: p.q, r: p.r }));
       if (!wp.length) return;
-      paths.push({ points: [{ q: f.pos.q, r: f.pos.r }, ...wp],
+      paths.push({ points: routeThrough(f.pos, wp),
                    color: f.sideId === 'blue' ? '#7ad0d8' : '#d88a7a' });
     });
     return { cols, rows, hexes, markers, corridors, paths };
