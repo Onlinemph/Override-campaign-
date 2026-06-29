@@ -10,8 +10,10 @@
   <small style="float:right"><a href="/audit">audit viewer →</a></small></h1>
 
 <div class="bar">
-  <button onclick="advance(false)">Step</button>
-  <button onclick="advance(true)">Run until event</button>
+  <button onclick="advance(false)" title="Advance one clock unit (6 min / 1 h / 6 h by mode)">Step</button>
+  <button onclick="advance(true, 10)" title="Advance up to 1 hour, stopping early on any event">Run ≤1h</button>
+  <button onclick="advance(true, 60)" title="Advance up to 6 hours, stopping early on any event">Run ≤6h</button>
+  <button onclick="advance(true)" title="Fast-forward to the next event (up to a full day)">Run to event</button>
   <button onclick="undoStep()" title="Rewind the last step">↶ Undo step</button>
   <span class="kv">belief overlay:
     <select id="belief" onchange="refresh()"><option value="">truth only</option></select></span>
@@ -171,8 +173,9 @@ async function refresh() {
   const s = await (await fetch('/api/gm/state')).json();
   lastState = s;
   const t = s.truth;
+  const modeNote = { WATCH: '6-hour skips', PULSE: '1-hour steps', CONTACT: '6-min turns' }[t.clockMode] || '';
   document.getElementById('clock').textContent =
-    `${clock(t.tick).replace('D', 'Day ')} · ${t.clockMode}`;
+    `${clock(t.tick).replace('D', 'Day ')} · ${t.clockMode}${modeNote ? ` (${modeNote})` : ''}`;
   const thr = t.config.vpThreshold;
   document.getElementById('vp-bar').innerHTML = Object.values(t.sides).map(side =>
     `<span class="pill">${side.name}: <b>${side.vp} VP</b>${thr ? ' / ' + thr : ''}` +
@@ -337,7 +340,7 @@ async function post(path, body) {
   return (await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body || {}) })).json();
 }
-async function advance(untilEvent) { await post('/api/gm/advance', { untilEvent }); refresh(); }
+async function advance(untilEvent, maxTicks) { await post('/api/gm/advance', { untilEvent, maxTicks }); refresh(); }
 async function undoStep() {
   const r = await post('/api/gm/undo', {});
   notify(r.ok ? `↶ rewound to ${clock(r.tick).replace('D', 'Day ')}` : `nothing to undo`, r.ok ? '' : 'bad');
