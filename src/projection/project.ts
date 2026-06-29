@@ -11,6 +11,7 @@
 import type { GroundPos, Id, Tick, TruthState } from '../core/types.js';
 import { DEEPSKY, LADDER_NAMES } from '../rules.js';
 import { isNight } from '../engine/clock.js';
+import { commandNodesOf } from '../engine/net.js';
 import { isFlight, jokerBingo, minFp } from '../engine/air.js';
 import { burnDaysRemaining, transitDays } from '../engine/space.js';
 import type { ContactView, OwnFacilityView, OwnFormationView, OwnSatelliteView,
@@ -161,6 +162,11 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
                  corridor: s.corridor.map(c => ({ ...c })),
                  periodPulses: s.periodPulses, nextPassTick: s.nextPassTick,
                  alive: s.alive }));
+  // own command-net coverage, so the player can see where their forces stay on-net
+  const netNodes = commandNodesOf(truth, sideId)
+    .filter(n => !n.theaterWide)
+    .map(n => ({ q: n.pos.q, r: n.pos.r, theaterId: n.pos.theaterId, radius: n.radius }));
+  const netTheaterWide = commandNodesOf(truth, sideId).some(n => n.theaterWide);
   // grid extent is public geography (paper maps exist); terrain stays scouted-only
   const theaters: TheaterBoundsView[] = Object.values(truth.theaters).map(t => {
     let cols = 0, rows = 0;
@@ -188,6 +194,8 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
     ...(system ? { system } : {}),
     ownFacilities,
     ownSatellites,
+    netNodes,
+    netTheaterWide,
     theaters,
   };
 }

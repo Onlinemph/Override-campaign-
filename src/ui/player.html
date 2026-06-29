@@ -16,7 +16,8 @@
       <div class="legend">
         <b>◯</b> your formations (dashed ring = EMCON DARK) · <b>▢</b> facilities ·
         <b>◇</b> contacts <b>G/S/C/L</b> (dimmer = staler; dashed circle = ±1) ·
-        <b>★</b> objective · <b>⌁</b> satellite track
+        <b>★</b> objective · <b>⌁</b> satellite track ·
+        <b style="color:#5aa9ff">⬡ dashed area</b> = command-net coverage (your forces are on-net inside it)
       </div>
     </div>
     <div class="panel" id="sys-panel" style="display:none">
@@ -119,8 +120,15 @@ async function refresh() {
   const model = buildPlayerHexModel(v, v.theaters[0] && v.theaters[0].id);
   if (model) {
     model.highlight = plotted;
-    // committed routes (green, from the model) + the route being plotted now (bright yellow)
-    if (plotted.length > 1) model.paths = [...(model.paths || []), { points: plotted, color: '#ffd75e' }];
+    // committed routes (green, from the model) + the route being plotted now (bright
+    // yellow), drawn from the SELECTED formation so it starts at the unit and follows hexes
+    if (plotted.length >= 1) {
+      const selId = document.getElementById('o-formation').value;
+      const me = (v.ownFormations || []).find(f => f.id === selId);
+      const start = me && me.pos ? me.pos : plotted[0];
+      model.paths = [...(model.paths || []),
+        { points: routeThrough(start, plotted), color: '#ffd75e' }];
+    }
     renderHexMap(document.getElementById('map'), model,
       { onHexClick: (q, r) => { plotted.push({ q, r });
           document.getElementById('o-path').value = plotted.map(p => p.q + ',' + p.r).join(';');

@@ -156,6 +156,15 @@
     });
     svg.appendChild(gInfra);
 
+    // ── command-net coverage zones (drawn under paths & markers) ──
+    const gZones = el('g', { 'pointer-events': 'none' });
+    (model.zones || []).forEach(z => {
+      const pts = z.corners.map(c => { const p = center(c.q, c.r, s); return p.x + ',' + p.y; }).join(' ');
+      gZones.appendChild(el('polygon', { points: pts, fill: z.color, 'fill-opacity': 0.05,
+        stroke: z.color, 'stroke-width': 1.2, 'stroke-dasharray': '7 6', opacity: 0.5 }));
+    });
+    svg.appendChild(gZones);
+
     // ── corridors (satellite tracks) & plotted paths ──
     const gPaths = el('g', { 'pointer-events': 'none' });
     (model.corridors || []).forEach(cor => {

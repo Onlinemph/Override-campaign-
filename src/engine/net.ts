@@ -6,9 +6,9 @@ import type { Formation, GroundPos, Id, TruthState } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
 import { hexDistance } from '../hex/axial.js';
 
-interface NetNode { id: Id; pos: GroundPos; radius: number; theaterWide: boolean }
+export interface NetNode { id: Id; pos: GroundPos; radius: number; theaterWide: boolean }
 
-function commandNodesOf(s: TruthState, sideId: Id): NetNode[] {
+export function commandNodesOf(s: TruthState, sideId: Id): NetNode[] {
   const out: NetNode[] = [];
   const side = s.sides[sideId];
   for (const nodeId of side.commandNodes) {

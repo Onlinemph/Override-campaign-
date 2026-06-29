@@ -16,6 +16,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { Campaign, replay } from '../core/truth.js';
 import { JsonlEventStore, MemoryEventStore } from '../core/log.js';
 import { project } from '../projection/project.js';
+import { commandNodesOf } from '../engine/net.js';
 import { loadCampaignFixture, buildFormationEntities } from '../demo.js';
 import { buildMul } from '../handoff/mul.js';
 import { hashPick } from '../core/rng.js';
@@ -86,6 +87,9 @@ function gmState() {
     salvage: Object.values(campaign.truth.salvage),
     persist: activeLogPath ? { path: activeLogPath, events: campaign.store.length() } : null,
     campaignName: campaign.truth.config.name,
+    netNodesBySide: Object.fromEntries(sides.map(s => [s,
+      commandNodesOf(campaign.truth, s).filter(n => !n.theaterWide)
+        .map(n => ({ q: n.pos.q, r: n.pos.r, theaterId: n.pos.theaterId, radius: n.radius }))])),
   };
 }
 

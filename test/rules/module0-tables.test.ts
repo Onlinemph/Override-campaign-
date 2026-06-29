@@ -161,9 +161,9 @@ describe('A8 — contact ladder (core §6.4)', () => {
 });
 
 describe('A9 — command nets (core §4.2)', () => {
-  it('12 ground node / 24 DropShip-base / theater-wide comm sat; re-net 1 pulse', () => {
-    expect(NET.GROUND_NODE_RADIUS).toBe(12);
-    expect(NET.DROPSHIP_BASE_RADIUS).toBe(24);
+  it('18 ground node / 30 DropShip-base / theater-wide comm sat; re-net 1 pulse', () => {
+    expect(NET.GROUND_NODE_RADIUS).toBe(18);
+    expect(NET.DROPSHIP_BASE_RADIUS).toBe(30);
     expect(NET.COMM_SAT_THEATER_WIDE).toBe(true);
     expect(NET.RENET_PULSES).toBe(1);
   });

@@ -199,7 +199,7 @@ async function refresh() {
   const theaterId = Object.keys(t.theaters)[0];
   document.getElementById('map-sub').textContent =
     `— ${t.theaters[theaterId]?.name ?? ''}${belief ? ' · belief: ' + belief : ''}`;
-  const model = buildTruthHexModel(t, theaterId, { beliefSide: belief });
+  const model = buildTruthHexModel(t, theaterId, { beliefSide: belief, netNodesBySide: s.netNodesBySide });
   if (model) renderHexMap(document.getElementById('map'), model,
     { onHexClick: inspectHex, showCoords: true });
   const sysModel = buildTruthSysModel(t);

@@ -39,6 +39,17 @@
     }
     return pts;
   }
+  window.routeThrough = routeThrough;
+
+  // a command-net coverage zone = the 6-corner hexagon of hexes within `radius`
+  const DIRS = [{ q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
+                { q: -1, r: 0 }, { q: -1, r: 1 }, { q: 0, r: 1 }];
+  function netZones(nodes, theaterId, color) {
+    return (nodes || [])
+      .filter(n => !n.theaterId || n.theaterId === theaterId)
+      .map(n => ({ corners: DIRS.map(d => ({ q: n.q + d.q * n.radius, r: n.r + d.r * n.radius })),
+                   color }));
+  }
 
   function classLetter(units) {
     const c = (units && units[0] && (units[0].class || units[0])) || '';
@@ -94,7 +105,8 @@
       if (!f.pos || wp.length === 0) return;
       paths.push({ points: routeThrough(f.pos, wp), color: '#7ad07a' });
     });
-    return { cols: th.cols, rows: th.rows, hexes, markers, corridors, paths };
+    const zones = netZones(v.netNodes, th.id, '#5aa9ff'); // own command-net coverage
+    return { cols: th.cols, rows: th.rows, hexes, markers, corridors, paths, zones };
   };
 
   window.buildPlayerSysModel = function (v) {
@@ -187,7 +199,13 @@
       paths.push({ points: routeThrough(f.pos, wp),
                    color: f.sideId === 'blue' ? '#7ad0d8' : '#d88a7a' });
     });
-    return { cols, rows, hexes, markers, corridors, paths };
+    // command-net coverage per side (GM sees all)
+    const zones = [];
+    const byside = (opts.netNodesBySide) || {};
+    for (const sid of Object.keys(byside)) {
+      zones.push(...netZones(byside[sid], th.id, sid === 'blue' ? '#5aa9ff' : '#ff8a6b'));
+    }
+    return { cols, rows, hexes, markers, corridors, paths, zones };
   };
 
   // ── EDITOR: an authoring campaign object → the hex renderer model ──────────
