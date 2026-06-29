@@ -258,7 +258,7 @@ for (const id of ['o-formation', 'o-kind', 'o-path', 'o-emcon', 'o-target',
   if (el) { el.addEventListener('input', previewOrder); el.addEventListener('change', previewOrder); }
 }
 
-const ws = new WebSocket(`ws://${location.host}`);
+const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
 ws.onmessage = refresh;
 refresh();
 </script>
