@@ -32,7 +32,11 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
         onNet: f.onNet,
         currentOrder: f.currentOrderId && truth.orders[f.currentOrderId]
           ? { id: f.currentOrderId, kind: truth.orders[f.currentOrderId].kind,
-              completed: !!truth.orders[f.currentOrderId].completed }
+              completed: !!truth.orders[f.currentOrderId].completed,
+              // own order: safe to expose the plotted route so the map can draw it
+              path: (truth.orders[f.currentOrderId].path ?? [])
+                .filter((p): p is GroundPos => p.kind === 'ground')
+                .map(p => ({ q: p.q, r: p.r })) }
           : undefined,
         units: f.unitIds.map(uid => {
           const u = truth.units[uid];

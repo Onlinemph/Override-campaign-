@@ -52,7 +52,14 @@
       .filter(s => s.theaterId === th.id && s.alive)
       .map(s => ({ points: s.corridor, color: '#7ad0d8',
                    label: `${s.id} next pass t${s.nextPassTick}` }));
-    return { cols: th.cols, rows: th.rows, hexes, markers, corridors };
+    // committed movement routes: a line from each own formation through its order waypoints
+    const paths = [];
+    (v.ownFormations || []).forEach(f => {
+      const wp = (f.currentOrder && f.currentOrder.path) || [];
+      if (!f.pos || wp.length === 0) return;
+      paths.push({ points: [{ q: f.pos.q, r: f.pos.r }, ...wp], color: '#7ad07a' });
+    });
+    return { cols: th.cols, rows: th.rows, hexes, markers, corridors, paths };
   };
 
   window.buildPlayerSysModel = function (v) {
@@ -132,7 +139,18 @@
     const corridors = Object.values(t.satellites || {})
       .filter(s => s.theaterId === th.id && s.alive)
       .map(s => ({ points: s.corridor, color: s.sideId === 'blue' ? '#7ad0d8' : '#d88a7a' }));
-    return { cols, rows, hexes, markers, corridors };
+    // committed movement routes for every formation, coloured by side (GM sees all)
+    const paths = [];
+    Object.values(t.formations).forEach(f => {
+      if (f.destroyed || f.pos.kind !== 'ground' || f.pos.theaterId !== th.id) return;
+      const order = f.currentOrderId && t.orders[f.currentOrderId];
+      if (!order || order.completed || !order.path) return;
+      const wp = order.path.filter(p => p.kind === 'ground').map(p => ({ q: p.q, r: p.r }));
+      if (!wp.length) return;
+      paths.push({ points: [{ q: f.pos.q, r: f.pos.r }, ...wp],
+                   color: f.sideId === 'blue' ? '#7ad0d8' : '#d88a7a' });
+    });
+    return { cols, rows, hexes, markers, corridors, paths };
   };
 
   // ── EDITOR: an authoring campaign object → the hex renderer model ──────────

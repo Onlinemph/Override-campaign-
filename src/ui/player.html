@@ -119,7 +119,8 @@ async function refresh() {
   const model = buildPlayerHexModel(v, v.theaters[0] && v.theaters[0].id);
   if (model) {
     model.highlight = plotted;
-    model.paths = plotted.length > 1 ? [{ points: plotted }] : [];
+    // committed routes (green, from the model) + the route being plotted now (bright yellow)
+    if (plotted.length > 1) model.paths = [...(model.paths || []), { points: plotted, color: '#ffd75e' }];
     renderHexMap(document.getElementById('map'), model,
       { onHexClick: (q, r) => { plotted.push({ q, r });
           document.getElementById('o-path').value = plotted.map(p => p.q + ',' + p.r).join(';');

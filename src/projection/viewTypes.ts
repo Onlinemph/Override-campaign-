@@ -16,7 +16,7 @@ export interface OwnFormationView {
   omp: number; br: number; rdy: number;
   emcon: Emcon; posture: Posture;
   onNet: boolean;
-  currentOrder?: { id: Id; kind: string; completed: boolean };
+  currentOrder?: { id: Id; kind: string; completed: boolean; path?: Array<{ q: number; r: number }> };
   units: OwnUnitView[];
   inSupply: boolean;
   // M3: the flight board — your own ledgers, always visible (SKYWATCH §2)

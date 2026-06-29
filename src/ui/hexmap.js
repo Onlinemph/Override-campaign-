@@ -170,11 +170,22 @@
       }));
     });
     (model.paths || []).forEach(p => {
-      const pts = p.points.map(pt => { const c = center(pt.q, pt.r, s); return c.x + ',' + c.y; }).join(' ');
-      gPaths.appendChild(el('polyline', {
-        points: pts, fill: 'none', stroke: p.color || '#ffd75e',
-        'stroke-width': 1.4, 'stroke-dasharray': '2 3', opacity: 0.85,
-      }));
+      const cs = p.points.map(pt => center(pt.q, pt.r, s));
+      const pts = cs.map(c => c.x + ',' + c.y).join(' ');
+      const color = p.color || '#ffd75e';
+      // soft glow under the route, then the dashed line on top
+      gPaths.appendChild(el('polyline', { points: pts, fill: 'none', stroke: color,
+        'stroke-width': s * 0.22, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', opacity: 0.18 }));
+      gPaths.appendChild(el('polyline', { points: pts, fill: 'none', stroke: color,
+        'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round',
+        'stroke-dasharray': '4 3', opacity: 0.95 }));
+      // waypoint dots, and a ring on the destination
+      cs.forEach((c, i) => {
+        const last = i === cs.length - 1;
+        gPaths.appendChild(el('circle', { cx: c.x, cy: c.y, r: last ? s * 0.2 : s * 0.1,
+          fill: last ? 'none' : color, stroke: color,
+          'stroke-width': last ? 2 : 0, opacity: 0.95 }));
+      });
     });
     svg.appendChild(gPaths);
 
