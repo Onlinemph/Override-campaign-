@@ -191,11 +191,12 @@ on `/gm`. This is the handoff. You have choices:
      condition and ammo. Download the `.mul` files if you use MegaMek.
   3. **Now go play that battle** on an actual BattleTech (or Alpha Strike, or quick-roll)
      table, with the setup the tool gave you.
-  4. **Enter the result.** The handoff gave you a `BattleResult` template (a bit of JSON) in
-     the banner. Fill in who won, each unit's final damage, any ejected pilots, who withdrew
-     which way — and click **Ingest BattleResult**. The campaign unfreezes: damage is applied,
-     salvage and downed-crew markers appear, the loser may rout, and both sides now hold a
-     **LOCK** on each other (they just met). Pursuit can begin.
+  4. **Enter the result.** The banner shows a simple form: pick the winner and who holds
+     the hex, set each unit's final damage and ammo from the dropdowns, add a note, and
+     click **Apply battle result**. (Power users can paste a full `BattleResult` JSON under
+     "advanced" to also record ejections/withdrawals.) The campaign unfreezes: damage is
+     applied, salvage and downed-crew markers appear, the loser may rout, and both sides now
+     hold a **LOCK** on each other (they just met). Pursuit can begin.
 
 **Step 6 — Win.** Holding objectives scores VP each day. When a side reaches the campaign's
 VP threshold (25 in the demo), the tool declares the winner and freezes — and you can open
