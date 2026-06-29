@@ -482,6 +482,13 @@ const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${l
 ws.onmessage = refresh;
 refresh();
 loadCampaignList();
+
+// keyboard: Space = Step (ignored while typing in a field)
+document.addEventListener('keydown', e => {
+  const t = e.target.tagName;
+  if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;
+  if (e.code === 'Space') { e.preventDefault(); advance(false); }
+});
 </script>
 </body>
 </html>

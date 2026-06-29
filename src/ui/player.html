@@ -68,6 +68,10 @@
       <div id="order-preview" class="legend" style="margin-top:8px;border-top:1px solid var(--line);padding-top:6px"></div>
       <div style="margin-top:6px"><button onclick="sendOrder()">Issue order</button>
         <span id="o-result" class="kv"></span></div>
+      <div class="kv" style="margin-top:6px">quick orders:
+        <button onclick="quickOrder('HIDE')" title="Hold position, go silent">Hold</button>
+        <button onclick="quickOrder('REST')" title="Rest &amp; refit in place">Rest</button>
+        <button onclick="fallBack()" title="Move to the nearest command node">Fall back</button></div>
     </div>
     <details class="panel">
       <summary style="cursor:pointer;color:var(--dim)">▸ Reading your screen</summary>
@@ -107,9 +111,11 @@ attachPanZoom(document.getElementById('sysmap'));
 const ago = Fmt.ago;
 const clock = tick => tick == null ? '—' : Fmt.clock(tick).replace('D', 'Day ');
 
+let lastView = null;
 async function refresh() {
   const v = await (await fetch(`/api/side/${sideId}/view?${q}`)).json();
   if (v.error) { document.getElementById('title').textContent = 'OVERRIDE — ' + v.error; return; }
+  lastView = v;
   document.getElementById('title').textContent =
     `OVERRIDE — ${sideId.toUpperCase()} · ${clock(v.now)} · ${v.clockMode} · ${v.isNight ? 'NIGHT' : 'DAY'} · ` +
     `${v.vp} VP${v.vpThreshold ? ' / ' + v.vpThreshold : ''}` +
@@ -119,7 +125,10 @@ async function refresh() {
   // the map
   const model = buildPlayerHexModel(v, v.theaters[0] && v.theaters[0].id);
   if (model) {
-    model.highlight = plotted;
+    // ring the selected formation so you can see what you're commanding, plus the plotted hexes
+    const selFid = document.getElementById('o-formation').value;
+    const selMe = (v.ownFormations || []).find(f => f.id === selFid);
+    model.highlight = [...(selMe && selMe.pos ? [{ q: selMe.pos.q, r: selMe.pos.r }] : []), ...plotted];
     // committed routes (green, from the model) + the route being plotted now (bright
     // yellow), drawn from the SELECTED formation so it starts at the unit and follows hexes
     if (plotted.length >= 1) {
@@ -259,6 +268,30 @@ async function sendOrder() {
   document.getElementById('o-result').textContent = r.ok ? '✓ order accepted' : `✗ ${r.reason}`;
   if (r.ok) { plotted = []; document.getElementById('o-path').value = ''; }
   refresh();
+}
+
+async function postOrder(body) {
+  const r = await (await fetch(`/api/side/${sideId}/order?${q}`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })).json();
+  document.getElementById('o-result').textContent = r.ok ? '✓ order accepted' : `✗ ${r.reason}`;
+  if (r.ok) { plotted = []; document.getElementById('o-path').value = ''; }
+  refresh();
+}
+function quickOrder(kind) {
+  const fid = document.getElementById('o-formation').value;
+  if (!fid) return;
+  postOrder({ formationId: fid, kind, path: [] });
+}
+function fallBack() {
+  const fid = document.getElementById('o-formation').value;
+  const me = lastView && (lastView.ownFormations || []).find(f => f.id === fid);
+  if (!me || !me.pos) return;
+  const nodes = (lastView.netNodes || []);
+  if (!nodes.length) { document.getElementById('o-result').textContent = '✗ no command node to fall back to'; return; }
+  const hd = (a, b) => { const dq = a.q - b.q, dr = a.r - b.r; return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2; };
+  let best = nodes[0], bd = hd(me.pos, nodes[0]);
+  for (const n of nodes) { const d = hd(me.pos, n); if (d < bd) { bd = d; best = n; } }
+  postOrder({ formationId: fid, kind: 'MOVE', path: [{ q: best.q, r: best.r }] });
 }
 
 for (const id of ['o-formation', 'o-kind', 'o-path', 'o-emcon', 'o-target',
