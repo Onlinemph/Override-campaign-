@@ -112,9 +112,12 @@ export const ROAD_COST_FACTOR = 0.5;   // ½ cost, min 1 — see MOVEMENT.ROAD_M
 export const ROAD_MIN_COST = 1;
 
 // ── Movement (core §2.3, §3.3, §5.1, §5.3) ──────────────────────────────────
+// Operational scale: one hex = 18 km (the high-altitude grid). OMP is hexes per HOUR
+// (one pulse): mech ≈ 3, vehicle ≈ 4, hover/VTOL ≈ 8 (× 18 km ⇒ ~54/72/144 km/h). A
+// 6-minute contact turn covers OMP/10 hex, so units crawl ~3 turns per hex near combat.
 export const MOVEMENT = {
-  PULSE_ROAD_MULT: 10,          // OMP × 10 hexes per pulse on roads
-  PULSE_CROSS_COUNTRY_MULT: 5,  // OMP × 5 cross-country
+  HEX_KM: 18,                   // each operational hex spans 18 km
+  ROAD_BONUS: 1.5,              // roads ×1.5 (predictable, faster) — was a ×10 pulse mult
   FORCED_MARCH_MULT: 1.5,       // speed ×1.5
   FORCED_MARCH_RDY_PER_PULSE: -1,
   FORCED_MARCH_BREAKDOWN_TN: 3, // 2d6 ≤ 3 per pulse ⇒ breakdown (engine hook: M2)

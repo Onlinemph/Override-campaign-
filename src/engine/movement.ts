@@ -1,11 +1,11 @@
 /**
  * engine/movement.ts — Module 0 ground movement (core §2.3, §5).
  *
- * Two formulas, one loop:
- *  - CONTACT mode: spend OMP against per-hex terrain costs (road ½, min 1).
- *  - PULSE/WATCH mode: distance budget = OMP × 10 (road) / × 5 (cross-country) hexes
- *    per pulse; terrain costs collapse into the road/cross-country distinction
- *    ("terrain permitting" — impassable hexes still block).
+ * OMP is hexes per HOUR at the 18 km operational scale. Two formulas, one loop:
+ *  - CONTACT mode (6-min turns): budget = OMP/10 per turn, spent against per-hex terrain
+ *    costs (road ½, min 1) — so a unit crawls ~3 turns per clear hex near combat.
+ *  - PULSE/WATCH mode: budget = OMP hexes per pulse (× ROAD_BONUS on roads); terrain
+ *    collapses to the road/off-road distinction (impassable hexes still block).
  * Fractional progress toward the next hex is carried on the formation between steps.
  */
 import { CLOCK, MOVEMENT, ROAD_MIN_COST, ROAD_COST_FACTOR, TERRAIN } from '../rules.js';
@@ -111,15 +111,22 @@ export function movementPass(
     //  CONTACT mode: OMP points (1 contact turn's worth × dt ticks)
     //  PULSE/WATCH:  pulses of marching time
     const contactScale = s.clockMode === 'CONTACT';
-    let avail = contactScale ? f.omp * mult * dt : dt / CLOCK.TICKS_PER_PULSE;
+    // OMP is hexes/hour; a contact tick is one 6-min turn ⇒ OMP/10 of budget per tick.
+    let avail = contactScale
+      ? f.omp * mult * dt / CLOCK.TICKS_PER_PULSE
+      : dt / CLOCK.TICKS_PER_PULSE;
 
     let moved = false;
     let forcedPulses = 0;
 
     while (pathIndex < path.length && avail > 1e-9) {
-      const next = path[pathIndex];
+      const waypoint = path[pathIndex];
       const cur = f.pos as GroundPos;
-      if (hexDistance(cur, next) === 0) { pathIndex++; continue; }
+      if (hexDistance(cur, waypoint) === 0) { pathIndex++; continue; }
+      // step ONE hex toward the waypoint, interpolating any gap (sparse authored paths
+      // or far-apart clicked waypoints) so movement is never a teleport between waypoints
+      const hop = hexLine(cur, waypoint)[1];
+      const next: GroundPos = { ...cur, q: hop.q, r: hop.r };
 
       const hex = getHex(s, next);
       if (!hex) break;
@@ -133,7 +140,7 @@ export function movementPass(
       } else {
         const c = hexEntryCost(s, f, hex);
         if (c === null) break;
-        const rate = f.omp * (onRoad ? MOVEMENT.PULSE_ROAD_MULT : MOVEMENT.PULSE_CROSS_COUNTRY_MULT) * mult;
+        const rate = f.omp * (onRoad ? MOVEMENT.ROAD_BONUS : 1) * mult; // hexes per pulse
         hexCost = 1 / rate; // pulses per hex
       }
 
@@ -148,7 +155,7 @@ export function movementPass(
         });
         moved = true;
         progress = 0;
-        pathIndex++;
+        if (hexDistance(next, waypoint) === 0) pathIndex++; // reached this waypoint
       } else {
         progress += avail / hexCost;
         if (order.kind === 'FORCED_MARCH' && !contactScale) forcedPulses += avail;

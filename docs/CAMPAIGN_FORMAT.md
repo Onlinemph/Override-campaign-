@@ -129,7 +129,7 @@ A formation lives in exactly **one** place — pick one position style:
 |---|---|---|---|
 | **id**, **sideId**, **name** | ✓ | | |
 | **sigBase** | ✓ | | base signature: Bn 5 · Co 6 · Lance 7 · single 9 · squad 10 |
-| omp | | 0 | operational MP (slowest Walk/Cruise in the unit) |
+| omp | | 0 | operational hexes per **hour** at the 18 km scale: mech ≈ 3, vehicle ≈ 4, hover/VTOL ≈ 8 |
 | sns | | mech 2/4 | `{ passive, active }` sensor ranges |
 | emcon | | PASSIVE | `DARK PASSIVE ACTIVE` |
 | posture | | NONE | `NONE HIDE DUG_IN DIGGING FORTIFIED` |

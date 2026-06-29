@@ -460,3 +460,18 @@ determinism or replay, it just shortens the log. The JSONL store rewrites its fi
 rewind survives a restart. Undo cannot pass the tick-0 setup (genesis + initial net/scout
 events stay). Loading a different campaign at runtime starts a fresh in-memory session and
 is therefore *not* persisted unless the server was launched with `--log`.
+
+## D-016 ✅ Operational scale: 18 km hexes, OMP in hexes/hour
+Playtest feedback: at the original scale a single 1-hour PULSE step moved a unit OMP×10
+hexes (the rulebook's "10 contact-turns per pulse"), so on any normal map units crossed
+the whole board in one click — "teleporting." Rescaled the operational hex to **18 km**
+(the high-altitude grid) and redefined **OMP as hexes per hour**: mech ≈ 3, vehicle ≈ 4,
+hover/VTOL ≈ 8 (≈ 54/72/144 km/h). A PULSE step now covers OMP hexes (× `ROAD_BONUS` 1.5
+on roads); a 6-min CONTACT turn covers OMP/10 hex, so units crawl ~3 turns per hex near
+combat — fine-grained enough to watch them maneuver and for the route overlay to read.
+Sensor / net / supply ranges stay in hex counts (each now 18 km), so those gameplay
+relationships are unchanged. Movement also now interpolates between waypoints one hex at a
+time (`hexLine`), so sparse authored paths or far-apart clicked waypoints no longer
+teleport. The `m1` acceptance scenario keeps its scripted pace by carrying the old ×5
+cross-country factor into the battalion's authored OMP (1 → 5); all other balance numbers
+move to the new scale.

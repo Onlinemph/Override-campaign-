@@ -63,8 +63,10 @@ function buildScenario(): TruthState {
     [gp(10, 11), gp(7, 14), gp(4, 17), gp(2, 18)], 90);
 
   // ── Red (attacker): the hidden battalion ──
+  // omp 5 at the 18 km scale ⇒ ~2.5 hex/pulse cautious cross-country — the same crossing
+  // pace the scenario was written around (was omp 1 under the old ×5 pulse multiplier)
   const bn = addMechFormation(truth,
-    { id: 'red-bn', sideId: 'red', pos: gp(24, 8), omp: 1, sigBase: 5, emcon: 'DARK' },
+    { id: 'red-bn', sideId: 'red', pos: gp(24, 8), omp: 5, sigBase: 5, emcon: 'DARK' },
     12, {});
   truth.orders['b1'] = moveOrder('b1', bn, 'MOVE_CAUTIOUS', [
     gp(23, 8), gp(22, 8), gp(21, 8), gp(20, 8), gp(19, 8), gp(18, 8), gp(17, 8),

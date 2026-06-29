@@ -122,9 +122,9 @@ describe('A6 — terrain table (core §5.2)', () => {
 });
 
 describe('A7 — movement rates (core §2.3, §3.3, §5.1)', () => {
-  it('pulse: ×10 road / ×5 cross-country; forced march ×1.5 with RDY −1/pulse', () => {
-    expect(MOVEMENT.PULSE_ROAD_MULT).toBe(10);
-    expect(MOVEMENT.PULSE_CROSS_COUNTRY_MULT).toBe(5);
+  it('18 km hexes: OMP is hexes/hour, roads ×1.5; forced march ×1.5 with RDY −1/pulse', () => {
+    expect(MOVEMENT.HEX_KM).toBe(18);
+    expect(MOVEMENT.ROAD_BONUS).toBe(1.5);
     expect(MOVEMENT.FORCED_MARCH_MULT).toBe(1.5);
     expect(MOVEMENT.FORCED_MARCH_RDY_PER_PULSE).toBe(-1);
   });

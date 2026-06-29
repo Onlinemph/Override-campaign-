@@ -14,7 +14,7 @@ describe('M2 — engagement detection', () => {
     const truth = baseTruth('ENG-SEED');
     truth.clockMode = 'CONTACT';
     addMechFormation(truth, { id: 'red-1', sideId: 'red', pos: gp(5, 5) });
-    const blue = addMechFormation(truth, { id: 'blue-1', sideId: 'blue', pos: gp(6, 5), omp: 4 });
+    const blue = addMechFormation(truth, { id: 'blue-1', sideId: 'blue', pos: gp(6, 5), omp: 10 });
     activate(truth, moveOrder('o', blue, 'MOVE', [gp(5, 5)]));
     const campaign = Campaign.create(truth);
 
@@ -36,7 +36,7 @@ describe('M2 — engagement detection', () => {
     const truth = baseTruth('ENG-SEED');
     truth.clockMode = 'CONTACT';
     const red = addMechFormation(truth, { id: 'red-1', sideId: 'red', pos: gp(5, 5) });
-    const blue = addMechFormation(truth, { id: 'blue-1', sideId: 'blue', pos: gp(6, 5), omp: 4 });
+    const blue = addMechFormation(truth, { id: 'blue-1', sideId: 'blue', pos: gp(6, 5), omp: 10 });
     activate(truth, moveOrder('o', blue, 'MOVE', [gp(5, 5)]));
     truth.contacts['c'] = {
       id: 'contact:blue:red-1', observerSideId: 'blue', targetFormationId: 'red-1',
