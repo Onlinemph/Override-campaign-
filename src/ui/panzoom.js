@@ -2,7 +2,13 @@
  * panzoom.js — wheel-zoom + drag-pan for a map SVG, applied as a CSS transform on the
  * element so it survives the renderers re-writing innerHTML on every websocket update.
  * Wrap the <svg> in a .mapwrap (overflow:hidden); call attachPanZoom(svg) once.
- * Double-click resets. Clicks that don't drag still reach hex handlers.
+ * Double-click resets.
+ *
+ * Pointer capture is engaged ONLY once a drag actually starts (movement past a small
+ * threshold). A plain click never captures, so pointerdown and pointerup share the same
+ * hex <polygon> target and the browser delivers the `click` to it — that's what makes
+ * click-to-plot work. (Capturing on every pointerdown re-targets the click to the <svg>
+ * and silently breaks hex clicks.)
  */
 (function () {
   window.attachPanZoom = function (svg) {
@@ -26,30 +32,35 @@
       apply();
     }, { passive: false });
 
+    const THRESHOLD = 4; // px of movement before a press becomes a drag
     let drag = null;
     const wrap = svg.parentElement;
+
     svg.addEventListener('pointerdown', e => {
-      drag = { x: e.clientX, y: e.clientY, ox: st.x, oy: st.y, moved: 0 };
-      svg.setPointerCapture(e.pointerId);
-      if (wrap) wrap.style.cursor = 'grabbing';
+      drag = { x: e.clientX, y: e.clientY, ox: st.x, oy: st.y, id: e.pointerId, dragging: false };
     });
     svg.addEventListener('pointermove', e => {
       if (!drag) return;
       const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-      drag.moved += Math.abs(dx) + Math.abs(dy);
-      st.x = drag.ox + dx; st.y = drag.oy + dy;
-      apply();
+      if (!drag.dragging && Math.abs(dx) + Math.abs(dy) > THRESHOLD) {
+        drag.dragging = true;                       // promote to a real drag now (not before)
+        try { svg.setPointerCapture(drag.id); } catch {}
+        if (wrap) wrap.style.cursor = 'grabbing';
+      }
+      if (drag.dragging) { st.x = drag.ox + dx; st.y = drag.oy + dy; apply(); }
     });
-    const end = e => {
+    const end = () => {
       if (!drag) return;
-      // a real drag suppresses the click that would otherwise plot a hex
-      if (drag.moved > 4) {
+      const wasDrag = drag.dragging;
+      try { if (wasDrag) svg.releasePointerCapture(drag.id); } catch {}
+      drag = null;
+      if (wrap) wrap.style.cursor = 'grab';
+      if (wasDrag) {
+        // suppress the synthetic click that fires at the end of a drag (don't plot a hex)
         const swallow = ev => { ev.stopPropagation(); svg.removeEventListener('click', swallow, true); };
         svg.addEventListener('click', swallow, true);
         setTimeout(() => svg.removeEventListener('click', swallow, true), 0);
       }
-      drag = null;
-      if (wrap) wrap.style.cursor = 'grab';
     };
     svg.addEventListener('pointerup', end);
     svg.addEventListener('pointercancel', end);
