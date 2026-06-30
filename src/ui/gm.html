@@ -143,6 +143,8 @@
         placeholder="Vixen 1 | Stinger STG-3R | MECH&#10;Vixen 2 | Wasp WSP-1A | MECH"></textarea>
       <div style="margin-top:4px"><button onclick="doSpawn()">Spawn reinforcement</button>
         <span id="rf-msg" class="kv"></span></div></div>
+    <div class="panel"><h2>Needs attention <small>— off-net / routed / starving / spent</small></h2>
+      <div id="gm-attention"></div></div>
     <div class="panel"><h2>Player links <small>— share each side's private URL</small></h2>
       <div id="links"></div></div>
     <div class="panel"><h2>Side views</h2><div id="views"></div></div>
@@ -258,6 +260,23 @@ async function refresh() {
     : '<small>(nothing in transit)</small>';
 
   // side views — what each side has actually been told (mirrors the player screen)
+  // GM needs-attention digest across every live formation (both sides)
+  const gmAttn = [];
+  for (const f of Object.values(t.formations)) {
+    if (f.destroyed || f.pos.kind !== 'ground') continue;
+    const why = [];
+    if (!f.onNet) why.push('off-net');
+    if (f.routUntilTick != null && t.tick < f.routUntilTick) why.push('routed');
+    if (f.supply && f.supply.inSupply === false) why.push('out of supply');
+    if (f.rdy <= 3) why.push('RDY ' + f.rdy);
+    if (!why.length) continue;
+    const stranded = !f.onNet || (f.routUntilTick != null && t.tick < f.routUntilTick);
+    gmAttn.push(`<div class="kv">⚠ <b style="color:var(--ink)">${esc(f.name)}</b> <small>[${up(f.sideId)}]</small> — ${why.join(', ')}` +
+      (stranded ? ` <button onclick="recall('${f.id}')" title="Courier an order: fall back to the nearest command node, go PASSIVE">recall</button>` : '') + '</div>');
+  }
+  document.getElementById('gm-attention').innerHTML = gmAttn.length ? gmAttn.join('')
+    : '<small class="kv">all formations nominal ✓</small>';
+
   document.getElementById('views').innerHTML = sides.map(x => {
     const v = s.views[x];
     const contacts = v.contacts.length
@@ -346,6 +365,11 @@ async function post(path, body) {
     body: JSON.stringify(body || {}) })).json();
 }
 async function advance(untilEvent, maxTicks, fine) { await post('/api/gm/advance', { untilEvent, maxTicks, fine: !!fine }); refresh(); }
+async function recall(formationId) {
+  const r = await post('/api/gm/recall', { formationId });
+  notify(r.ok ? `↩ courier sent — ${fname(formationId)} recalled toward ${r.toward}` : `✗ ${r.reason}`, r.ok ? 'good' : 'bad');
+  refresh();
+}
 async function undoStep() {
   const r = await post('/api/gm/undo', {});
   notify(r.ok ? `↶ rewound to ${clock(r.tick).replace('D', 'Day ')}` : `nothing to undo`, r.ok ? '' : 'bad');

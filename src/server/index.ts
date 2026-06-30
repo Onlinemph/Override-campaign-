@@ -211,6 +211,29 @@ const server = createServer(async (req, res) => {
       broadcast();
       return json(res, 200, { tick: campaign.truth.tick, events: events.length });
     }
+    if (path === '/api/gm/recall' && req.method === 'POST') {
+      // GM courier: order a stranded formation back to its nearest command node, bypassing
+      // the on-net gate (this is the "send a runner" rescue for an out-of-range unit)
+      const b = await readBody(req);
+      const t = campaign.truth;
+      const f = t.formations[b.formationId];
+      if (!f || f.destroyed || f.pos.kind !== 'ground') return json(res, 200, { ok: false, reason: 'no such ground formation' });
+      const here = f.pos as GroundPos;
+      const nodes = commandNodesOf(t, f.sideId)
+        .filter(n => !n.theaterWide && n.pos.theaterId === here.theaterId && n.id !== f.id);
+      if (!nodes.length) return json(res, 200, { ok: false, reason: 'no command node to recall toward' });
+      const hd = (a: GroundPos, c: GroundPos) => { const dq = a.q - c.q, dr = a.r - c.r; return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2; };
+      let best = nodes[0];
+      for (const n of nodes) if (hd(here, n.pos) < hd(here, best.pos)) best = n;
+      const order: Order = {
+        id: `recall:${b.formationId}:${t.tick}`, sideId: f.sideId, formationId: b.formationId,
+        kind: 'MOVE', path: [{ kind: 'ground', theaterId: best.pos.theaterId, q: best.pos.q, r: best.pos.r }],
+        emconOverride: 'PASSIVE', conditionals: [], issuedTick: t.tick, effectiveTick: t.tick + 1,
+      };
+      campaign.inject({ type: 'ORDER_ISSUED', order });
+      broadcast();
+      return json(res, 200, { ok: true, toward: `${best.pos.q},${best.pos.r}` });
+    }
     if (path === '/api/gm/undo' && req.method === 'POST') {
       const r = campaign.rewindOneStep();
       if (r) broadcast();

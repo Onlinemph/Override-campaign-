@@ -28,6 +28,7 @@
   </div>
 
   <div class="col">
+    <div class="panel"><h2>Needs attention</h2><div id="attention"></div></div>
     <div class="panel"><h2>Own forces</h2><pre id="own"></pre></div>
     <div class="panel"><h2>Contacts <small>— dimmer = staler intel</small></h2><pre id="contacts"></pre></div>
   </div>
@@ -151,6 +152,24 @@ async function refresh() {
   document.getElementById('sys-panel').style.display = sysModel ? '' : 'none';
   if (sysModel) renderSysMap(document.getElementById('sysmap'), sysModel);
 
+  // needs-attention digest
+  const attn = [];
+  for (const f of v.ownFormations) {
+    const why = [];
+    if (!f.onNet) why.push('off-net — can\'t be ordered');
+    if (f.routed) why.push('routed — uncommandable');
+    if (f.inSupply === false) why.push('out of supply');
+    if (f.rdy <= 3) why.push('readiness ' + f.rdy + '/10');
+    if (f.flight && f.flight.fpMin <= f.flight.bingoFp) why.push('fuel at/below bingo');
+    if (f.vessel && f.vessel.burnDaysRemaining <= 1.5) why.push('low fuel');
+    if (why.length) why.unshift(f.name); else continue;
+    attn.push(`<div class="kv">⚠ <b style="color:var(--ink)">${why[0]}</b> — ${why.slice(1).join(' · ')}</div>`);
+  }
+  document.getElementById('attention').innerHTML = attn.length
+    ? attn.join('') + (v.ownFormations.some(f => !f.onNet)
+        ? '<div class="legend" style="margin-top:4px">Off-net units run on standing orders until a command node is in range — drive your HQ toward them.</div>' : '')
+    : '<small class="kv">all formations nominal ✓</small>';
+
   // panels
   document.getElementById('own').textContent =
     v.ownFormations.map(Fmt.ownForce).join('\n\n') || '(none)';
@@ -233,7 +252,12 @@ function previewOrder() {
     }[when] || when;
     s += ` <span style="color:var(--accent)">Then if ${cond}: ${ckind}${cemcon ? ` (EMCON ${cemcon})` : ''}.</span>`;
   }
-  document.getElementById('order-preview').innerHTML = s;
+  // flag if the selected formation can't actually receive the order right now
+  const me = (lastView && lastView.ownFormations || []).find(f => f.id === sel.value);
+  let warn = '';
+  if (me && !me.onNet) warn = '<div style="color:var(--warn)">⚠ off-net — it won\'t receive this until a command node is in range</div>';
+  else if (me && me.routed) warn = '<div style="color:var(--warn)">⚠ routed — uncommandable until it rallies</div>';
+  document.getElementById('order-preview').innerHTML = warn + s;
 }
 
 function clearPath() { plotted = []; document.getElementById('o-path').value = ''; refresh(); }

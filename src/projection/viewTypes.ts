@@ -16,6 +16,7 @@ export interface OwnFormationView {
   omp: number; br: number; rdy: number;
   emcon: Emcon; posture: Posture;
   onNet: boolean;
+  routed?: boolean; // RDY≤1: uncommandable until it rallies (core §3.2/§7.4)
   currentOrder?: { id: Id; kind: string; completed: boolean; path?: Array<{ q: number; r: number }> };
   units: OwnUnitView[];
   inSupply: boolean;

@@ -31,6 +31,7 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
         omp: f.omp, br: f.br, rdy: f.rdy,
         emcon: f.emcon, posture: f.posture,
         onNet: f.onNet,
+        routed: f.routUntilTick != null && now < f.routUntilTick,
         currentOrder: f.currentOrderId && truth.orders[f.currentOrderId]
           ? { id: f.currentOrderId, kind: truth.orders[f.currentOrderId].kind,
               completed: !!truth.orders[f.currentOrderId].completed,
