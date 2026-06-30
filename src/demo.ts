@@ -10,6 +10,7 @@ import {
   mkTheater, mkUnit, type HexOverride,
 } from './fixtures.js';
 import { validateCampaign } from './campaign/schema.js';
+import { deriveFormationOmp } from './engine/movement.js';
 
 interface FixtureJson {
   seed: string;
@@ -48,19 +49,6 @@ export function buildFormationEntities(f: any):
         band: (f.airPos.band ?? 'HIGH') as 'HIGH', altLevel: f.airPos.altLevel ?? 6,
         velocity: 2, vectorDeg: 0 }
     : { kind: 'ground' as const, theaterId: f.theaterId, q: f.q, r: f.r };
-  const formation = mkFormation({
-    id: f.id, sideId: f.sideId, name: f.name, pos,
-    omp: f.omp ?? 0, sigBase: f.sigBase,
-    sns: f.sns, emcon: f.emcon ?? 'PASSIVE',
-    alertState: f.alertState,
-    posture: f.posture, rdy: f.rdy, facing: f.facing,
-    carriedSp: f.carriedSp, squawk: f.squawk, neutral: f.neutral,
-    ...(f.mountedOn ? { mounted: { carrierFormationId: f.mountedOn } } : {}),
-  });
-  if (f.flight || f.airPos) {
-    formation.air = { phase: f.airPos ? 'ENROUTE' : 'GROUNDED', speed: 'CRUISE',
-                      homeFacilityId: f.flight?.homeFacilityId };
-  }
   const pilots: Pilot[] = [];
   const jumpDrives: JumpDrive[] = [];
   const units = (f.units ?? []).map((u: any, i: number) => {
@@ -96,6 +84,23 @@ export function buildFormationEntities(f: any):
     }
     return unit;
   });
+  // OMP: explicit if authored, else the formation moves at its slowest member's Walk MP
+  // (deriveFormationOmp) — so a unit's speed matters without hand-tuning, and an omitted
+  // omp no longer means "can't move".
+  const omp = f.omp ?? deriveFormationOmp(units);
+  const formation = mkFormation({
+    id: f.id, sideId: f.sideId, name: f.name, pos,
+    omp, sigBase: f.sigBase,
+    sns: f.sns, emcon: f.emcon ?? 'PASSIVE',
+    alertState: f.alertState,
+    posture: f.posture, rdy: f.rdy, facing: f.facing,
+    carriedSp: f.carriedSp, squawk: f.squawk, neutral: f.neutral,
+    ...(f.mountedOn ? { mounted: { carrierFormationId: f.mountedOn } } : {}),
+  });
+  if (f.flight || f.airPos) {
+    formation.air = { phase: f.airPos ? 'ENROUTE' : 'GROUNDED', speed: 'CRUISE',
+                      homeFacilityId: f.flight?.homeFacilityId };
+  }
   formation.unitIds = units.map((u: Unit) => u.id);
   return { formation, units, pilots, jumpDrives };
 }

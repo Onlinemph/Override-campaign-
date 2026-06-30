@@ -9,7 +9,6 @@
     "endTick": 720,
     "netGroundRadius": 18
   },
-
   "theaters": [
     {
       "id": "pellar",
@@ -18,128 +17,496 @@
       "height": 24,
       "defaultTerrain": "CLEAR",
       "overrides": [
-        { "q": 4,  "r": 12, "infra": ["DEPOT", "ROAD"] },
-        { "q": 5,  "r": 12, "infra": ["ROAD"] },
-        { "q": 6,  "r": 12, "infra": ["ROAD"] },
-        { "q": 7,  "r": 12, "infra": ["ROAD"] },
-        { "q": 8,  "r": 12, "infra": ["ROAD"] },
-        { "q": 9,  "r": 12, "infra": ["ROAD"] },
-        { "q": 10, "r": 12, "infra": ["ROAD"] },
-        { "q": 11, "r": 12, "infra": ["ROAD"] },
-        { "q": 12, "r": 12, "infra": ["ROAD"] },
-        { "q": 13, "r": 12, "terrain": "URBAN", "infra": ["TOWN", "ROAD"],
-          "objective": { "vpPerDay": 5, "hidden": false, "ownerSideId": "blue" } },
-        { "q": 14, "r": 12, "infra": ["ROAD"] },
-        { "q": 15, "r": 12, "infra": ["ROAD"] },
-        { "q": 16, "r": 12, "infra": ["ROAD"] },
-        { "q": 17, "r": 12, "infra": ["ROAD"] },
-        { "q": 18, "r": 12, "infra": ["ROAD"] },
-        { "q": 19, "r": 12, "infra": ["ROAD"] },
-        { "q": 20, "r": 12, "infra": ["ROAD"] },
-        { "q": 21, "r": 12, "infra": ["ROAD"] },
-        { "q": 22, "r": 12, "infra": ["ROAD"] },
-        { "q": 23, "r": 12, "infra": ["ROAD"] },
-        { "q": 24, "r": 12, "infra": ["ROAD"] },
-        { "q": 25, "r": 12, "infra": ["ROAD"] },
-        { "q": 26, "r": 12, "infra": ["ROAD"] },
-
-        { "q": 16, "r": 10, "terrain": "WOODS" },
-        { "q": 17, "r": 10, "terrain": "WOODS" },
-        { "q": 17, "r": 11, "terrain": "WOODS" },
-        { "q": 18, "r": 11, "terrain": "WOODS" },
-        { "q": 9,  "r": 14, "terrain": "WOODS" },
-        { "q": 10, "r": 14, "terrain": "WOODS" },
-        { "q": 10, "r": 15, "terrain": "WOODS" },
-
-        { "q": 12, "r": 9,  "terrain": "HILLS" },
-        { "q": 13, "r": 9,  "terrain": "HILLS" },
-        { "q": 20, "r": 14, "terrain": "HILLS" },
-        { "q": 21, "r": 15, "terrain": "HILLS" },
-
-        { "q": 15, "r": 14, "terrain": "WATER" },
-        { "q": 15, "r": 13, "terrain": "WATER" },
-        { "q": 11, "r": 11, "terrain": "ROUGH" }
+        {
+          "q": 4,
+          "r": 12,
+          "infra": [
+            "DEPOT",
+            "ROAD"
+          ]
+        },
+        {
+          "q": 5,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 6,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 7,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 8,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 9,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 10,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 11,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 12,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 13,
+          "r": 12,
+          "terrain": "URBAN",
+          "infra": [
+            "TOWN",
+            "ROAD"
+          ],
+          "objective": {
+            "vpPerDay": 5,
+            "hidden": false,
+            "ownerSideId": "blue"
+          }
+        },
+        {
+          "q": 14,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 15,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 16,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 17,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 18,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 19,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 20,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 21,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 22,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 23,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 24,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 25,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 26,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 16,
+          "r": 10,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 17,
+          "r": 10,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 17,
+          "r": 11,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 18,
+          "r": 11,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 9,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 10,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 10,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 12,
+          "r": 9,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 13,
+          "r": 9,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 20,
+          "r": 14,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 21,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 15,
+          "r": 14,
+          "terrain": "WATER"
+        },
+        {
+          "q": 15,
+          "r": 13,
+          "terrain": "WATER"
+        },
+        {
+          "q": 11,
+          "r": 11,
+          "terrain": "ROUGH"
+        }
       ]
     }
   ],
-
   "sides": [
-    { "id": "blue", "name": "Federated Guard" },
-    { "id": "red", "name": "Combine Raiders" }
+    {
+      "id": "blue",
+      "name": "Federated Guard"
+    },
+    {
+      "id": "red",
+      "name": "Combine Raiders"
+    }
   ],
-
   "commandNodes": {
-    "blue": ["fob-keystone"],
-    "red": ["red-hq"]
+    "blue": [
+      "fob-keystone"
+    ],
+    "red": [
+      "red-hq"
+    ]
   },
-
   "facilities": [
     {
-      "id": "fob-keystone", "sideId": "blue", "name": "FOB Keystone",
-      "theaterId": "pellar", "q": 4, "r": 12,
-      "tags": ["DEPOT"], "supplyPoints": 40, "isCommandNode": true,
-      "sensorStation": { "passive": 6, "active": 12 }, "activeSweep": true
+      "id": "fob-keystone",
+      "sideId": "blue",
+      "name": "FOB Keystone",
+      "theaterId": "pellar",
+      "q": 4,
+      "r": 12,
+      "tags": [
+        "DEPOT"
+      ],
+      "supplyPoints": 40,
+      "isCommandNode": true,
+      "sensorStation": {
+        "passive": 6,
+        "active": 12
+      },
+      "activeSweep": true
     }
   ],
-
   "formations": [
     {
-      "id": "blue-recon", "sideId": "blue", "name": "Vixen Lance",
-      "theaterId": "pellar", "q": 9, "r": 9,
-      "omp": 4, "sigBase": 7, "sns": { "passive": 3, "active": 5 },
-      "emcon": "PASSIVE", "posture": "NONE", "rdy": 10,
+      "id": "blue-recon",
+      "sideId": "blue",
+      "name": "Vixen Lance",
+      "theaterId": "pellar",
+      "q": 9,
+      "r": 9,
+      "omp": 6,
+      "sigBase": 7,
+      "sns": {
+        "passive": 3,
+        "active": 5
+      },
+      "emcon": "PASSIVE",
+      "posture": "NONE",
+      "rdy": 10,
       "units": [
-        { "name": "Vixen 1", "model": "Stinger STG-3R", "class": "MECH", "tags": ["BEAGLE"],
-          "pilot": { "name": "Lt. Okafor", "gunnery": 3, "piloting": 4 } },
-        { "name": "Vixen 2", "model": "Wasp WSP-1A", "class": "MECH" }
+        {
+          "name": "Vixen 1",
+          "model": "Stinger STG-3R",
+          "class": "MECH",
+          "tags": [
+            "BEAGLE"
+          ],
+          "pilot": {
+            "name": "Lt. Okafor",
+            "gunnery": 3,
+            "piloting": 4
+          }
+        },
+        {
+          "name": "Vixen 2",
+          "model": "Wasp WSP-1A",
+          "class": "MECH"
+        }
       ]
     },
     {
-      "id": "blue-line", "sideId": "blue", "name": "Hammer Company",
-      "theaterId": "pellar", "q": 11, "r": 13,
-      "omp": 3, "sigBase": 6, "sns": { "passive": 2, "active": 4 },
-      "emcon": "PASSIVE", "posture": "DUG_IN", "rdy": 10,
+      "id": "blue-line",
+      "sideId": "blue",
+      "name": "Hammer Company",
+      "theaterId": "pellar",
+      "q": 11,
+      "r": 13,
+      "omp": 4,
+      "sigBase": 6,
+      "sns": {
+        "passive": 2,
+        "active": 4
+      },
+      "emcon": "PASSIVE",
+      "posture": "DUG_IN",
+      "rdy": 10,
       "units": [
-        { "name": "Hammer 1", "model": "Hunchback HBK-4G", "class": "MECH",
-          "pilot": { "name": "Cpt. Reyes", "gunnery": 3, "piloting": 4 } },
-        { "name": "Hammer 2", "model": "Enforcer ENF-4R", "class": "MECH" },
-        { "name": "Hammer 3", "model": "Manticore", "class": "VEHICLE" }
+        {
+          "name": "Hammer 1",
+          "model": "Hunchback HBK-4G",
+          "class": "MECH",
+          "pilot": {
+            "name": "Cpt. Reyes",
+            "gunnery": 3,
+            "piloting": 4
+          }
+        },
+        {
+          "name": "Hammer 2",
+          "model": "Enforcer ENF-4R",
+          "class": "MECH"
+        },
+        {
+          "name": "Hammer 3",
+          "model": "Manticore",
+          "class": "VEHICLE"
+        }
       ]
     },
     {
-      "id": "red-hq", "sideId": "red", "name": "Raider Command",
-      "theaterId": "pellar", "q": 27, "r": 12,
-      "omp": 3, "sigBase": 7, "sns": { "passive": 4, "active": 8 },
-      "emcon": "PASSIVE", "posture": "NONE", "rdy": 10,
+      "id": "red-hq",
+      "sideId": "red",
+      "name": "Raider Command",
+      "theaterId": "pellar",
+      "q": 27,
+      "r": 12,
+      "omp": 3,
+      "sigBase": 7,
+      "sns": {
+        "passive": 4,
+        "active": 8
+      },
+      "emcon": "PASSIVE",
+      "posture": "NONE",
+      "rdy": 10,
       "units": [
-        { "name": "Mobile HQ", "model": "Mobile HQ", "class": "VEHICLE", "tags": ["HQ"] },
-        { "name": "Escort", "model": "Panther PNT-9R", "class": "MECH" }
+        {
+          "name": "Mobile HQ",
+          "model": "Mobile HQ",
+          "class": "VEHICLE",
+          "tags": [
+            "HQ"
+          ]
+        },
+        {
+          "name": "Escort",
+          "model": "Panther PNT-9R",
+          "class": "MECH"
+        }
       ]
     },
     {
-      "id": "red-strike", "sideId": "red", "name": "Akuma Company",
-      "theaterId": "pellar", "q": 25, "r": 13,
-      "omp": 3, "sigBase": 6, "sns": { "passive": 2, "active": 4 },
-      "emcon": "PASSIVE", "posture": "NONE", "rdy": 10,
+      "id": "red-strike",
+      "sideId": "red",
+      "name": "Akuma Company",
+      "theaterId": "pellar",
+      "q": 25,
+      "r": 13,
+      "omp": 4,
+      "sigBase": 6,
+      "sns": {
+        "passive": 2,
+        "active": 4
+      },
+      "emcon": "PASSIVE",
+      "posture": "NONE",
+      "rdy": 10,
       "units": [
-        { "name": "Akuma 1", "model": "Dragon DRG-1N", "class": "MECH",
-          "pilot": { "name": "Tai-i Sato", "gunnery": 3, "piloting": 4 } },
-        { "name": "Akuma 2", "model": "Panther PNT-9R", "class": "MECH" },
-        { "name": "Akuma 3", "model": "Jenner JR7-D", "class": "MECH" }
+        {
+          "name": "Akuma 1",
+          "model": "Dragon DRG-1N",
+          "class": "MECH",
+          "pilot": {
+            "name": "Tai-i Sato",
+            "gunnery": 3,
+            "piloting": 4
+          }
+        },
+        {
+          "name": "Akuma 2",
+          "model": "Panther PNT-9R",
+          "class": "MECH"
+        },
+        {
+          "name": "Akuma 3",
+          "model": "Jenner JR7-D",
+          "class": "MECH"
+        }
       ]
     }
   ],
-
   "orders": [
     {
-      "id": "order-red-strike", "sideId": "red", "formationId": "red-strike",
-      "kind": "MOVE", "effectiveTick": 0,
-      "path": [ {"q":24,"r":12}, {"q":22,"r":12}, {"q":20,"r":12}, {"q":18,"r":12},
-                {"q":16,"r":12}, {"q":14,"r":12}, {"q":13,"r":12} ],
+      "id": "order-red-strike",
+      "sideId": "red",
+      "formationId": "red-strike",
+      "kind": "MOVE",
+      "effectiveTick": 0,
+      "path": [
+        {
+          "q": 24,
+          "r": 12
+        },
+        {
+          "q": 22,
+          "r": 12
+        },
+        {
+          "q": 20,
+          "r": 12
+        },
+        {
+          "q": 18,
+          "r": 12
+        },
+        {
+          "q": 16,
+          "r": 12
+        },
+        {
+          "q": 14,
+          "r": 12
+        },
+        {
+          "q": 13,
+          "r": 12
+        }
+      ],
       "conditionals": [
-        { "trigger": { "when": "CONTACT_WITHIN", "param": 4 },
-          "then": { "kind": "FORCED_MARCH",
-                    "path": [ {"q":16,"r":12}, {"q":14,"r":12}, {"q":13,"r":12} ] } }
+        {
+          "trigger": {
+            "when": "CONTACT_WITHIN",
+            "param": 4
+          },
+          "then": {
+            "kind": "FORCED_MARCH",
+            "path": [
+              {
+                "q": 16,
+                "r": 12
+              },
+              {
+                "q": 14,
+                "r": 12
+              },
+              {
+                "q": 13,
+                "r": 12
+              }
+            ]
+          }
+        }
       ]
     }
   ]
