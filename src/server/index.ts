@@ -17,6 +17,7 @@ import { Campaign, replay } from '../core/truth.js';
 import { JsonlEventStore, MemoryEventStore } from '../core/log.js';
 import { project } from '../projection/project.js';
 import { commandNodesOf } from '../engine/net.js';
+import { supplyEnvelope } from '../engine/logistics.js';
 import { loadCampaignFixture, buildFormationEntities } from '../demo.js';
 import { buildMul } from '../handoff/mul.js';
 import { hashPick } from '../core/rng.js';
@@ -90,6 +91,9 @@ function gmState() {
     netNodesBySide: Object.fromEntries(sides.map(s => [s,
       commandNodesOf(campaign.truth, s).filter(n => !n.theaterWide)
         .map(n => ({ q: n.pos.q, r: n.pos.r, theaterId: n.pos.theaterId, radius: n.radius }))])),
+    supplyHexesBySide: Object.fromEntries(sides.map(s => [s,
+      Object.keys(campaign.truth.theaters).flatMap(th => supplyEnvelope(campaign.truth, s, th)
+        .map(k => { const [q, r] = k.split(',').map(Number); return { q, r, theaterId: th }; }))])),
   };
 }
 

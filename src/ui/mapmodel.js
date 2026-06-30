@@ -105,7 +105,11 @@
       if (!f.pos || wp.length === 0) return;
       paths.push({ points: routeThrough(f.pos, wp), color: '#7ad07a' });
     });
-    const zones = netZones(v.netNodes, th.id, '#5aa9ff'); // own command-net coverage
+    const zones = [];
+    // supply envelope (a filled region) drawn first, under the outline zones
+    const supply = (v.supplyHexes || []).filter(h => h.theaterId === th.id).map(h => ({ q: h.q, r: h.r }));
+    if (supply.length) zones.push({ kind: 'supply', hexes: supply, color: '#caa14a', fillOpacity: 0.08 });
+    zones.push(...netZones(v.netNodes, th.id, '#5aa9ff')); // own command-net coverage
     // sensor-station detection coverage (fixed early-warning radar)
     const sensorNodes = (v.ownFacilities || [])
       .filter(fc => fc.sensor && fc.pos && fc.pos.theaterId === th.id)
@@ -204,8 +208,13 @@
       paths.push({ points: routeThrough(f.pos, wp),
                    color: f.sideId === 'blue' ? '#7ad0d8' : '#d88a7a' });
     });
-    // command-net coverage per side (GM sees all)
+    // coverage per side (GM sees all): supply fills first, then net outlines
     const zones = [];
+    const supplyBy = (opts.supplyHexesBySide) || {};
+    for (const sid of Object.keys(supplyBy)) {
+      const hx = supplyBy[sid].filter(h => h.theaterId === th.id).map(h => ({ q: h.q, r: h.r }));
+      if (hx.length) zones.push({ kind: 'supply', hexes: hx, color: sid === 'blue' ? '#5a8fd0' : '#d09a5a', fillOpacity: 0.05 });
+    }
     const byside = (opts.netNodesBySide) || {};
     for (const sid of Object.keys(byside)) {
       zones.push(...netZones(byside[sid], th.id, sid === 'blue' ? '#5aa9ff' : '#ff8a6b'));

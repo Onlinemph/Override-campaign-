@@ -12,6 +12,7 @@ import type { GroundPos, Id, Tick, TruthState } from '../core/types.js';
 import { DEEPSKY, LADDER_NAMES } from '../rules.js';
 import { isNight } from '../engine/clock.js';
 import { commandNodesOf } from '../engine/net.js';
+import { supplyEnvelope } from '../engine/logistics.js';
 import { isFlight, jokerBingo, minFp } from '../engine/air.js';
 import { burnDaysRemaining, transitDays } from '../engine/space.js';
 import type { ContactView, OwnFacilityView, OwnFormationView, OwnSatelliteView,
@@ -170,6 +171,11 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
     .filter(n => !n.theaterWide)
     .map(n => ({ q: n.pos.q, r: n.pos.r, theaterId: n.pos.theaterId, radius: n.radius }));
   const netTheaterWide = commandNodesOf(truth, sideId).some(n => n.theaterWide);
+  // own supply envelope per theater (where a stocked depot/convoy can reach)
+  const supplyHexes = Object.keys(truth.theaters).flatMap(thId =>
+    supplyEnvelope(truth, sideId, thId).map(k => {
+      const [q, r] = k.split(',').map(Number); return { q, r, theaterId: thId };
+    }));
   // grid extent is public geography (paper maps exist); terrain stays scouted-only
   const theaters: TheaterBoundsView[] = Object.values(truth.theaters).map(t => {
     let cols = 0, rows = 0;
@@ -199,6 +205,7 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
     ownSatellites,
     netNodes,
     netTheaterWide,
+    supplyHexes,
     theaters,
   };
 }

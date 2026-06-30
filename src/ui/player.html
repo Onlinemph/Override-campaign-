@@ -15,16 +15,18 @@
   <div class="col" style="flex:1.7;min-width:480px">
     <div class="panel">
       <h2>Theater map <small>— your intelligence picture, not the territory</small>
-        <select id="theater-sel" onchange="curTheater=this.value;refresh()"
-          style="float:right;display:none"></select></h2>
+        <span style="float:right;font-weight:normal">
+          <label class="kv" title="Tint the ground your depots/convoys can supply"><input type="checkbox" id="supply-on" onchange="refresh()"> supply</label>
+          <select id="theater-sel" onchange="curTheater=this.value;refresh()" style="display:none"></select></span></h2>
       <div class="mapwrap"><svg id="map" class="map"></svg></div>
       <div class="maphint">scroll to zoom · drag to pan · double-click to reset · click a hex to plot</div>
       <div class="legend">
         <b>◯</b> your formations (dashed ring = EMCON DARK) · <b>▢</b> facilities ·
         <b>◇</b> contacts <b>G/S/C/L</b> (dimmer = staler; dashed circle = ±1) ·
         <b>★</b> objective · <b>⌁</b> satellite track ·
-        <b style="color:#5aa9ff">⬡ blue area</b> = command-net coverage ·
-        <b style="color:#4fd0b8">⬡ teal area</b> = sensor-station range · hover a hex for distance from your selected unit
+        <b style="color:#5aa9ff">⬡ blue area</b> = command net ·
+        <b style="color:#4fd0b8">⬡ teal area</b> = sensor range ·
+        <b style="color:#caa14a">⬡ amber fill</b> = in-supply ground · hover a hex for distance from your selected unit
       </div>
     </div>
     <div class="panel" id="sys-panel" style="display:none">
@@ -187,6 +189,7 @@ async function refresh() {
 
   // the map
   const model = buildPlayerHexModel(v, curTheater);
+  if (model && !document.getElementById('supply-on').checked) model.zones = model.zones.filter(z => z.kind !== 'supply');
   if (model) {
     // ring the selected formation so you can see what you're commanding, plus the plotted hexes
     const selFid = document.getElementById('o-formation').value;

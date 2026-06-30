@@ -89,6 +89,44 @@ function reachableSource(s: TruthState, f: Formation): Source | null {
   return null;
 }
 
+/**
+ * The supply envelope for a side in a theater: every hex within line budget of a stocked
+ * source (roads 1 / off-road 2, routed around live enemy hexes). Same cost model as
+ * reachableSource, flooded outward from all sources — for the map overlay.
+ */
+export function supplyEnvelope(s: TruthState, sideId: Id, theaterId: Id): string[] {
+  const theater = s.theaters[theaterId];
+  if (!theater) return [];
+  const sources = sourcesFor(s, sideId, theaterId);
+  if (!sources.length) return [];
+  const enemy = new Set<string>();
+  for (const o of Object.values(s.formations)) {
+    if (o.destroyed || o.sideId === sideId || o.pos.kind !== 'ground') continue;
+    if ((o.pos as GroundPos).theaterId !== theaterId) continue;
+    enemy.add(hexKey(o.pos.q, o.pos.r));
+  }
+  const cost: Record<string, number> = {};
+  const open = new Set<string>();
+  for (const src of sources) { const k = hexKey(src.q, src.r); cost[k] = 0; open.add(k); }
+  while (open.size) {
+    let cur = ''; let best = Infinity;
+    for (const k of open) if (cost[k] < best) { best = cost[k]; cur = k; }
+    open.delete(cur);
+    if (best >= SUPPLY.SUPPLY_LINE_MAX_HEXES) continue;
+    const [cq, cr] = cur.split(',').map(Number);
+    for (const n of neighbors({ q: cq, r: cr })) {
+      const nk = hexKey(n.q, n.r);
+      const hex = theater.hexes[nk];
+      if (!hex || enemy.has(nk)) continue;
+      if (TERRAIN[hex.terrain].ompCost === null) continue;
+      const step = (hex.infra.includes('ROAD') || hex.infra.includes('RAIL')) ? 1 : 2;
+      const nc = best + step;
+      if (nc < (cost[nk] ?? Infinity)) { cost[nk] = nc; open.add(nk); }
+    }
+  }
+  return Object.keys(cost);
+}
+
 export function maintenancePass(s: TruthState, dt: number, emit: (e: GameEvent) => void): void {
   const pulses = dt / CLOCK.TICKS_PER_PULSE;
 

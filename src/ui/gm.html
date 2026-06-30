@@ -90,8 +90,9 @@
   <div class="col" style="flex:1.8;min-width:520px">
     <div class="panel">
       <h2>Truth map <small id="map-sub"></small>
-        <select id="theater-sel" onchange="curTheater=this.value;refresh()"
-          style="float:right;display:none"></select></h2>
+        <span style="float:right;font-weight:normal">
+          <label class="kv" title="Tint each side's supplied ground"><input type="checkbox" id="supply-on" onchange="refresh()"> supply</label>
+          <select id="theater-sel" onchange="curTheater=this.value;refresh()" style="display:none"></select></span></h2>
       <div class="mapwrap"><svg id="map" class="map"></svg></div>
       <div class="maphint">scroll to zoom · drag to pan · double-click to reset · click a hex to inspect</div>
       <div class="legend"><b>◯</b> formations · <b>▢</b> facilities · <b>◇</b> belief
@@ -221,7 +222,8 @@ async function refresh() {
   const theaterId = curTheater;
   document.getElementById('map-sub').textContent =
     `— ${t.theaters[theaterId]?.name ?? ''}${belief ? ' · belief: ' + belief : ''}`;
-  const model = buildTruthHexModel(t, theaterId, { beliefSide: belief, netNodesBySide: s.netNodesBySide });
+  const model = buildTruthHexModel(t, theaterId, { beliefSide: belief, netNodesBySide: s.netNodesBySide, supplyHexesBySide: s.supplyHexesBySide });
+  if (!document.getElementById('supply-on').checked) model.zones = model.zones.filter(z => z.kind !== 'supply');
   if (model) renderHexMap(document.getElementById('map'), model,
     { onHexClick: inspectHex, showCoords: true });
   const sysModel = buildTruthSysModel(t);

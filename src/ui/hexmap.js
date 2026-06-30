@@ -161,9 +161,17 @@
     });
     svg.appendChild(gInfra);
 
-    // ── command-net coverage zones (drawn under paths & markers) ──
+    // ── coverage zones (net/sensor = dashed hexagon outline; supply = hex fill) ──
     const gZones = el('g', { 'pointer-events': 'none' });
     (model.zones || []).forEach(z => {
+      if (z.hexes) {                              // irregular region: tint each hex
+        z.hexes.forEach(h => {
+          const c = center(h.q, h.r, s);
+          gZones.appendChild(el('polygon', { points: hexPoints(c.x, c.y, s - 0.6),
+            fill: z.color, 'fill-opacity': z.fillOpacity || 0.07, stroke: 'none' }));
+        });
+        return;
+      }
       const pts = z.corners.map(c => { const p = center(c.q, c.r, s); return p.x + ',' + p.y; }).join(' ');
       gZones.appendChild(el('polygon', { points: pts, fill: z.color, 'fill-opacity': 0.05,
         stroke: z.color, 'stroke-width': 1.2, 'stroke-dasharray': '7 6', opacity: 0.5 }));
