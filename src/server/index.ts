@@ -207,7 +207,7 @@ const server = createServer(async (req, res) => {
       const body = await readBody(req);
       const events = body.untilEvent
         ? campaign.runUntilEvent(body.maxTicks ?? 240)
-        : campaign.step();
+        : campaign.step(body.fine ? 'CONTACT' : undefined);
       broadcast();
       return json(res, 200, { tick: campaign.truth.tick, events: events.length });
     }

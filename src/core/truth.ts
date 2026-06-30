@@ -64,9 +64,9 @@ export class Campaign {
     return { campaign: Campaign.create(initial(), store), resumed: false };
   }
 
-  /** One engine step. Returns the emitted events. */
-  step(): GameEvent[] {
-    const r = step(this.truth);
+  /** One engine step. `forceMode` overrides the auto clock tier (e.g. 'CONTACT' = 6 min). */
+  step(forceMode?: import('../core/types.js').ClockMode): GameEvent[] {
+    const r = step(this.truth, forceMode);
     for (const e of r.events) this.store.append(e);
     this.truth = r.truth;
     return r.events;

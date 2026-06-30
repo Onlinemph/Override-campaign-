@@ -10,7 +10,8 @@
   <small style="float:right"><a href="/audit">audit viewer →</a></small></h1>
 
 <div class="bar">
-  <button onclick="advance(false)" title="Advance one clock unit (6 min / 1 h / 6 h by mode)">Step</button>
+  <button onclick="advance(false, null, true)" title="Advance one 6-minute contact turn">Step 6 min</button>
+  <button onclick="advance(false)" title="Advance one clock unit at the current tier (6 min / 1 h / 6 h)">Step (auto)</button>
   <button onclick="advance(true, 10)" title="Advance up to 1 hour, stopping early on any event">Run ≤1h</button>
   <button onclick="advance(true, 60)" title="Advance up to 6 hours, stopping early on any event">Run ≤6h</button>
   <button onclick="advance(true)" title="Fast-forward to the next event (up to a full day)">Run to event</button>
@@ -344,7 +345,7 @@ async function post(path, body) {
   return (await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body || {}) })).json();
 }
-async function advance(untilEvent, maxTicks) { await post('/api/gm/advance', { untilEvent, maxTicks }); refresh(); }
+async function advance(untilEvent, maxTicks, fine) { await post('/api/gm/advance', { untilEvent, maxTicks, fine: !!fine }); refresh(); }
 async function undoStep() {
   const r = await post('/api/gm/undo', {});
   notify(r.ok ? `↶ rewound to ${clock(r.tick).replace('D', 'Day ')}` : `nothing to undo`, r.ok ? '' : 'bad');
@@ -527,7 +528,7 @@ loadCampaignList();
 document.addEventListener('keydown', e => {
   const t = e.target.tagName;
   if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;
-  if (e.code === 'Space') { e.preventDefault(); advance(false); }
+  if (e.code === 'Space') { e.preventDefault(); advance(false, null, true); } // 6-min step
 });
 </script>
 </body>

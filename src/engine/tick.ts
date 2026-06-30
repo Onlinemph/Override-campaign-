@@ -5,7 +5,7 @@
  * emits events (each applied immediately so later subsystems see fresh state),
  * and returns the events plus whether anything "interesting" happened (compression).
  */
-import type { TruthState } from '../core/types.js';
+import type { ClockMode, TruthState } from '../core/types.js';
 import { applyEvent, isInterestingEvent, type GameEvent } from '../core/events.js';
 import { chooseClockMode, ticksFor } from './clock.js';
 import { movementPass } from './movement.js';
@@ -52,7 +52,7 @@ function applyDueOrders(s: TruthState, emit: (e: GameEvent) => void): void {
   }
 }
 
-export function step(truth: TruthState): StepResult {
+export function step(truth: TruthState, forceMode?: ClockMode): StepResult {
   // Frozen on a pending engagement (spec §3.1): the campaign does not advance until the
   // GM exports the handoff and ingests a result. step() is a no-op while paused.
   // Likewise once the campaign has ended (core §12.2).
@@ -64,7 +64,7 @@ export function step(truth: TruthState): StepResult {
   const events: GameEvent[] = [];
   const emit = (e: GameEvent) => { events.push(e); applyEvent(work, e); };
 
-  const mode = chooseClockMode(work);
+  const mode = forceMode ?? chooseClockMode(work);
   const dt = ticksFor(mode);
   emit({ type: 'STEP_BEGAN', tick: work.tick, mode, dt });
 
