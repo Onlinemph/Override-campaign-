@@ -19,7 +19,9 @@
 </div>
 <div class="cols">
   <div class="col" style="flex:1.8;min-width:520px">
-    <div class="panel"><h2>The truth, then</h2><svg id="map" class="map"></svg></div>
+    <div class="panel"><h2>The truth, then
+      <select id="theater-sel" onchange="curTheater=this.value;seek(+document.getElementById('slider').value)"
+        style="float:right;display:none"></select></h2><svg id="map" class="map"></svg></div>
     <div class="panel" id="sys-panel" style="display:none">
       <h2>The sky, then</h2><svg id="sysmap" class="map"></svg></div>
   </div>
@@ -33,7 +35,7 @@
 <script src="/ui/mapmodel.js"></script>
 <script src="/ui/format.js"></script>
 <script>
-let max = 0, timer = null;
+let max = 0, timer = null, curTheater = null;
 
 async function seek(n) {
   const s = await (await fetch('/api/gm/audit?index=' + n)).json();
@@ -47,7 +49,16 @@ async function seek(n) {
   document.getElementById('when').textContent =
     `${Fmt.clock(t.tick).replace('D', 'Day ')} · ${t.clockMode || ''}`;
 
-  const theaterId = Object.keys(t.theaters)[0];
+  const theaterIds = Object.keys(t.theaters);
+  const tsel = document.getElementById('theater-sel');
+  if (theaterIds.length > 1) {
+    if (tsel.options.length !== theaterIds.length)
+      tsel.innerHTML = theaterIds.map(id => `<option value="${id}">${t.theaters[id].name}</option>`).join('');
+    tsel.style.display = '';
+  }
+  if (!curTheater || !t.theaters[curTheater]) curTheater = theaterIds[0];
+  tsel.value = curTheater;
+  const theaterId = curTheater;
   const model = buildTruthHexModel(t, theaterId, {});
   if (model) renderHexMap(document.getElementById('map'), model, { showCoords: true });
   const sysModel = buildTruthSysModel(t);

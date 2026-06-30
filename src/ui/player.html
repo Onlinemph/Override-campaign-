@@ -10,7 +10,9 @@
 <div class="cols">
   <div class="col" style="flex:1.7;min-width:480px">
     <div class="panel">
-      <h2>Theater map <small>— your intelligence picture, not the territory</small></h2>
+      <h2>Theater map <small>— your intelligence picture, not the territory</small>
+        <select id="theater-sel" onchange="curTheater=this.value;refresh()"
+          style="float:right;display:none"></select></h2>
       <div class="mapwrap"><svg id="map" class="map"></svg></div>
       <div class="maphint">scroll to zoom · drag to pan · double-click to reset · click a hex to plot</div>
       <div class="legend">
@@ -114,6 +116,7 @@ const ago = Fmt.ago;
 const clock = tick => tick == null ? '—' : Fmt.clock(tick).replace('D', 'Day ');
 
 let lastView = null;
+let curTheater = null;
 async function refresh() {
   const v = await (await fetch(`/api/side/${sideId}/view?${q}`)).json();
   if (v.error) { document.getElementById('title').textContent = 'OVERRIDE — ' + v.error; return; }
@@ -124,8 +127,18 @@ async function refresh() {
     (v.ended ? `  ·  ${v.ended.winnerSideId === sideId ? '★ VICTORY' :
       v.ended.winnerSideId ? 'DEFEAT' : 'DRAW'} (${v.ended.reason})` : '');
 
+  // theater switcher (only meaningful with more than one map)
+  const tsel = document.getElementById('theater-sel');
+  if (v.theaters.length > 1) {
+    if (tsel.options.length !== v.theaters.length)
+      tsel.innerHTML = v.theaters.map(th => `<option value="${th.id}">${th.name}</option>`).join('');
+    tsel.style.display = '';
+  }
+  if (!curTheater || !v.theaters.some(th => th.id === curTheater)) curTheater = v.theaters[0] && v.theaters[0].id;
+  tsel.value = curTheater;
+
   // the map
-  const model = buildPlayerHexModel(v, v.theaters[0] && v.theaters[0].id);
+  const model = buildPlayerHexModel(v, curTheater);
   if (model) {
     // ring the selected formation so you can see what you're commanding, plus the plotted hexes
     const selFid = document.getElementById('o-formation').value;

@@ -89,7 +89,9 @@
 <div class="cols">
   <div class="col" style="flex:1.8;min-width:520px">
     <div class="panel">
-      <h2>Truth map <small id="map-sub"></small></h2>
+      <h2>Truth map <small id="map-sub"></small>
+        <select id="theater-sel" onchange="curTheater=this.value;refresh()"
+          style="float:right;display:none"></select></h2>
       <div class="mapwrap"><svg id="map" class="map"></svg></div>
       <div class="maphint">scroll to zoom · drag to pan · double-click to reset · click a hex to inspect</div>
       <div class="legend"><b>◯</b> formations · <b>▢</b> facilities · <b>◇</b> belief
@@ -163,6 +165,7 @@
 <script src="/ui/panzoom.js"></script>
 <script>
 let lastState = null;
+let curTheater = null;
 attachPanZoom(document.getElementById('map'));
 attachPanZoom(document.getElementById('sysmap'));
 
@@ -206,7 +209,16 @@ async function refresh() {
 
   // maps
   const belief = document.getElementById('belief').value || undefined;
-  const theaterId = Object.keys(t.theaters)[0];
+  const theaterIds = Object.keys(t.theaters);
+  const tsel = document.getElementById('theater-sel');
+  if (theaterIds.length > 1) {
+    if (tsel.options.length !== theaterIds.length)
+      tsel.innerHTML = theaterIds.map(id => `<option value="${id}">${esc(t.theaters[id].name)}</option>`).join('');
+    tsel.style.display = '';
+  }
+  if (!curTheater || !t.theaters[curTheater]) curTheater = theaterIds[0];
+  tsel.value = curTheater;
+  const theaterId = curTheater;
   document.getElementById('map-sub').textContent =
     `— ${t.theaters[theaterId]?.name ?? ''}${belief ? ' · belief: ' + belief : ''}`;
   const model = buildTruthHexModel(t, theaterId, { beliefSide: belief, netNodesBySide: s.netNodesBySide });
@@ -338,12 +350,12 @@ function notify(text, kind) {
 function inspectHex(q, r) {
   if (!lastState) return;
   const t = lastState.truth;
-  const theaterId = Object.keys(t.theaters)[0];
+  const theaterId = curTheater || Object.keys(t.theaters)[0];
   const hex = t.theaters[theaterId].hexes[q + ',' + r];
   const here = Object.values(t.formations).filter(f =>
-    f.pos.kind === 'ground' && f.pos.q === q && f.pos.r === r);
+    f.pos.kind === 'ground' && f.pos.theaterId === theaterId && f.pos.q === q && f.pos.r === r);
   const fac = Object.values(t.facilities).filter(f =>
-    f.pos.kind === 'ground' && f.pos.q === q && f.pos.r === r);
+    f.pos.kind === 'ground' && f.pos.theaterId === theaterId && f.pos.q === q && f.pos.r === r);
   const terrain = hex ? hex.terrain.toLowerCase() : 'unknown';
   const infra = hex && hex.infra.length ? `, ${hex.infra.join(', ').toLowerCase()}` : '';
   const obj = hex && hex.objective
