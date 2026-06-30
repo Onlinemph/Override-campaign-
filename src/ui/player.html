@@ -6,7 +6,11 @@
 <link rel="stylesheet" href="/ui/style.css">
 </head>
 <body>
-<h1 id="title">OVERRIDE</h1>
+<h1 id="title">OVERRIDE
+  <small style="float:right;font-weight:normal">
+    <label title="Sound + desktop alert on new intel"><input type="checkbox" id="alerts-on" onchange="toggleAlerts()"> 🔔 alerts</label>
+  </small></h1>
+<div id="notify" style="display:none;background:#1d3a2a;border:1px solid var(--good);border-radius:6px;padding:6px 12px;margin-bottom:10px;color:var(--good)"></div>
 <div class="cols">
   <div class="col" style="flex:1.7;min-width:480px">
     <div class="panel">
@@ -117,9 +121,53 @@ const clock = tick => tick == null ? '—' : Fmt.clock(tick).replace('D', 'Day '
 
 let lastView = null;
 let curTheater = null;
+let prevReportCount = null, prevContactCount = 0, unread = 0;
+const baseTitle = document.title;
+
+// restore the tab title once the player looks back at the window
+window.addEventListener('focus', () => { unread = 0; document.title = baseTitle; });
+
+function toggleAlerts() {
+  if (document.getElementById('alerts-on').checked && 'Notification' in window
+      && Notification.permission === 'default') Notification.requestPermission();
+}
+function beep() {
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.frequency.value = 880; g.gain.value = 0.06;
+    o.start(); o.stop(ac.currentTime + 0.12);
+  } catch (e) { /* audio needs a prior user gesture; ignore */ }
+}
+function notifyIntel(nReports, nContacts) {
+  const bits = [];
+  if (nReports > 0) bits.push(`${nReports} new report${nReports === 1 ? '' : 's'}`);
+  if (nContacts > 0) bits.push(`${nContacts} new contact${nContacts === 1 ? '' : 's'}`);
+  const msg = '🔔 ' + bits.join(' · ');
+  const el = document.getElementById('notify');
+  el.textContent = msg; el.style.display = '';
+  clearTimeout(notifyIntel._t);
+  notifyIntel._t = setTimeout(() => { el.style.display = 'none'; }, 6000);
+  // tab title badge while the player is away
+  if (!document.hasFocus()) { unread += nReports + nContacts; document.title = `(${unread}) ${baseTitle}`; }
+  if (document.getElementById('alerts-on').checked) {
+    beep();
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try { new Notification('OVERRIDE — ' + sideId.toUpperCase(), { body: bits.join(' · ') }); } catch (e) {}
+    }
+  }
+}
 async function refresh() {
   const v = await (await fetch(`/api/side/${sideId}/view?${q}`)).json();
   if (v.error) { document.getElementById('title').textContent = 'OVERRIDE — ' + v.error; return; }
+  // new-intel notification (reports accumulate; contacts may rise)
+  const rc = v.reports.length, cc = v.contacts.length;
+  if (prevReportCount !== null) {
+    const nr = rc - prevReportCount, ncon = cc - prevContactCount;
+    if (nr > 0 || ncon > 0) notifyIntel(nr, ncon);
+  }
+  prevReportCount = rc; prevContactCount = cc;
   lastView = v;
   document.getElementById('title').textContent =
     `OVERRIDE — ${sideId.toUpperCase()} · ${clock(v.now)} · ${v.clockMode} · ${v.isNight ? 'NIGHT' : 'DAY'} · ` +
