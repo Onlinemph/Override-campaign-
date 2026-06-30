@@ -27,19 +27,28 @@ function mkReport(id: string, source: string, generatedTick = 5): ContactReport 
 }
 
 describe('B8 — command nets', () => {
-  it('within 18 hexes of a friendly command node ⇒ on-net (immediate first assignment)', () => {
+  it('within 12 hexes of a friendly command node ⇒ on-net (immediate first assignment)', () => {
     const truth = baseTruth();
     withHq(truth);
-    const f = addMechFormation(truth, { id: 'f1', sideId: 'blue', pos: gp(18, 0) });
+    const f = addMechFormation(truth, { id: 'f1', sideId: 'blue', pos: gp(12, 0) });
     runNet(truth);
     expect(truth.formations['f1'].onNet).toBe(true);
     expect(isFormationOnNet(truth, f)).toBe(true);
   });
 
-  it('beyond 18 hexes ⇒ off-net; returning into radius of the SAME live node is instant', () => {
+  it('config.netGroundRadius overrides the default reach', () => {
+    const truth = baseTruth();
+    truth.config.netGroundRadius = 18;
+    withHq(truth);
+    const f = addMechFormation(truth, { id: 'f1', sideId: 'blue', pos: gp(15, 0) });
+    runNet(truth);
+    expect(truth.formations['f1'].onNet).toBe(true); // 15 ≤ 18, on-net only with the override
+  });
+
+  it('beyond 12 hexes ⇒ off-net; returning into radius of the SAME live node is instant', () => {
     const truth = baseTruth();
     withHq(truth);
-    const f = addMechFormation(truth, { id: 'f1', sideId: 'blue', pos: gp(19, 0) });
+    const f = addMechFormation(truth, { id: 'f1', sideId: 'blue', pos: gp(13, 0) });
     runNet(truth);
     expect(truth.formations['f1'].onNet).toBe(false);
 
@@ -47,7 +56,7 @@ describe('B8 — command nets', () => {
     runNet(truth);
     expect(truth.formations['f1'].onNet).toBe(true);
 
-    f.pos = gp(25, 0);
+    f.pos = gp(20, 0);
     runNet(truth);
     expect(truth.formations['f1'].onNet).toBe(false);
 

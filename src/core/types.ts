@@ -334,6 +334,10 @@ export interface CampaignConfig {
   // at endTick the campaign ends and the highest VP wins (ties → draw).
   vpThreshold?: number;
   endTick?: Tick;
+  // ext: per-campaign command-net reach (op-hexes). Defaults to NET.GROUND_NODE_RADIUS /
+  // NET.DROPSHIP_BASE_RADIUS when omitted.
+  netGroundRadius?: number;
+  netBaseRadius?: number;
 }
 
 export interface TruthState {

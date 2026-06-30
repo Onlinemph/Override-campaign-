@@ -91,19 +91,35 @@ export function movementPass(
     if (!isStrike && !MOVE_KINDS.has(order.kind)) continue;
 
     // STRIKE re-paths toward the live contact estimate; everything else follows its plot.
-    let path: GroundPos[];
-    let pathIndex: number;
+    const cur0 = f.pos as GroundPos;
+    let wps: GroundPos[];
     if (isStrike) {
       const target = strikeTargetHex(s, order);
-      const cur = f.pos as GroundPos;
-      if (!target || hexDistance(cur, target) === 0) continue; // arrived or blind: hold
-      path = hexLine(cur, target).slice(1).map(h => ({ ...cur, q: h.q, r: h.r }));
-      pathIndex = 0; // path rebuilt from current position each step
+      if (!target || hexDistance(cur0, target) === 0) continue; // arrived or blind: hold
+      wps = [target];
     } else {
       if (!order.path) continue;
-      path = order.path.filter((p): p is GroundPos => p.kind === 'ground');
-      pathIndex = f.pathIndex ?? 0;
+      wps = order.path.filter((p): p is GroundPos => p.kind === 'ground');
     }
+    let pathIndex = isStrike ? 0 : (f.pathIndex ?? 0);
+    // skip any leading waypoint we're already standing on
+    while (pathIndex < wps.length && hexDistance(cur0, wps[pathIndex]) === 0) pathIndex++;
+
+    // Interpolate the EXACT hexes to traverse — from the current position through the
+    // remaining waypoints — so the unit follows the drawn route line precisely (this is
+    // the same hexLine-through-waypoints the map overlay's routeThrough draws).
+    const hops: Array<{ q: number; r: number; wpIndex: number }> = [];
+    {
+      let cc: { q: number; r: number } = cur0;
+      for (let wi = pathIndex; wi < wps.length; wi++) {
+        const seg = hexLine(cc, wps[wi]);
+        for (let i = 1; i < seg.length; i++) {
+          hops.push({ q: seg[i].q, r: seg[i].r, wpIndex: i === seg.length - 1 ? wi : -1 });
+        }
+        cc = wps[wi];
+      }
+    }
+
     let progress = f.moveProgress ?? 0;
     const mult = speedMult(order.kind);
 
@@ -118,28 +134,22 @@ export function movementPass(
 
     let moved = false;
     let forcedPulses = 0;
+    let hi = 0;
 
-    while (pathIndex < path.length && avail > 1e-9) {
-      const waypoint = path[pathIndex];
+    while (hi < hops.length && avail > 1e-9) {
       const cur = f.pos as GroundPos;
-      if (hexDistance(cur, waypoint) === 0) { pathIndex++; continue; }
-      // step ONE hex toward the waypoint, interpolating any gap (sparse authored paths
-      // or far-apart clicked waypoints) so movement is never a teleport between waypoints
-      const hop = hexLine(cur, waypoint)[1];
-      const next: GroundPos = { ...cur, q: hop.q, r: hop.r };
+      const next: GroundPos = { ...cur, q: hops[hi].q, r: hops[hi].r };
 
       const hex = getHex(s, next);
       if (!hex) break;
       const onRoad = hex.infra.includes('ROAD') || hex.infra.includes('RAIL');
 
+      const c = hexEntryCost(s, f, hex);
+      if (c === null) break; // impassable: order stalls, GM sees the stuck counter
       let hexCost: number; // in the unit of `avail`
       if (contactScale) {
-        const c = hexEntryCost(s, f, hex);
-        if (c === null) break; // impassable: order stalls, GM sees the stuck counter
         hexCost = c;
       } else {
-        const c = hexEntryCost(s, f, hex);
-        if (c === null) break;
         const rate = f.omp * (onRoad ? MOVEMENT.ROAD_BONUS : 1) * mult; // hexes per pulse
         hexCost = 1 / rate; // pulses per hex
       }
@@ -155,7 +165,8 @@ export function movementPass(
         });
         moved = true;
         progress = 0;
-        if (hexDistance(next, waypoint) === 0) pathIndex++; // reached this waypoint
+        if (hops[hi].wpIndex >= 0) pathIndex = hops[hi].wpIndex + 1; // reached a waypoint
+        hi++;
       } else {
         progress += avail / hexCost;
         if (order.kind === 'FORCED_MARCH' && !contactScale) forcedPulses += avail;
@@ -185,7 +196,7 @@ export function movementPass(
 
     // STRIKE never self-completes here: arrival is resolved by the engagement pass
     // (battle if the enemy is present, completion-with-miss if the estimate was stale).
-    if (!isStrike && pathIndex >= path.length) {
+    if (!isStrike && pathIndex >= wps.length) {
       emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
     }
   }

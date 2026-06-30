@@ -15,7 +15,8 @@ interface FixtureJson {
   seed: string;
   config: { name: string; dawnTick: number; duskTick: number; weather: 'CLEAR' | 'RAIN' | 'STORM';
             airHexByTheater?: Record<string, { q: number; r: number }>;
-            vpThreshold?: number; endTick?: number };
+            vpThreshold?: number; endTick?: number;
+            netGroundRadius?: number; netBaseRadius?: number };
   theaters: Array<{ id: string; name: string; width: number; height: number;
                     defaultTerrain: string; overrides: HexOverride[] }>;
   sides: Array<{ id: string; name: string }>;

@@ -6,7 +6,8 @@
     "duskTick": 180,
     "weather": "CLEAR",
     "vpThreshold": 15,
-    "endTick": 720
+    "endTick": 720,
+    "netGroundRadius": 18
   },
 
   "theaters": [

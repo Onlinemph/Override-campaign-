@@ -135,8 +135,8 @@ export const MOVEMENT = {
 
 // ── Command nets (core §4.2) ────────────────────────────────────────────────
 export const NET = {
-  GROUND_NODE_RADIUS: 18,       // op-hexes a mobile command node nets (18 km hexes)
-  DROPSHIP_BASE_RADIUS: 30,     // grounded DropShip / fixed base
+  GROUND_NODE_RADIUS: 12,       // default op-hexes a mobile command node nets
+  DROPSHIP_BASE_RADIUS: 24,     // grounded DropShip / fixed base (per-campaign overridable)
   COMM_SAT_THEATER_WIDE: true,
   RENET_PULSES: 1,              // per formation, after losing its node (D-008.2)
   ECM_NET_CUT_RADIUS: 0,        // D-008.1: hostile ECM cuts net in its own op-hex

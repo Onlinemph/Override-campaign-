@@ -68,9 +68,11 @@ function buildScenario(): TruthState {
   const bn = addMechFormation(truth,
     { id: 'red-bn', sideId: 'red', pos: gp(24, 8), omp: 5, sigBase: 5, emcon: 'DARK' },
     12, {});
+  // contiguous lay-up approach (each hop adjacent) so interpolation can't route the
+  // column through the scout's hex at 13,7 and trip an unintended same-hex engagement
   truth.orders['b1'] = moveOrder('b1', bn, 'MOVE_CAUTIOUS', [
     gp(23, 8), gp(22, 8), gp(21, 8), gp(20, 8), gp(19, 8), gp(18, 8), gp(17, 8),
-    gp(16, 8), gp(15, 8), gp(14, 8), gp(14, 7), gp(13, 6), gp(12, 6),
+    gp(16, 8), gp(15, 8), gp(14, 8), gp(14, 7), gp(14, 6), gp(13, 6), gp(12, 6),
   ], 0);
   truth.orders['b2'] = moveOrder('b2', bn, 'HIDE', [], 55);
   return truth;

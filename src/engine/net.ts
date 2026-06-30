@@ -9,22 +9,20 @@ import { hexDistance } from '../hex/axial.js';
 export interface NetNode { id: Id; pos: GroundPos; radius: number; theaterWide: boolean }
 
 export function commandNodesOf(s: TruthState, sideId: Id): NetNode[] {
+  const groundR = s.config.netGroundRadius ?? NET.GROUND_NODE_RADIUS;
+  const baseR = s.config.netBaseRadius ?? NET.DROPSHIP_BASE_RADIUS;
   const out: NetNode[] = [];
   const side = s.sides[sideId];
   for (const nodeId of side.commandNodes) {
     const f = s.formations[nodeId];
     if (f && !f.destroyed && f.pos.kind === 'ground') {
       const isDropship = f.unitIds.some(uid => s.units[uid]?.class === 'DROPSHIP');
-      out.push({ id: f.id, pos: f.pos,
-                 radius: isDropship ? NET.DROPSHIP_BASE_RADIUS : NET.GROUND_NODE_RADIUS,
-                 theaterWide: false });
+      out.push({ id: f.id, pos: f.pos, radius: isDropship ? baseR : groundR, theaterWide: false });
     }
     const fac = s.facilities[nodeId];
     if (fac && fac.isCommandNode && fac.pos.kind === 'ground') {
       const big = fac.tags.includes('SPACEPORT') || fac.tags.includes('FORT');
-      out.push({ id: fac.id, pos: fac.pos,
-                 radius: big ? NET.DROPSHIP_BASE_RADIUS : NET.GROUND_NODE_RADIUS,
-                 theaterWide: false });
+      out.push({ id: fac.id, pos: fac.pos, radius: big ? baseR : groundR, theaterWide: false });
     }
   }
   // live comm satellite ⇒ theater-wide relay (core §8.6)
