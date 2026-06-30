@@ -185,7 +185,7 @@ async function refresh() {
 
   // panels
   document.getElementById('own').textContent =
-    v.ownFormations.map(Fmt.ownForce).join('\n\n') || '(none)';
+    v.ownFormations.map(f => Fmt.ownForce(f, v.now)).join('\n\n') || '(none)';
 
   document.getElementById('contacts').textContent = v.contacts.map(c => {
     const at = c.estPos.kind === 'air' ? `AIR ${c.estPos.gridQ},${c.estPos.gridR}`

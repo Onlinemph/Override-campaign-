@@ -245,9 +245,11 @@ async function refresh() {
   const flights = Object.values(t.formations).filter(f => f.air && !f.destroyed);
   document.getElementById('air-board').innerHTML = flights.length ? flights.map(f => {
     const fp = Math.min(...f.unitIds.map(u => t.units[u]?.fuel?.fp ?? Infinity));
-    const where = f.pos.kind === 'air'
+    const ready = f.air && f.air.turnaroundReadyTick != null && t.tick < f.air.turnaroundReadyTick
+      ? ` · rearming, ready ${clock(f.air.turnaroundReadyTick).replace('D', 'Day ')}` : '';
+    const where = (f.pos.kind === 'air'
       ? `✈ air ${f.pos.gridQ},${f.pos.gridR} ${f.pos.band} · ${f.air.phase} ${f.air.speed}`
-      : `▢ grounded · ${f.alertState || 'no alert'}`;
+      : `▢ grounded · ${f.alertState || 'no alert'}`) + ready;
     return `<div class="report">${f.name} <small>[${f.sideId}]</small> · ${where} · FP ${isFinite(fp) ? fp : '—'}` +
       (f.pos.kind === 'ground'
         ? ` <select onchange="setAlert('${f.id}', this.value)"><option value="">alert…</option>

@@ -52,8 +52,23 @@
   function rdyWord(r) { return r >= 8 ? 'fresh' : r >= 5 ? 'worn' : r >= 2 ? 'spent' : 'broken'; }
   function orderWords(kind) { return String(kind || '').toLowerCase().replace(/_/g, ' '); }
 
-  // a player's own formation as readable plain text (multi-line)
-  function ownForce(f) {
+  function hexDist(a, b) {
+    const dq = a.q - b.q, dr = a.r - b.r;
+    return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2;
+  }
+  // rough arrival tick for a ground move order: remaining hexes ÷ OMP hexes/hour
+  function moveEtaTick(f, now) {
+    if (now == null || !f.pos || !f.omp || !f.currentOrder || f.currentOrder.completed) return null;
+    const wp = f.currentOrder.path || [];
+    if (!wp.length) return null;
+    let hexes = 0, cc = { q: f.pos.q, r: f.pos.r };
+    for (const p of wp) { hexes += hexDist(cc, p); cc = p; }
+    if (hexes <= 0) return null;
+    return now + Math.ceil(hexes / f.omp * 10); // 10 ticks/hour
+  }
+
+  // a player's own formation as readable plain text (multi-line). `now` enables ETAs.
+  function ownForce(f, now) {
     const where = f.flight && f.flight.airPos
       ? `airborne ${f.flight.airPos.q},${f.flight.airPos.r} ${f.flight.airPos.band}`
       : f.vessel && f.vessel.spacePos
@@ -67,11 +82,16 @@
       emconWord(f.emcon) + (post ? `, ${post}` : ''),
       f.onNet ? 'linked to command net' : 'off-net — running on standing orders',
     ];
-    if (f.currentOrder) head.push(`ordered to ${orderWords(f.currentOrder.kind)}`);
+    if (f.currentOrder) {
+      const eta = moveEtaTick(f, now);
+      head.push(`ordered to ${orderWords(f.currentOrder.kind)}` + (eta != null ? `, ETA ~${clock(eta)}` : ''));
+    }
     let line = head.join(' · ');
     if (f.flight) {
       const fl = f.flight;
-      line += `\n   ✈ ${orderWords(fl.phase)} (${orderWords(fl.speed)}) · fuel ${fl.fpMin} ` +
+      const ready = fl.turnaroundReadyTick != null && now != null && now < fl.turnaroundReadyTick
+        ? ` · rearming, ready ${clock(fl.turnaroundReadyTick)}` : '';
+      line += `\n   ✈ ${orderWords(fl.phase)} (${orderWords(fl.speed)})${ready} · fuel ${fl.fpMin} ` +
         `(joker ${fl.jokerFp} / bingo ${fl.bingoFp}) · fatigue ${fl.fatigueMax}` +
         (f.alertState ? ` · alert ${f.alertState}` : '');
     } else if (f.vessel) {
