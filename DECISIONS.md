@@ -605,3 +605,8 @@ into a light MekHQ-style persistence layer. All numbers in `rules.ts` CAREER.
    carrier turnaround, mirroring the facility rule. Ground engagements still include
    co-located cargo in the battle roster on purpose — troops in a grounded DropShip under
    assault are part of that fight; the GM decides whether they sortie.
+7. **Editor authoring** (follow-up): a `carrier` checkbox (bays/crews/av fuel) and an
+   `embarked in` picker on the formation form — the picker lists only same-side, un-embarked
+   carriers, and embarking snaps the formation to the ship's hex. The validator gains carrier
+   checks (numeric ranges, unknown/self/cross-side/nested `mountedOn`, and bay overflow —
+   counted once per carrier, not per stowed formation).

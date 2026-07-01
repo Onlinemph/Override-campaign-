@@ -138,3 +138,53 @@ describe('loader — the newly-wired authoring fields actually load', () => {
     expect(() => loadCampaignFixture(join(__dirname, '../../demo/campaign.json'))).not.toThrow();
   });
 });
+
+describe('validator & loader — carriers and embarked formations', () => {
+  const withCarrier = () => {
+    const j = minimal();
+    j.formations.push(
+      { id: 'ds1', sideId: 'blue', theaterId: 't1', q: 2, r: 2, sigBase: 8,
+        carrier: { bays: 2, crews: 1, avFuelTons: 40 },
+        units: [{ name: 'Union', model: 'Union', class: 'DROPSHIP' }] },
+      { id: 'cargo', sideId: 'blue', theaterId: 't1', q: 2, r: 2, sigBase: 7,
+        mountedOn: 'ds1',
+        units: [{ name: 'Wasp', model: 'Wasp WSP-1A', class: 'MECH' }] });
+    return j;
+  };
+
+  it('a valid carrier + embarked formation passes and builds', () => {
+    const j = withCarrier();
+    expect(validateCampaign(j)).toEqual([]);
+    const t = buildCampaign(j);
+    expect(t.formations['ds1'].carrier).toMatchObject({ bays: 2, crews: 1, avFuelTons: 40 });
+    expect(t.formations['cargo'].mounted).toEqual({ carrierFormationId: 'ds1' });
+  });
+
+  it('catches carrier authoring mistakes with readable messages', () => {
+    const expectProblem = (mutate: (j: any) => void, needle: string) => {
+      const j = withCarrier();
+      mutate(j);
+      const problems = validateCampaign(j);
+      expect(problems.some(p => p.toLowerCase().includes(needle.toLowerCase())),
+        `expected a problem mentioning "${needle}", got: ${JSON.stringify(problems)}`).toBe(true);
+    };
+    expectProblem(j => { j.formations[2].mountedOn = 'nope'; }, 'unknown formation');
+    expectProblem(j => { j.formations[2].mountedOn = 'cargo'; }, 'itself');
+    expectProblem(j => { j.formations[2].mountedOn = 'blue-1'; }, 'not a carrier');
+    expectProblem(j => { j.formations[1].sideId = 'red'; }, 'other side');
+    expectProblem(j => { j.formations[1].carrier.bays = 0; }, 'bays');
+    expectProblem(j => { j.formations[1].carrier.avFuelTons = -1; }, 'avFuelTons');
+    // more embarked than bays
+    expectProblem(j => {
+      j.formations[1].carrier.bays = 1;
+      j.formations.push({ id: 'cargo2', sideId: 'blue', theaterId: 't1', q: 2, r: 2,
+        sigBase: 7, mountedOn: 'ds1', units: [{ name: 'B', model: 'X', class: 'MECH' }] });
+    }, 'only 1 bays');
+    // carriers don't nest
+    expectProblem(j => {
+      j.formations[2].carrier = { bays: 1, crews: 0, avFuelTons: 0 };
+      j.formations.push({ id: 'nested', sideId: 'blue', theaterId: 't1', q: 2, r: 2,
+        sigBase: 7, mountedOn: 'cargo', units: [{ name: 'C', model: 'X', class: 'MECH' }] });
+    }, 'nest');
+  });
+});

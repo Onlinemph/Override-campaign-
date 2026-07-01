@@ -392,7 +392,9 @@ function delSide(i) {
 function renderEntities() {
   $('formations').innerHTML = camp.formations.map(f =>
     `<div class="ent ${sel&&sel.id===f.id?'sel':''}" onclick="sel={kind:'formation',id:'${f.id}'};redraw()">
-      ${f.name} <small>[${f.sideId}] @${f.nodeId ? '⛁'+f.nodeId : (f.q??'?')+','+(f.r??'?')}</small></div>`).join('')
+      ${f.carrier ? '🚢 ' : ''}${f.name} <small>[${f.sideId}] @${f.nodeId ? '⛁'+f.nodeId : (f.q??'?')+','+(f.r??'?')}${
+        f.mountedOn ? ' · aboard ' + f.mountedOn : ''}${
+        f.carrier ? ' · ' + camp.formations.filter(x=>x.mountedOn===f.id).length + '/' + f.carrier.bays + ' bays' : ''}</small></div>`).join('')
     || '<small>(none — use the + Unit tool)</small>';
   $('facilities').innerHTML = camp.facilities.map(f =>
     `<div class="ent ${sel&&sel.id===f.id?'sel':''}" onclick="sel={kind:'facility',id:'${f.id}'};redraw()">
@@ -467,6 +469,16 @@ function formationForm(f) {
       ${SCHEMA.postures.map(x=>`<option${f.posture===x?' selected':''}>${x}</option>`).join('')}</select></div>
     <div class="row"><label>RDY</label><input class="s" value="${f.rdy}" oninput="camp.formations[${idx}].rdy=+this.value;validate()">
       <label><input type="checkbox" ${f._commandNode?'checked':''} onchange="camp.formations[${idx}]._commandNode=this.checked"> command node</label></div>
+    <div class="row"><label><input type="checkbox" ${f.carrier?'checked':''} onchange="toggleCarrier(${idx},this.checked)"> carrier</label>
+      ${f.carrier ? `bays <input class="s" value="${f.carrier.bays}" oninput="camp.formations[${idx}].carrier.bays=+this.value;validate()">
+        crews <input class="s" value="${f.carrier.crews}" oninput="camp.formations[${idx}].carrier.crews=+this.value;validate()">
+        av fuel t <input class="s" value="${f.carrier.avFuelTons}" oninput="camp.formations[${idx}].carrier.avFuelTons=+this.value;validate()">`
+      : '<span class="kv">DropShip: bays carry formations, crews rearm &amp; repair</span>'}</div>
+    ${carrierChoices(f).length || f.mountedOn ? `<div class="row"><label>embarked in</label>
+      <select onchange="setMountedOn(${idx},this.value)">
+        <option value="">(not embarked)</option>
+        ${carrierChoices(f).map(c=>`<option value="${c.id}"${f.mountedOn===c.id?' selected':''}>${c.name} (${c.id})</option>`).join('')}
+      </select><span class="kv">rides that carrier; can’t move on its own</span></div>` : ''}
     <h2 style="margin-top:6px">Units</h2>
     <div class="row"><input class="m" placeholder="🔎 add from library (e.g. Warhammer)…" oninput="libSearch(${idx},this.value)">
       <span class="kv">picks the real model &amp; class; stats fill in on load</span></div>
@@ -504,6 +516,33 @@ function libSearch(idx, q) {
 }
 function addLibUnit(idx, u) {
   camp.formations[idx].units.push({ name: u.name, model: u.name, class: u.class, tags: [] });
+  redraw(); validate();
+}
+
+// ── carrier authoring ──
+// same-side carriers this formation could embark in (never itself, never one that's embarked)
+function carrierChoices(f) {
+  return camp.formations.filter(c =>
+    c.id !== f.id && c.sideId === f.sideId && c.carrier && !c.mountedOn);
+}
+function toggleCarrier(idx, on) {
+  const f = camp.formations[idx];
+  if (on) { f.carrier = { bays: 2, crews: 1, avFuelTons: 40 }; delete f.mountedOn; }
+  else {
+    delete f.carrier;
+    camp.formations.forEach(x => { if (x.mountedOn === f.id) delete x.mountedOn; });
+  }
+  redraw(); validate();
+}
+function setMountedOn(idx, carrierId) {
+  const f = camp.formations[idx];
+  if (!carrierId) { delete f.mountedOn; redraw(); validate(); return; }
+  f.mountedOn = carrierId;
+  // stowed cargo sits where the ship sits: snap to the carrier's hex
+  const c = camp.formations.find(x => x.id === carrierId);
+  if (c && c.theaterId !== undefined && f.theaterId !== undefined) {
+    f.theaterId = c.theaterId; f.q = c.q; f.r = c.r;
+  }
   redraw(); validate();
 }
 

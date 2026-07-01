@@ -181,6 +181,42 @@ export function validateCampaign(j: any): string[] {
     });
   }
 
+  // ── carriers & embarked formations (second pass: mountedOn may point forward) ──
+  const byId = new Map<string, Json>((j.formations ?? []).map((f: Json) => [f.id, f]));
+  for (const f of j.formations ?? []) {
+    const at = `formation "${f.id ?? '?'}"`;
+    if (f.carrier !== undefined) {
+      if (!isObj(f.carrier)) err(`${at}.carrier: must be { bays, crews, avFuelTons }`);
+      else {
+        if (!isNum(f.carrier.bays) || f.carrier.bays < 1) err(`${at}.carrier.bays: must be ≥ 1`);
+        if (!isNum(f.carrier.crews) || f.carrier.crews < 0) err(`${at}.carrier.crews: must be ≥ 0`);
+        if (!isNum(f.carrier.avFuelTons) || f.carrier.avFuelTons < 0) err(`${at}.carrier.avFuelTons: must be ≥ 0`);
+      }
+    }
+    if (f.mountedOn !== undefined) {
+      const carrier = byId.get(f.mountedOn);
+      if (f.mountedOn === f.id) err(`${at}: cannot embark in itself`);
+      else if (!carrier) err(`${at}.mountedOn: unknown formation "${f.mountedOn}"`);
+      else {
+        if (!isObj(carrier.carrier)) err(`${at}.mountedOn: "${f.mountedOn}" is not a carrier (needs a carrier block)`);
+        if (carrier.sideId !== f.sideId) err(`${at}.mountedOn: "${f.mountedOn}" belongs to the other side`);
+        if (carrier.mountedOn !== undefined) err(`${at}.mountedOn: "${f.mountedOn}" is itself embarked — carriers don't nest`);
+      }
+    }
+  }
+  {
+    const embarkedBy = new Map<string, number>();
+    for (const f of j.formations ?? []) {
+      if (f.mountedOn !== undefined) embarkedBy.set(f.mountedOn, (embarkedBy.get(f.mountedOn) ?? 0) + 1);
+    }
+    for (const [carrierId, n] of embarkedBy) {
+      const bays = (byId.get(carrierId) as Json)?.carrier?.bays;
+      if (isNum(bays) && n > bays) {
+        err(`formation "${carrierId}": ${n} formations embarked but only ${bays} bays`);
+      }
+    }
+  }
+
   // ── command nodes ──
   for (const [sideId, ids] of Object.entries(j.commandNodes ?? {})) {
     knownSide(sideId, `commandNodes key`);

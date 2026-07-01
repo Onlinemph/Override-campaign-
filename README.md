@@ -100,7 +100,10 @@ homed on the carrier), **recover** a co-located flight back into a bay, and **re
 from the ship itself — a turnaround that ties up a carrier crew and draws aviation fuel from
 `avFuelTons`, no ground fuel farm required. A carrier board shows each DropShip's bays,
 free crews, fuel, and who's aboard; lose the carrier and its embarked units are stranded at
-its last position rather than vanishing with it.
+its last position rather than vanishing with it. Carriers are authorable in the **`/editor`**
+too — tick **carrier** on a formation (bays / crews / av fuel) and pick **embarked in** on
+another to start it stowed in a bay (it snaps to the ship's hex); live validation catches
+overloaded bays, cross-side loading, and nested carriers as you build.
 
 `npm run setup` builds the tracker; `npm run dev` (and `start.cmd`) build it on first launch
 if it's missing. Needs only Node — the build unpacks the library with a pure-Node fallback,
