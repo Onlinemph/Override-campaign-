@@ -564,3 +564,12 @@ units, closing the "units in storage" story.
    a GM "Carrier ops" panel with a live carrier board (bays, free crews, av fuel, who's
    aboard); authorable via `carrier` / `mountedOn` / `flight.homeCarrierId` in the campaign
    file. All actions go through the log — replay stays byte-exact.
+6. **The hull masks the cargo** (follow-up ruling). An embarked formation is *inside* the
+   carrier: it is not an independent sensor return (ground detection, same-hex auto-LOCK,
+   satellite passes, air detection all skip `mounted` targets), it contributes no sensor
+   picture of its own (skipped as a searcher — the carrier's sensors are the ship's), it
+   cannot be air-intercepted in a bay, and it is sustained by the ship's stores (in supply,
+   no SP draw, no starvation riding through transit). Launch is also gated on an in-progress
+   carrier turnaround, mirroring the facility rule. Ground engagements still include
+   co-located cargo in the battle roster on purpose — troops in a grounded DropShip under
+   assault are part of that fight; the GM decides whether they sortie.

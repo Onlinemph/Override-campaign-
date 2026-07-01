@@ -2,7 +2,10 @@
 import { describe, expect, it } from 'vitest';
 import { carrierPass, samePos } from '../../src/engine/carrier.js';
 import { movementPass } from '../../src/engine/movement.js';
+import { detectionPass } from '../../src/engine/detection.js';
+import { maintenancePass } from '../../src/engine/logistics.js';
 import { applyEvent, type GameEvent } from '../../src/core/events.js';
+import { CLOCK } from '../../src/rules.js';
 import { addMechFormation, baseTruth, gp, moveOrder } from '../helpers.js';
 import type { GroundPos, TruthState } from '../../src/core/types.js';
 
@@ -65,6 +68,32 @@ describe('carrier carry pass', () => {
     expect(evs.map(e => e.type)).toContain('MOUNT_CHANGED');
     expect(truth.formations['m1'].mounted).toBeUndefined();
     expect(posOf(truth, 'm1')).toEqual(gp(7, 9)); // left where the carrier fell
+  });
+
+  it('an embarked formation is not independently detectable — the carrier is the return', () => {
+    const truth = baseTruth('CARRY-SEED');
+    addMechFormation(truth, { id: 'ds1', sideId: 'blue', pos: gp(7, 9) });
+    const lance = addMechFormation(truth, { id: 'm1', sideId: 'blue', pos: gp(7, 9) });
+    lance.mounted = { carrierFormationId: 'ds1' };
+    // an enemy standing in the SAME hex: normally an instant mutual LOCK
+    addMechFormation(truth, { id: 'red1', sideId: 'red', pos: gp(7, 9) });
+
+    run(truth, detectionPass);
+    expect(truth.contacts['contact:red:m1']).toBeUndefined();  // cargo invisible in the bay
+    expect(truth.contacts['contact:blue:red1']).toBeDefined(); // the carrier still sees
+    expect(truth.contacts['contact:red:ds1']).toBeDefined();   // and is seen
+  });
+
+  it('an embarked formation is sustained by the ship — no supply draw, no starvation', () => {
+    const truth = baseTruth('CARRY-SEED');
+    addMechFormation(truth, { id: 'ds1', sideId: 'blue', pos: gp(7, 9) });
+    const lance = addMechFormation(truth, { id: 'm1', sideId: 'blue', pos: gp(7, 9) });
+    lance.mounted = { carrierFormationId: 'ds1' };
+    truth.tick = CLOCK.TICKS_PER_DAY; // a full day out, nowhere near a depot
+
+    run(truth, (s, emit) => maintenancePass(s, 1, emit));
+    expect(truth.formations['m1'].supply.inSupply).toBe(true);
+    expect(truth.formations['m1'].rdy).toBe(10); // no out-of-supply RDY bleed
   });
 
   it('samePos distinguishes kinds and coordinates', () => {

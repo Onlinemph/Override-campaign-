@@ -468,8 +468,9 @@ export function computeAirSig(s: TruthState, target: Formation, night: boolean,
  */
 export function airDetectionPass(s: TruthState, emit: (e: GameEvent) => void): void {
   const night = isNight(s, s.tick);
+  // stowed-in-a-bay flights (mounted) are inside the carrier's return, not their own
   const airborne = Object.values(s.formations).filter(
-    f => !f.destroyed && f.pos.kind === 'air');
+    f => !f.destroyed && f.pos.kind === 'air' && !f.mounted);
   if (airborne.length === 0) return;
 
   interface AirSearcher { id: Id; sideId: Id; name: string; airHex: { q: number; r: number };
@@ -486,7 +487,7 @@ export function airDetectionPass(s: TruthState, emit: (e: GameEvent) => void): v
       active: !!fac.activeSweep, alwaysOnNet: true });
   }
   for (const f of Object.values(s.formations)) {
-    if (f.destroyed || f.pos.kind !== 'ground') continue;
+    if (f.destroyed || f.pos.kind !== 'ground' || f.mounted) continue;
     const isHq = f.unitIds.some(uid => s.units[uid]?.tags.includes('HQ'));
     searchers.push({ id: f.id, sideId: f.sideId, name: f.name,
       airHex: theaterAirHex(s, f.pos.theaterId),
@@ -555,7 +556,7 @@ export function airEngagementCandidates(s: TruthState):
   if (s.pendingEngagementId) return [];
   const out: Array<{ pursuer: Formation; target: Formation; pos: AirPos }> = [];
   const airborne = Object.values(s.formations).filter(
-    f => !f.destroyed && f.pos.kind === 'air');
+    f => !f.destroyed && f.pos.kind === 'air' && !f.mounted); // bays are not merges
 
   for (const pursuer of airborne) {
     const order = activeAirOrder(s, pursuer);

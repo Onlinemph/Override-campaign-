@@ -535,6 +535,9 @@ export class Campaign {
       return { ok: false, reason: `${flight.name} is not aboard ${carrier.name}` };
     }
     if (!isFlight(this.truth, flight)) return { ok: false, reason: `${flight.name} cannot fly` };
+    if (flight.air?.turnaroundReadyTick != null && this.truth.tick < flight.air.turnaroundReadyTick) {
+      return { ok: false, reason: `turnaround in progress — ready at tick ${flight.air.turnaroundReadyTick}` };
+    }
 
     let hex: { q: number; r: number };
     let altLevel: number;

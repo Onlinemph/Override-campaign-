@@ -178,6 +178,13 @@ export function maintenancePass(s: TruthState, dt: number, emit: (e: GameEvent) 
     // daily supply tick — anchored on lastSuppliedTick so step size doesn't matter
     const sinceSupply = s.tick - f.supply.lastSuppliedTick;
     if (sinceSupply >= CLOCK.TICKS_PER_DAY) {
+      // embarked in a carrier's bay: sustained by the ship's stores — no ground line
+      // needed, no SP draw, and no starvation while riding through transit
+      if (f.mounted) {
+        emit({ type: 'SUPPLY_CHANGED', formationId: f.id, inSupply: true,
+               lastSuppliedTick: f.supply.lastSuppliedTick + CLOCK.TICKS_PER_DAY });
+        continue;
+      }
       const src = reachableSource(s, f);
       // a fighting/forced-marching day costs double (core §10.1)
       const fought = f.lastBattleTick !== undefined && s.tick - f.lastBattleTick < CLOCK.TICKS_PER_DAY;

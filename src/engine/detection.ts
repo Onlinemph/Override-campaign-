@@ -57,6 +57,7 @@ function gatherSearchers(s: TruthState): Searcher[] {
   const out: Searcher[] = [];
   for (const f of Object.values(s.formations)) {
     if (f.destroyed || f.pos.kind !== 'ground') continue;
+    if (f.mounted) continue; // stowed in a carrier bay: no sensor picture from inside a hull
     const sns = formationSensors(s, f);
     const order = f.currentOrderId ? s.orders[f.currentOrderId] : undefined;
     // core §6.1: DARK = passive sensors only at SNS −2 (D-008.13); eyeballs unaffected
@@ -313,8 +314,9 @@ export function registerDetection(
 export function detectionPass(s: TruthState, emit: (e: GameEvent) => void): void {
   const night = isNight(s, s.tick);
   const searchers = gatherSearchers(s);
+  // embarked formations are inside a carrier's hull: the CARRIER is the detectable return
   const targets = Object.values(s.formations).filter(
-    f => !f.destroyed && f.pos.kind === 'ground');
+    f => !f.destroyed && f.pos.kind === 'ground' && !f.mounted);
 
   // same-hex auto LOCK (core §6.4) — mutual
   for (const a of targets) {
@@ -404,7 +406,7 @@ export function satellitePass(s: TruthState, emit: (e: GameEvent) => void): void
     if (s.tick < sat.nextPassTick) continue;
 
     for (const target of Object.values(s.formations)) {
-      if (target.destroyed || target.sideId === sat.sideId) continue;
+      if (target.destroyed || target.sideId === sat.sideId || target.mounted) continue;
       if (target.pos.kind !== 'ground' || target.pos.theaterId !== sat.theaterId) continue;
       const within = distanceToPath(target.pos, sat.corridor)
         <= Math.floor(SATELLITE.TRACK_WIDTH_HEXES / 2);

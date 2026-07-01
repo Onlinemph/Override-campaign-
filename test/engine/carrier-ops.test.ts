@@ -120,6 +120,18 @@ describe('carrier ops — launch / recover / rearm', () => {
     expect(replay(c.store.all())).toEqual(c.truth);
   });
 
+  it('refuses to launch a flight mid-rearm (turnaround crew still working)', () => {
+    const truth = carrierTruth();
+    const flt = addFlight(truth, { id: 'f1', sideId: 'blue', basePos: gp(10, 10), fp: 20, tons: 5 });
+    flt.mounted = { carrierFormationId: 'ds1' };
+    const c = Campaign.create(truth);
+
+    expect(c.carrierRearm('ds1', 'f1').ok).toBe(true);
+    const r = c.launchFromCarrier('ds1', 'f1');
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toMatch(/turnaround/);
+  });
+
   it('refuses to rearm a flight that is not aboard, and honours the single crew', () => {
     const truth = carrierTruth();
     const a = addFlight(truth, { id: 'f1', sideId: 'blue', basePos: gp(10, 10), fp: 20, tons: 5 });
