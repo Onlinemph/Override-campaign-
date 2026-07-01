@@ -26,8 +26,17 @@ Event-sourced fog-of-war engine:
 
 ## Run it
 
+First time, one command sets up everything (campaign + the embedded battle tracker):
+
 ```sh
-npm install
+npm run setup    # installs deps and builds the battle tracker
+npm run update   # later: git pull + reinstall + rebuild, in one step
+```
+
+Then:
+
+```sh
+npm install                          # (npm run setup already did this)
 npm run dev                          # in-memory demo campaign
 npm run dev -- demo/starter.json --log war.jsonl    # a small, original starter scenario
 npm run dev -- demo/campaign.json --log war.jsonl   # persist + resume from war.jsonl
@@ -49,6 +58,33 @@ The demo is a 25-VP campaign: a satellite (watch its passes catch GHOST returns)
 airbase, a supply convoy, hidden and contested objectives, a system layer with a gas-giant
 picket, and a red probe force already moving. Click **Run until event** a few times.
 Pass `--log <file>` to make it survive a restart.
+
+## Battle tracker & record sheets (embedded card builder)
+
+The [OVERRIDE Card Builder](https://github.com/Onlinemph/Override-card-builder) is vendored
+under `cards/` and serves two roles.
+
+**Unit stats come from the real record sheets.** On load, each unit's model is resolved
+against the bundled MegaMek library and its `.mtf`/`.blk` is parsed to fill in movement,
+class, BV, and electronic-warfare gear — Guardian→`ECM`, Angel→`ANGEL_ECM`,
+Beagle/Bloodhound/Watchdog→`BEAGLE`, stealth→`STEALTH`, C3 Master→`C3M`, Mobile HQ→`HQ`,
+wheeled→`WHEELED`. Only *unset* fields are filled (explicit campaign values always win;
+tags merge), so ECM raises the enemy's detection TN, a probe or HQ extends sensor range,
+and speed sets the map pace — automatically, with no engine changes. (Opt out with
+`CAMPAIGN_NO_ENRICH=1`.)
+
+**An interactive battle tracker at `/battle`.** When the campaign freezes on a pending
+engagement, click **Export handoff** → **⚔ Open battle tracker** on the GM screen. The
+campaign builds a per-side roster (models, pilot skills, and the fog-of-war setup) and
+opens `/battle` pre-loaded with both forces as real Override record cards, plus a campaign
+briefing (entry edges, initiative, posture, off-board support). Play it out, then **⇧ Send
+result to campaign** folds the marked-up cards into a `BattleResult` — damage state
+(DESTROYED vs recoverable SALVAGE), ejected crews, victor — and posts it back, where it
+ingests and unfreezes the campaign (double-ingest is refused).
+
+`npm run setup` builds the tracker; `npm run dev` (and `start.cmd`) build it on first launch
+if it's missing. Needs only Node — the build unpacks the library with a pure-Node fallback,
+so no `unzip`/WSL on Windows.
 
 ## Build your own campaign
 

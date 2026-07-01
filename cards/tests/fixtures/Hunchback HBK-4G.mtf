@@ -1,0 +1,35 @@
+chassis:Hunchback
+model:HBK-4G
+
+Config:Biped
+TechBase:Inner Sphere
+Era:2572
+Rules Level:1
+
+Mass:50
+Engine:200 Fusion Engine
+Structure:Standard
+Myomer:Standard
+
+Heat Sinks:13 Single
+Walk MP:4
+Jump MP:0
+
+Armor:Standard(Inner Sphere)
+LA Armor:16
+RA Armor:16
+LT Armor:16
+RT Armor:16
+CT Armor:20
+HD Armor:9
+LL Armor:16
+RL Armor:16
+LTR Armor:6
+RTR Armor:6
+CTR Armor:6
+
+Weapons:4
+AC/20, Right Torso
+Medium Laser, Left Arm
+Medium Laser, Right Arm
+Small Laser, Head

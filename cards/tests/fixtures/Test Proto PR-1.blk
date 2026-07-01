@@ -1,0 +1,64 @@
+#building block data file
+<BlockVersion>
+1
+</BlockVersion>
+
+<UnitType>
+ProtoMech
+</UnitType>
+
+<Name>
+Test Proto
+</Name>
+
+<Model>
+PR-1
+</Model>
+
+<year>
+3070
+</year>
+
+<type>
+Clan Level 2
+</type>
+
+<motion_type>
+Biped
+</motion_type>
+
+<cruiseMP>
+5
+</cruiseMP>
+
+<jumpingMP>
+5
+</jumpingMP>
+
+<armor>
+4
+12
+3
+3
+9
+</armor>
+
+<Body Equipment>
+</Body Equipment>
+
+<Torso Equipment>
+CLERMediumLaser
+</Torso Equipment>
+
+<Right Arm Equipment>
+</Right Arm Equipment>
+
+<Left Arm Equipment>
+</Left Arm Equipment>
+
+<Legs Equipment>
+</Legs Equipment>
+
+<tonnage>
+7.0
+</tonnage>

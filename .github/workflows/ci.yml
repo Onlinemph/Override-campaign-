@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # ── Campaign (OVERRIDE GM Tool) ──
+      - name: Install campaign deps
+        run: npm ci
+
+      - name: Typecheck (campaign)
+        run: npm run typecheck
+
+      # Extract the bundled unit library so the record-sheet derivation tests
+      # (src/roster) run for real instead of skipping. Uses only node + unzip.
+      - name: Extract unit library
+        run: npm --prefix cards run extract-units
+
+      - name: Test (campaign)
+        run: npm test
+
+      # ── Embedded card builder / battle tracker ──
+      - name: Install card builder deps
+        run: npm --prefix cards ci
+
+      - name: Test (card builder)
+        run: npm --prefix cards test
+
+      # Proves the battle tracker builds from a clean checkout (extract-units
+      # needs `unzip`, preinstalled on ubuntu-latest) so /battle works on deploy.
+      # Deps already installed above, so build directly rather than build:battle.
+      - name: Build battle tracker
+        run: npm --prefix cards run build:web
+
+      - name: Check the build produced a servable app
+        run: test -f cards/dist-web/index.html && test -f cards/dist-web/units-index.json

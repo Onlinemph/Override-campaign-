@@ -65,11 +65,17 @@ export function ingestBattleResult(
       }
     }
   }
-  // 3. ejections → DOWNED_CREW markers (SKYWATCH §8.4 / core §10.4)
+  // 3. ejections → DOWNED_CREW markers (SKYWATCH §8.4 / core §10.4).
+  //    The tracker can't know board coordinates, so it may omit pos; fall the
+  //    crew down at the battle hex (or a combatant's position as a last resort).
+  const ejectFallback = eng.hex
+    ?? s.formations[allFormationIds[0]]?.pos
+    ?? { kind: 'ground' as const, theaterId: '', q: 0, r: 0 };
   for (const ej of result.ejections) {
     const marker: Marker = {
       id: `marker:downed:${ej.pilotId}:${s.tick}`, kind: 'DOWNED_CREW',
-      pos: ej.pos, payload: { pilotId: ej.pilotId }, beaconActive: true,
+      pos: ej.pos ?? structuredClone(ejectFallback), payload: { pilotId: ej.pilotId },
+      beaconActive: true,
     };
     events.push({ type: 'MARKER_ADDED', marker });
   }

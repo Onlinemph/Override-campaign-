@@ -215,6 +215,7 @@ export class Campaign {
     const eng = Object.values(this.truth.engagements).find(e => e.handoffId === result.handoffId)
       ?? this.pendingEngagement;
     if (!eng) return { ok: false, reason: 'no engagement for this handoff' };
+    if (eng.status === 'RESOLVED') return { ok: false, reason: 'engagement already resolved' };
     for (const e of ingestBattleResult(this.truth, eng, result)) this.inject(e);
     return { ok: true };
   }

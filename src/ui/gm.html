@@ -237,6 +237,7 @@ async function refresh() {
     document.getElementById('eng-detail').innerHTML = engBriefing(s.pendingEngagement);
     document.getElementById('mul-links').innerHTML = e.handoffId
       ? sides.map(x => `<a href="/api/gm/handoff/${encodeURIComponent(e.handoffId)}/mul/${x}" download="${x}.mul">⤓ ${x}.mul</a>`).join(' · ')
+        + ` · <button onclick="openBattle('${encodeURIComponent(e.handoffId)}')">⚔ Open battle tracker</button>`
       : '';
   } else {
     engDiv.style.display = 'none';
@@ -419,6 +420,25 @@ async function exportHandoff() {
   document.getElementById('handoff-out').textContent = JSON.stringify(pkg, null, 1);
   document.getElementById('battle-result').value = ''; // form is the default; JSON overrides
   buildBattleForm(pkg);
+}
+// Open the embedded card-builder battle tracker, pre-loaded with both sides of this
+// handoff. We fetch the compact roster (models + pilot skills + setup) and hand it to
+// /battle via the same #h= hash the tracker reads on load.
+async function openBattle(handoffId) {
+  let roster;
+  try {
+    const resp = await fetch(`/api/gm/handoff/${handoffId}/battle`);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    roster = await resp.json();
+  } catch (err) {
+    alert('Could not build the battle roster: ' + err.message);
+    return;
+  }
+  const bytes = new TextEncoder().encode(JSON.stringify(roster));
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  const payload = 'r' + btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  window.open(`/battle/#h=${payload}`, '_blank');
 }
 // a click-to-fill outcome form built from the handoff (no JSON typing for the common case)
 function buildBattleForm(pkg) {

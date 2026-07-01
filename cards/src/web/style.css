@@ -1,0 +1,1810 @@
+:root {
+  --bg: #0f1115;
+  --panel: #181b22;
+  --panel-2: #20242d;
+  --ink: #e6e8ec;
+  --muted: #8b93a1;
+  --accent: #f0a020;
+  --accent-ink: #1a1205;
+  --error: #ff6b6b;
+  --line: #2b303b;
+  --good: #6bd49a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+#app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.9rem;
+  letter-spacing: 0.5px;
+}
+
+.tagline {
+  color: var(--muted);
+  margin: 0.35rem 0 1.75rem;
+}
+
+code {
+  background: var(--panel-2);
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+button,
+.file-btn {
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--ink);
+  padding: 0.5rem 0.9rem;
+  border-radius: 6px;
+  font: inherit;
+}
+
+button:hover,
+.file-btn:hover {
+  border-color: var(--accent);
+}
+
+button.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+  font-weight: 600;
+  align-self: flex-start;
+}
+
+textarea {
+  width: 100%;
+  min-height: 260px;
+  resize: vertical;
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.9rem;
+  font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.output {
+  margin-top: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1rem 1.1rem 1.25rem;
+}
+
+.card.error {
+  border-color: var(--error);
+}
+
+.card.error h2 {
+  color: var(--error);
+}
+
+.card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.2rem;
+}
+
+.card h2 small {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 0.8em;
+}
+
+.card h3 {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.4rem 0.75rem;
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-bottom: 1px dotted var(--line);
+  padding: 0.15rem 0;
+}
+
+.stat .label {
+  color: var(--muted);
+}
+
+.stat .value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+table.weapons {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+}
+
+table.weapons th,
+table.weapons td {
+  text-align: left;
+  padding: 0.3rem 0.4rem;
+  border-bottom: 1px solid var(--line);
+}
+
+table.weapons th {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.78rem;
+}
+
+td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.rear {
+  color: var(--accent);
+  font-size: 0.85em;
+}
+
+.warn-flag {
+  color: var(--error);
+  font-size: 0.8em;
+}
+
+.warnings {
+  margin: 0.75rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--error);
+  font-size: 0.85rem;
+}
+
+footer {
+  margin-top: 3rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+}
+
+/* ---- TIC editor ---------------------------------------------------------- */
+.tics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.6rem;
+  margin: 0.5rem 0;
+}
+.tic {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+}
+.tic-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+.tic-dmg {
+  margin-left: auto;
+  font-weight: 700;
+  color: var(--accent);
+}
+.tic-range {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.35rem 0;
+  font-size: 0.8rem;
+}
+.tic-range th {
+  color: var(--muted);
+  font-weight: 500;
+}
+.tic-range td,
+.tic-range th {
+  text-align: center;
+  padding: 1px 2px;
+}
+.tic-weapons {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.tic-weapons li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+.tic-weapons select.move {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 4px;
+  font-size: 0.8rem;
+}
+.melee-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: baseline;
+  padding: 0.4rem 0.65rem;
+  border-top: 1px dashed var(--line);
+  margin-top: 0.3rem;
+}
+.tic-note {
+  font-size: 0.85rem;
+  margin: 0.4rem 0 0;
+}
+
+/* ---- Battle Armor firepower table ---------------------------------------- */
+.ba-firepower {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.85rem;
+}
+.ba-firepower th,
+.ba-firepower td {
+  border: 1px solid var(--line);
+  padding: 0.3rem 0.45rem;
+  text-align: center;
+  vertical-align: middle;
+}
+.ba-firepower thead th {
+  color: var(--accent);
+  font-weight: 600;
+  background: var(--panel-2);
+}
+.ba-firepower .ba-corner {
+  color: var(--muted);
+  font-weight: 500;
+  text-align: left;
+}
+.ba-firepower .ba-range {
+  font-size: 0.72rem;
+  font-weight: 400;
+  margin-top: 0.15rem;
+  font-variant-numeric: tabular-nums;
+}
+.ba-firepower .ba-count {
+  text-align: left;
+  white-space: nowrap;
+}
+.ba-firepower .ba-count .ba-n {
+  font-weight: 700;
+  margin-right: 0.35rem;
+}
+.ba-firepower .ba-count .pips {
+  display: inline-flex;
+  margin: 0;
+  vertical-align: middle;
+}
+.ba-firepower td.num {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.ba-ai-head,
+.ba-ai {
+  border-left: 2px solid var(--accent);
+  color: var(--good);
+}
+.ba-ai { font-weight: 600; }
+.ba-firepower tbody tr:nth-child(even) td,
+.ba-firepower tbody tr:nth-child(even) .ba-count {
+  background: rgba(255, 255, 255, 0.02);
+}
+.ba-legend {
+  font-size: 0.78rem;
+  margin: 0.35rem 0 0;
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+.ba-legend .pip { vertical-align: middle; }
+
+/* Battle Armor armor pips read as circles, echoing the printed record card. */
+.ba-firepower .pip.armor {
+  border-radius: 50%;
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  width: 8px;
+  height: 8px;
+}
+
+/* ---- Equipment list ------------------------------------------------------ */
+.equipment {
+  list-style: none;
+  margin: 0.3rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.3rem;
+}
+.equip {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.9rem;
+}
+.equip.ammo {
+  border-left: 3px solid var(--accent);
+}
+.equip-loc {
+  margin-left: auto;
+  color: var(--muted);
+  font-variant: small-caps;
+}
+
+/* ---- Pips (shared by the Battle Armor card) ------------------------------ */
+.pips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  justify-content: center;
+  margin: 0.2rem 0 0;
+}
+.pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.pip.armor { background: var(--accent); }
+.pip.rear { background: #b9764a; }
+.pip.struct {
+  background: transparent;
+  border: 1px solid var(--muted);
+  width: 6px;
+  height: 6px;
+}
+
+/* ---- Unit browser -------------------------------------------------------- */
+.browse {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.85rem 1.1rem 1rem;
+  margin-bottom: 1.5rem;
+}
+.browse-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+.browse-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.browse-count {
+  font-size: 0.82rem;
+  font-weight: 400;
+}
+.browse-toggle {
+  margin-left: auto;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.6rem;
+}
+.browse-controls {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+.browse-cat,
+.browse-q {
+  background: var(--panel-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.4rem 0.65rem;
+  font: inherit;
+  font-size: 0.9rem;
+}
+.browse-cat { flex: 0 1 180px; }
+.browse-q { flex: 1 1 200px; }
+.browse-cat:focus,
+.browse-q:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.browse-list {
+  max-height: min(60vh, 520px);
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+.browse-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "name add" "meta add";
+  align-items: center;
+  column-gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.browse-item:hover,
+.browse-item:focus {
+  background: var(--panel-2);
+  outline: none;
+}
+.browse-item-name {
+  grid-area: name;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.browse-item-meta {
+  grid-area: meta;
+  font-size: 0.75rem;
+}
+.browse-role { color: var(--accent); font-weight: 700; }
+.browse-add {
+  grid-area: add;
+  align-self: center;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.2rem 0.5rem;
+}
+.browse-status {
+  font-size: 0.82rem;
+  margin: 0.45rem 0 0;
+  min-height: 1.2em;
+}
+
+/* ---- Battle Armor record sheet (light, mirrors the printed Override card) -- */
+.ba-sheet {
+  grid-column: 1 / -1; /* span the full results row — the table is wide */
+  background: #f4f4f1;
+  color: #15171c;
+  border: 2px solid #15171c;
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+}
+.ba-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem 0.6rem;
+}
+.ba-titlebox { flex: 1 1 auto; min-width: 0; }
+.ba-title {
+  font-weight: 800;
+  font-size: 1.3rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-bottom: 3px solid #15171c;
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.45rem;
+}
+.ba-title .ba-sqd { font-weight: 700; }
+.ba-unitdata {
+  border: 1.5px solid #15171c;
+  border-radius: 10px;
+  padding: 0.5rem 0.8rem;
+  max-width: 540px;
+}
+.ba-ud-h {
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+.ba-ud-row { font-size: 0.9rem; padding: 0.08rem 0; }
+.ba-ud-row b { font-weight: 700; }
+.ba-amech { margin-left: 1.2rem; }
+.ba-check {
+  display: inline-block;
+  width: 1.05em;
+  height: 1.05em;
+  border: 1.5px solid #15171c;
+  border-radius: 2px;
+  text-align: center;
+  line-height: 1em;
+  font-weight: 800;
+  vertical-align: -2px;
+}
+.ba-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.55rem;
+  flex: 0 0 auto;
+}
+.ba-skills { display: flex; gap: 0.6rem; }
+.ba-skill { font-size: 0.6rem; text-align: center; }
+.ba-skill-box {
+  width: 48px;
+  height: 30px;
+  border: 1.5px solid #15171c;
+  border-radius: 5px;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #15171c;
+}
+.ba-wordmark {
+  font-weight: 800;
+  font-size: 1.2rem;
+  line-height: 1.05;
+  text-align: right;
+  color: #8a8f98;
+  letter-spacing: 1px;
+}
+.ba-wordmark b { color: #15171c; font-size: 1.3rem; letter-spacing: 2px; }
+.ba-wm-a { color: #15171c; font-size: 0.75em; }
+
+.ba-fire-wrap { overflow-x: auto; }
+.ba-sheet .ba-firepower {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  font-size: 0.9rem;
+}
+.ba-sheet .ba-firepower th,
+.ba-sheet .ba-firepower td {
+  border: none;
+  padding: 0.45rem 0.55rem;
+  text-align: center;
+  vertical-align: middle;
+  color: #15171c;
+}
+.ba-sheet .ba-firepower thead th {
+  background: transparent;
+  border-bottom: 2px solid #15171c;
+  vertical-align: bottom;
+}
+.ba-sheet .ba-corner {
+  text-align: left;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.ba-wpn { min-width: 88px; }
+.ba-wname { font-weight: 700; font-size: 0.95rem; }
+.ba-rng {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0 0.3rem;
+  font-size: 0.68rem;
+  margin: 0.2rem 0 0.1rem;
+  font-variant-numeric: tabular-nums;
+}
+.ba-rng-h { color: #6b7079; }
+.ba-rng-v { color: #15171c; }
+.ba-dmg-label { font-size: 0.72rem; color: #6b7079; margin-top: 0.1rem; }
+.ba-sheet .ba-firepower tbody tr:nth-child(odd) td,
+.ba-sheet .ba-firepower tbody tr:nth-child(odd) .ba-count {
+  background: #e7e7e1;
+}
+.ba-sheet .ba-firepower td.num {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ba-sheet .ba-count {
+  text-align: left;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding-left: 0.6rem;
+}
+.ba-n { font-weight: 800; font-size: 1.15rem; width: 1.1em; text-align: center; }
+.ba-fig { width: 22px; height: 29px; fill: #7a7f88; flex: 0 0 auto; }
+/* armor (dark) hexes then the red "health" hex — the suit's final hit. */
+.ba-armor-pips { display: inline-flex; align-items: center; gap: 3px; }
+.ba-armor-pips .pips { display: inline-flex; margin: 0; gap: 3px; flex-wrap: nowrap; }
+.ba-sheet .pip.armor,
+.ba-sheet .pip.health {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 0;
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+}
+.ba-sheet .pip.armor { background: #15171c; }
+.ba-sheet .pip.health { background: #c0392b; }
+.ba-sheet .ba-ai-head,
+.ba-sheet .ba-ai { border-left: 2px solid #15171c; }
+.ba-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: #15171c;
+  padding: 0.5rem 1rem 0;
+  margin: 0;
+}
+.ba-hl-red { color: #c0392b; font-weight: 600; }
+.ba-note { font-size: 0.78rem; color: #6b7079; padding: 0.3rem 1rem 0.7rem; margin: 0; }
+.ba-sheet .warnings { padding: 0 1rem 0.8rem 2rem; }
+
+@media (max-width: 560px) {
+  .ba-top { flex-direction: column; }
+  .ba-brand { align-items: flex-start; flex-direction: row; justify-content: space-between; width: 100%; }
+}
+
+/* ---- BattleMech record sheet (light, mirrors the printed Override card) ---- */
+.mech-sheet {
+  grid-column: 1 / -1;
+  background: #f4f4f1;
+  color: #15171c;
+  border: 2px solid #15171c;
+  border-radius: 12px;
+  padding: 0.9rem 1rem 1rem;
+  overflow: hidden;
+}
+.ms-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+}
+@media (max-width: 760px) { .ms-grid { grid-template-columns: 1fr; } }
+
+.ms-title {
+  font-weight: 800;
+  font-size: 1.4rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-bottom: 3px solid #15171c;
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+.ms-unitdata { border: 1.5px solid #15171c; border-radius: 10px; padding: 0.5rem 0.7rem; }
+.ms-ud-h { font-weight: 800; font-size: 0.9rem; letter-spacing: 0.04em; margin-bottom: 0.35rem; }
+.ms-ud-cols { display: flex; gap: 0.75rem; justify-content: space-between; }
+.ms-ud-stats { font-size: 0.92rem; display: flex; flex-direction: column; gap: 0.18rem; }
+.ms-ud-stats b { font-weight: 700; }
+.ms-ud-move b + b { margin-left: 0.6rem; }
+
+/* Heat scale strip */
+.heatscale { display: flex; align-items: stretch; gap: 0.3rem; }
+.hs-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-align: center;
+  color: #6b7079;
+}
+.hs-rows { display: flex; flex-direction: column; gap: 1px; }
+.hs-row { display: flex; align-items: center; gap: 0.35rem; }
+.hs-n {
+  width: 1.15rem; height: 1.15rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.74rem; font-weight: 800;
+  border: 1px solid #15171c;
+}
+.hs-t { font-size: 0.66rem; color: #2a2d35; }
+.hs-n.h5 { background: #15171c; color: #fff; }
+.hs-n.h4 { background: #c0392b; color: #fff; }
+.hs-n.h3 { background: #e67e22; color: #fff; }
+.hs-n.h2 { background: #f1c40f; }
+.hs-n.h1 { background: #f7e463; }
+.hs-n.h0 { background: #fff; }
+
+/* Weapons table */
+.mweapons { width: 100%; border-collapse: collapse; margin: 0.6rem 0 0.4rem; font-size: 0.86rem; }
+.mweapons thead th {
+  font-size: 0.72rem; color: #6b7079; font-weight: 700;
+  border-bottom: 2px solid #15171c; padding: 0.2rem 0.3rem; text-align: center;
+}
+.mweapons thead th.wname { text-align: left; font-size: 0.95rem; color: #15171c; text-transform: uppercase; }
+.mweapons td { padding: 0.28rem 0.3rem; border-bottom: 1px solid #d7d7d1; }
+.mweapons td.num { text-align: center; font-variant-numeric: tabular-nums; }
+.mweapons td.wname { font-weight: 600; }
+.mweapons td.wdmg { font-weight: 700; }
+.mweapons td.loc, .mweapons th.loc { text-align: center; }
+.mweapons td.rng { color: #2a2d35; }
+.mweapons tbody tr:nth-child(odd) td { background: #e9e9e3; }
+.mweapons tr.melee td { border-top: 1.5px solid #15171c; font-style: italic; }
+
+.ms-equip { font-size: 0.84rem; margin: 0.4rem 0; }
+.ms-armament { font-size: 0.86rem; margin: 0.5rem 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.ms-equip b { font-weight: 700; }
+.ms-equip .eq-loc { color: #6b7079; }
+
+/* ---- Conventional Infantry card (full-width layout) ---------------------- */
+.inf-dim { color: #6b7079; font-weight: 400; }
+/* Top band: UNIT DATA | armament + range | skills/wordmark */
+.inf-top {
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) minmax(200px, 1.4fr) auto;
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 0.6rem;
+}
+@media (max-width: 760px) { .inf-top { grid-template-columns: 1fr; } }
+.inf-arm { border: 1.5px solid #15171c; border-radius: 10px; padding: 0.5rem 0.7rem; }
+.inf-arm-h { font-weight: 800; font-size: 0.9rem; letter-spacing: 0.04em; margin-bottom: 0.35rem; }
+.inf-arm .ms-armament { margin: 0 0 0.4rem; }
+.inf-arm .mweapons { margin-top: 0.2rem; }
+
+/* TROOPERS & WEAPONS: squads spread across the row, damage legend on the right */
+.inf-troopers { border-top: 2px solid #15171c; padding-top: 0.5rem; margin-top: 0.3rem; }
+.inf-sec-h { font-weight: 800; font-size: 0.95rem; letter-spacing: 0.04em; margin-bottom: 0.5rem; display: flex; align-items: baseline; gap: 0.6rem; }
+.inf-sec-sub { font-size: 0.72rem; font-weight: 500; color: #6b7079; letter-spacing: 0; }
+.inf-tr-body { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+.inf-squads { display: flex; flex-wrap: wrap; gap: 0.5rem; flex: 1 1 60%; }
+.inf-squad { border: 1.25px solid #15171c; border-radius: 8px; padding: 0.4rem 0.5rem 0.3rem; text-align: center; min-width: 76px; }
+.inf-squad-h { font-size: 0.66rem; font-weight: 700; color: #6b7079; margin-bottom: 0.3rem; }
+.inf-pips { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; max-width: 92px; }
+.ms-body { width: 10px; height: 13px; border: 1.25px solid #15171c; border-radius: 2px; background: #fff; }
+.inf-squad-dmg { margin-top: 0.35rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.inf-degrade { flex: 0 1 auto; }
+.inf-degrade-h { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.5px; color: #6b7079; margin-bottom: 0.2rem; }
+.ms-degrade { border-collapse: collapse; font-size: 0.78rem; }
+.ms-degrade th { text-align: left; font-weight: 700; color: #6b7079; padding: 0.1rem 0.8rem 0.15rem 0; border-bottom: 1px solid #c7ccd4; }
+.ms-degrade td { padding: 0.08rem 0.8rem 0.08rem 0; }
+.ms-degrade td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ms-degrade td.wdmg { font-weight: 700; }
+
+/* Condition monitor */
+.condmon { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; font-size: 0.72rem; margin-top: 0.5rem; padding-top: 0.45rem; border-top: 1.5px solid #15171c; }
+.cm-grp { display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 700; }
+.cm-box { width: 18px; height: 14px; border: 1.5px solid #15171c; border-radius: 3px; }
+.cm-pip { border: 1.5px solid #15171c; border-radius: 3px; padding: 0 0.25rem; font-weight: 700; }
+.cm-pip.kia { background: #15171c; color: #fff; }
+
+/* Right column: skills + wordmark + paper doll */
+.ms-brand { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem; }
+.ms-skills { display: flex; gap: 0.6rem; }
+.ms-skill { font-size: 0.6rem; text-align: center; }
+.ms-skill-box {
+  width: 46px;
+  height: 30px;
+  border: 1.5px solid #15171c;
+  border-radius: 5px;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #15171c;
+}
+.ms-wordmark { font-weight: 800; font-size: 1.05rem; line-height: 1.05; text-align: right; color: #8a8f98; letter-spacing: 1px; }
+.ms-wordmark b { color: #15171c; font-size: 1.15rem; letter-spacing: 2px; }
+.ms-wm-a { color: #15171c; font-size: 0.75em; }
+
+.mdoll {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1fr;
+  grid-template-areas:
+    ".  hd  ."
+    "la ct ra"
+    "ll ct rl"
+    ".  tr  .";
+  gap: 0.4rem;
+}
+/* Tripod: insert a center-leg row between the legs and the torso rear. */
+.mdoll.has-cl {
+  grid-template-areas:
+    ".  hd  ."
+    "la ct ra"
+    "ll ct rl"
+    ".  cl  ."
+    ".  tr  .";
+}
+.mloc.cl { grid-area: cl; }
+.mloc { background: #e3e3dd; border: 1.5px solid #9a9a92; border-radius: 8px; padding: 0.35rem 0.3rem; text-align: center; }
+.mloc.hd { grid-area: hd; }
+.mloc.la { grid-area: la; }
+.mloc.ra { grid-area: ra; }
+.mloc.ct { grid-area: ct; }
+.mloc.ll { grid-area: ll; }
+.mloc.rl { grid-area: rl; }
+.mloc.tr { grid-area: tr; }
+.mloc-name { font-weight: 700; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.02em; }
+.loc-hits { color: #6b7079; font-weight: 600; }
+.loc-miss { color: #b03020; text-decoration: line-through; }
+
+/* ProtoMech paper doll: single Legs block, optional Main Gun beside the head. */
+.pdoll {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1fr;
+  grid-template-areas:
+    ".  hd  ."
+    "la ct ra"
+    ".  lg  .";
+  gap: 0.4rem;
+}
+.pdoll.has-mg { grid-template-areas: ".  hd  mg" "la ct ra" ".  lg  ."; }
+.pdoll .mloc.hd { grid-area: hd; }
+.pdoll .mloc.mg { grid-area: mg; }
+.pdoll .mloc.la { grid-area: la; }
+.pdoll .mloc.ra { grid-area: ra; }
+.pdoll .mloc.ct { grid-area: ct; }
+.pdoll .mloc.lg { grid-area: lg; }
+.mloc-pips { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; align-items: center; margin-top: 0.3rem; }
+.hexrow { display: inline-flex; flex-wrap: wrap; gap: 2px; justify-content: center; align-items: center; }
+.hex {
+  width: 13px; height: 13px; display: inline-block;
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  /* Force the fill to print: browsers drop background colors by default, which
+     would make the (filled) armor pips vanish on paper. */
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.hex.armor { background: #6c4f9e; }
+/* Armor-type pip shapes (default armor is the hexagon above). */
+.hex.armor.as-diamond { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.hex.armor.as-triangle { clip-path: polygon(50% 4%, 96% 96%, 4% 96%); }
+.hex.armor.as-octagon { clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); }
+.hex.armor.as-pentagon { clip-path: polygon(50% 0, 100% 40%, 81% 100%, 19% 100%, 0 40%); }
+/* Structure pips are a HOLLOW SQUARE — a distinct SHAPE from the armor hexagon,
+   so armor vs structure reads clearly in plain black ink (no color needed). */
+.hex.struct {
+  background: transparent;
+  border: 1.5px solid #2a2d35;
+  clip-path: none;
+  width: 11px; height: 11px;
+  align-self: center;
+}
+.mdoll-legend { display: flex; align-items: center; gap: 0.35rem; justify-content: center; font-size: 0.72rem; color: #2a2d35; margin: 0.5rem 0 0; }
+.mdoll-legend .hex { vertical-align: middle; }
+
+/* Biped record-sheet paper doll (SVG silhouette + circle armor / square structure). */
+.bdoll-wrap { position: relative; width: 100%; max-width: 460px; margin: 0.3rem auto 0; }
+svg.bdoll { display: block; width: 100%; height: auto; }
+svg.bdoll .bpip { fill: #fff; stroke: #2c2c28; stroke-width: 1; }
+svg.bdoll .bdoll-lbl { font-size: 9px; font-weight: 800; fill: #222; text-anchor: middle; }
+svg.bdoll .bdoll-num { font-size: 21px; font-weight: 800; fill: #15171c; text-anchor: middle; }
+svg.bdoll .bdoll-hit { font-size: 8.5px; font-weight: 600; fill: #6a6a62; text-anchor: middle; }
+.bpip.pip-hit { fill: #c0392b !important; }
+
+/* Tabletop assistant: heat dial + to-hit helper (play mode). */
+.ttop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin: 0.8rem 0;
+  padding: 0.6rem 0.8rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.ttop-heat, .ttop-tohit { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.ttop-h { font-weight: 800; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); }
+.heat-btn { padding: 0.2rem 0.55rem; font-size: 0.9rem; }
+.heat-val { font-size: 1.2rem; font-weight: 800; min-width: 1.4rem; text-align: center; font-variant-numeric: tabular-nums; }
+.heat-eff { font-size: 0.78rem; color: #c0392b; font-weight: 600; }
+.ttop-tohit label { font-size: 0.72rem; color: var(--muted); display: inline-flex; align-items: center; gap: 0.25rem; }
+.ttop-tohit select, .th-num {
+  background: var(--panel-2); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 5px; padding: 0.25rem 0.35rem; font: inherit; font-size: 0.85rem;
+}
+.th-num { width: 3rem; }
+.th-tc { font-size: 0.72rem; font-weight: 800; color: #16a34a; background: rgba(74,222,128,0.16); border: 1px solid #4ade80; border-radius: 5px; padding: 0.05rem 0.35rem; }
+.th-tc-row { font-size: 0.62rem; font-weight: 800; color: #16a34a; background: rgba(74,222,128,0.16); border-radius: 4px; padding: 0 0.25rem; vertical-align: middle; }
+.tohit-out { flex: 1 1 100%; }
+.tohit-tbl { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.tohit-tbl td { padding: 0.15rem 0.4rem; border-bottom: 1px solid var(--line); }
+.tohit-tbl td.num { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* Ammo counter (play mode). */
+.ammo-track {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.9rem;
+  margin: 0.8rem 0; padding: 0.6rem 0.8rem;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+}
+.ammo-row { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; }
+.ammo-name { font-weight: 600; }
+.ammo-btn { padding: 0.05rem 0.5rem; font-size: 1rem; line-height: 1.2; }
+.ammo-val { min-width: 4.2rem; text-align: center; font-variant-numeric: tabular-nums; }
+.ammo-rem { font-size: 1.1rem; font-weight: 800; }
+.ammo-tot { color: var(--muted); font-size: 0.78rem; }
+.ammo-val.ammo-empty .ammo-rem { color: #c0392b; }
+/* Active heat row highlighted on the card's heat scale. */
+.hs-row.hs-active { background: rgba(192, 57, 24, 0.16); outline: 1.5px solid #c0392b; border-radius: 3px; }
+/* Per-location damage dropdowns overlaid on the doll. */
+.dmg-ctl {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  pointer-events: none; /* only the select itself is interactive */
+}
+.dmg-name { font-size: 0.58rem; font-weight: 800; line-height: 1.05; background: rgba(244, 244, 241, 0.92); padding: 0 3px; border-radius: 3px; }
+.dmg-hits { font-size: 0.5rem; color: #555; line-height: 1; background: rgba(244, 244, 241, 0.92); border-radius: 3px; }
+.dmg-ctl select {
+  pointer-events: auto;
+  font-size: 0.85rem;
+  padding: 2px 1px;
+  border: 1px solid #777;
+  border-radius: 5px;
+  background: #fff;
+  color: #15171c;
+}
+.mech-sheet .warnings { color: #b03020; padding-left: 1.1rem; }
+
+/* ---- Combat Vehicle facing armor diagram --------------------------------- */
+.vdoll {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 1fr;
+  grid-template-areas:
+    ".     front  ."
+    "left  turret right"
+    ".     rear   .";
+  gap: 0.4rem;
+  align-items: stretch;
+}
+.vdoll.has-rotor {
+  grid-template-areas:
+    ".     rotor  ."
+    ".     front  ."
+    "left  turret right"
+    ".     rear   .";
+}
+.vloc {
+  background: #e3e3dd;
+  border: 1.5px solid #9a9a92;
+  border-radius: 8px;
+  padding: 0.4rem 0.35rem;
+  text-align: center;
+}
+.vloc.vempty { background: transparent; border: none; }
+.vfront { grid-area: front; }
+.vleft { grid-area: left; }
+.vturret { grid-area: turret; }
+.vright { grid-area: right; }
+.vrear { grid-area: rear; }
+.vrotor { grid-area: rotor; }
+.vloc-name { font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.02em; }
+.vloc-name .loc-hits { color: #15171c; font-size: 0.95rem; }
+.vloc-pips { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; margin-top: 0.3rem; }
+
+/* ---- Fighter facing armor diagram (nose / wings / aft) ------------------- */
+.fdoll {
+  display: grid;
+  grid-template-columns: 1fr 0.6fr 1fr;
+  grid-template-areas:
+    ".      nose   ."
+    "lwing  .      rwing"
+    ".      aft    .";
+  gap: 0.4rem;
+  align-items: stretch;
+}
+.fnose { grid-area: nose; }
+.flwing { grid-area: lwing; }
+.frwing { grid-area: rwing; }
+.faft { grid-area: aft; }
+/* Single airframe-wide Structural Integrity track (not per-location). */
+.fsi {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  background: #e3e3dd;
+  border: 1.5px solid #9a9a92;
+  border-radius: 8px;
+}
+.fsi-label { font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.02em; color: #15171c; }
+.fsi-pips { display: flex; flex-wrap: wrap; gap: 2px; }
+.fsi-val { margin-left: auto; font-weight: 700; color: #15171c; }
+
+/* ---- DropShip arc armor diamond ------------------------------------------ */
+.ddoll {
+  display: grid;
+  grid-template-columns: 1fr 0.9fr 1fr;
+  grid-template-areas:
+    ".    nose ."
+    "ls   si   rs"
+    ".    aft  .";
+  gap: 0.4rem;
+  align-items: stretch;
+}
+.dloc {
+  background: #e3e3dd;
+  border: 1.5px solid #9a9a92;
+  border-radius: 8px;
+  padding: 0.4rem 0.3rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.dloc.dnose { grid-area: nose; }
+.dloc.dls { grid-area: ls; }
+.dloc.drs { grid-area: rs; }
+.dloc.daft { grid-area: aft; }
+.dloc.dsi { grid-area: si; background: #d7d7cf; border-style: dashed; }
+/* WarShip: six hex sides (nose / fore-L,R / aft-L,R / aft) around the SI core. */
+.ddoll.warship {
+  grid-template-areas:
+    "fl nose fr"
+    "al si   ar"
+    ".  aft  .";
+}
+.dloc.dfl { grid-area: fl; }
+.dloc.dfr { grid-area: fr; }
+.dloc.dal { grid-area: al; }
+.dloc.dar { grid-area: ar; }
+.dloc-name { font-weight: 700; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.02em; }
+.dloc-val { font-weight: 800; font-size: 1.5rem; color: #6c4f9e; font-variant-numeric: tabular-nums; }
+.dloc-val.si { color: #c0392b; }
+
+/* ---- Manual TIC editor (single 'Mech card) ------------------------------- */
+.tic-editor {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.tic-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tic-editor-head h3 {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.tic-reset {
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--ink);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.tic-reset:hover { border-color: var(--accent); }
+.tic-hint { margin: 6px 0 12px; font-size: 12px; }
+.tic-boxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.tic-box {
+  flex: 1 1 200px;
+  min-width: 180px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.tic-box-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.tic-tag {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--accent);
+  letter-spacing: 0.03em;
+}
+.tic-meta { font-size: 12px; color: var(--muted); }
+.tic-members { list-style: none; margin: 0; padding: 0; }
+.tic-members li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 0;
+}
+.tic-wname { font-size: 13px; }
+.tic-move {
+  font-size: 11px;
+  padding: 1px 4px;
+  background: var(--panel);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.tic-move:hover { border-color: var(--accent); color: var(--ink); }
+
+/* ---- DropShip / WarShip weapon table: per-arc sections ------------------- */
+.dropship-weapons .arc-head th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #111;
+  background: #e6e6e0;            /* light band — prints cleanly */
+  padding: 9px 8px 4px;
+  border-top: 2px solid #2a2a2a; /* clear divider + breathing room between arcs */
+}
+.dropship-weapons .arc-head:first-child th {
+  border-top: none;              /* no rule above the very first arc */
+  padding-top: 4px;
+}
+/* ---- Force builder + print sheet ----------------------------------------- */
+.input-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.force {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.85rem 1.1rem 1rem;
+  margin-bottom: 1.5rem;
+}
+.force-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+.force-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.force-count { font-size: 0.82rem; font-weight: 400; }
+.force-pick {
+  background: var(--panel-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  font: inherit;
+  font-size: 0.9rem;
+  max-width: 240px;
+}
+.force-manage { margin-left: auto; display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+/* RAT weighted random force generator. */
+.rat-gen { margin-top: 0.8rem; border-top: 1px solid var(--line); padding-top: 0.7rem; }
+.rat-toggle { font-size: 0.85rem; }
+.rat-body { margin-top: 0.6rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.rat-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.rat-count-label { font-size: 0.8rem; color: var(--muted); }
+.rat-count, .rat-bv {
+  width: 3.2rem;
+  background: var(--panel-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.3rem 0.4rem;
+  font: inherit;
+  margin-left: 0.3rem;
+}
+.rat-bv { width: 4.2rem; }
+.rat-scenario-row { border-top: 1px dashed var(--line); padding-top: 0.5rem; margin-top: 0.2rem; }
+.rat-scn-h { font-weight: 700; font-size: 0.8rem; }
+.rat-scn-lbl { font-size: 0.8rem; color: var(--muted); }
+.rat-status { font-size: 0.8rem; }
+
+/* Pilot stable. */
+.pilot-stable { margin-top: 0.6rem; border-top: 1px solid var(--line); padding-top: 0.6rem; }
+.pilot-list { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.6rem; }
+.pilot-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
+.pilot-name { font-weight: 700; }
+.pilot-sk { color: var(--accent); font-variant-numeric: tabular-nums; }
+.pilot-ab { color: var(--muted); font-size: 0.78rem; font-style: italic; }
+.pilot-edit, .pilot-del { margin-left: auto; padding: 0.1rem 0.45rem; font-size: 0.75rem; }
+.pilot-del { margin-left: 0; }
+.pilot-form { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+.pf-name, .pf-abil {
+  background: var(--panel-2); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 6px; padding: 0.3rem 0.45rem; font: inherit; font-size: 0.85rem;
+}
+.pf-name { flex: 1 1 8rem; }
+.pf-abil { flex: 2 1 12rem; }
+.pf-num { width: 2.8rem; background: var(--panel-2); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 0.3rem 0.35rem; font: inherit; }
+.pilot-abil { font-size: 0.75rem; color: var(--muted); font-style: italic; align-self: center; }
+
+/* Force analytics. */
+.analytics { margin-top: 0.6rem; border-top: 1px solid var(--line); padding-top: 0.6rem; }
+.analytics-actions { margin-bottom: 0.6rem; }
+.an-stats { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.8rem; }
+.an-stat { flex: 1 1 5rem; background: var(--panel-2); border: 1px solid var(--line); border-radius: 7px; padding: 0.4rem 0.5rem; text-align: center; }
+.an-stat-v { font-size: 1.15rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.an-stat-l { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.an-sec { margin-bottom: 0.9rem; }
+.an-sec h4 { margin: 0 0 0.4rem; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.an-fp-row { display: flex; align-items: center; gap: 0.5rem; margin: 0.25rem 0; }
+.an-fp-lbl { flex: 0 0 4rem; font-size: 0.8rem; }
+.an-fp-bar { flex: 1 1 auto; height: 0.85rem; background: var(--panel-2); border-radius: 4px; overflow: hidden; }
+.an-fp-bar > span { display: block; height: 100%; background: var(--accent); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.an-fp-v { flex: 0 0 2.5rem; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 0.85rem; }
+.an-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.25rem 0; }
+.an-chip { background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 0.15rem 0.55rem; font-size: 0.78rem; }
+.an-chip b { color: var(--accent); }
+.an-chip.an-role { border-color: var(--accent); }
+.an-muster { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.an-muster th, .an-muster td { padding: 0.2rem 0.4rem; border-bottom: 1px solid var(--line); text-align: left; }
+.an-muster th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.02em; color: var(--muted); }
+.an-muster .num { text-align: right; font-variant-numeric: tabular-nums; }
+.an-muster tfoot td { border-top: 2px solid var(--line); border-bottom: none; }
+.muster-print { color: #15171c; }
+.muster-print .an-stat, .muster-print .an-chip { border-color: #bbb; }
+.force-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.force-cols-label { font-size: 0.8rem; color: var(--muted); }
+.force-cols {
+  background: var(--panel-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.3rem 0.45rem;
+  font: inherit;
+  font-size: 0.82rem;
+  margin-left: 0.3rem;
+}
+.force-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.force-empty { margin: 0; font-size: 0.85rem; }
+.force-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.25rem 0.3rem 0.25rem 0.7rem;
+  font-size: 0.85rem;
+}
+.force-item-name {
+  font-weight: 600;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+.force-item-name:hover { color: var(--accent); text-decoration: underline; }
+/* Lance / star grouping in the force list. */
+.lance-group { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.lance-head { flex: 1 1 100%; display: flex; align-items: baseline; gap: 0.5rem; margin: 0.35rem 0 0.1rem; padding-bottom: 0.15rem; border-bottom: 1px solid var(--line); }
+.lance-name { font-weight: 800; font-size: 0.82rem; letter-spacing: 0.02em; }
+.lance-meta { font-size: 0.72rem; }
+.lance-pick {
+  font: inherit; font-size: 0.68rem; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 6px; background: var(--bg);
+  padding: 0.05rem 0.1rem; max-width: 8rem; cursor: pointer;
+}
+.bt-lance-h {
+  font-weight: 800; font-size: 0.72rem; letter-spacing: 0.03em; color: var(--muted);
+  margin: 0.4rem 0 0.15rem; padding-top: 0.25rem; border-top: 1px dashed var(--line);
+}
+.bt-lance-h:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+
+/* Force-unit editor (TICs + skills) shown in the output area. */
+.force-edit-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem 0.85rem;
+  margin-bottom: 0.8rem;
+  font-size: 0.9rem;
+}
+.force-edit-bar .force-edit-btns { margin-left: auto; display: flex; gap: 0.4rem; }
+
+/* Damage tracking: clickable pips in the force-unit play view; a hit pip gets a
+   red "crossed-off" slash. */
+.force-play .hexrow .hex,
+.force-play .ba-armor-pips .pip,
+.force-play .inf-pips .ms-body,
+.force-play .cm-pip,
+.force-play .cm-box,
+.force-play .mweapons tbody tr { cursor: pointer; }
+.pip-hit {
+  background-image: linear-gradient(135deg, transparent 38%, #c0392b 38%, #c0392b 62%, transparent 62%) !important;
+}
+.cm-pip.pip-hit { background: #c0392b; color: #fff; }
+.cm-box.pip-hit { background: #c0392b; }
+
+/* A TIC whose limb is destroyed: struck out and dimmed. */
+.tic-dead { opacity: 0.5; }
+.tic-dead .wname { text-decoration: line-through; }
+.tic-dead td { color: #8a3a30; }
+
+/* Unit status banner — big red DESTROYED / KIA across the card (text from the
+   data-dead attribute set by the damage tracker). */
+.mech-sheet[data-dead] { position: relative; }
+.mech-sheet[data-dead]::after {
+  content: attr(data-dead);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.8rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: rgba(192, 57, 24, 0.62);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+  transform: rotate(-14deg);
+  pointer-events: none; /* keep pips clickable to undo */
+  z-index: 5;
+}
+.skills-editor {
+  display: flex;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  font-size: 0.85rem;
+}
+.skills-editor label { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; }
+.skills-editor input {
+  width: 3.2rem;
+  background: var(--panel-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.3rem 0.4rem;
+  font: inherit;
+}
+.force-remove {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.15rem 0.35rem;
+  border-radius: 999px;
+}
+.force-remove:hover { background: var(--line); color: var(--ink); }
+.force-item-bv {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.force-total { margin: 0.6rem 0 0; font-size: 0.85rem; color: var(--muted); }
+.force-total b { font-size: 1rem; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* BV badge injected just under a card's title (BV2 from the MUL lookup). */
+.card-bv {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #6c4f9e;
+  margin: -0.15rem 0 0.4rem;
+}
+.card-bv b { font-size: 0.85rem; }
+
+/* Design quirks line (injected hidden; revealed by the "Show quirks" option). */
+.card-quirks { display: none; font-size: 0.66rem; color: #3a3d45; line-height: 1.3; margin: 0 0 0.4rem; }
+body.show-quirks .card-quirks { display: block; }
+.card-quirks .cq-h { font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.62rem; color: #6a6a62; margin-bottom: 0.1rem; }
+.cq-row { padding: 0.06rem 0 0.06rem 0.45rem; border-left: 2px solid #c9c9c2; }
+.cq-row.cq-pos { border-left-color: #2e7d32; }
+.cq-row.cq-neg { border-left-color: #c0392b; }
+.cq-row.cq-none { border-left-color: #c9c9c2; color: #8a8a82; }
+.cq-n { font-weight: 700; color: #15171c; }
+.cq-row.cq-none .cq-n { color: #8a8a82; }
+.cq-w { font-weight: 700; color: #5a5a52; }
+.cq-e { color: #3a3d45; }
+/* A card value adjusted by a quirk (e.g. cooling-jacket heat). */
+.q-mod { color: #8a4b00; font-weight: 800; }
+.leg-mod { color: #c0392b; font-weight: 800; }
+.card-role {
+  display: inline-block; margin: 0 0 0.3rem; padding: 0.05rem 0.5rem;
+  font-size: 0.66rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  color: #15171c; background: #d8d8d2; border-radius: 999px;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.card-tc {
+  display: inline-block; margin: 0 0 0.35rem; padding: 0.05rem 0.5rem;
+  font-size: 0.66rem; font-weight: 800; letter-spacing: 0.04em;
+  color: #14532d; background: #bbf7d0; border: 1px solid #4ade80; border-radius: 999px;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.tc-flag { color: #16a34a; font-weight: 800; font-size: 0.92em; }
+/* Range to-hit cells worsened by heat (Override: +1 ranged at heat 2+). */
+.mweapons td.heat-rng { color: #c0392b; font-weight: 800; background: rgba(192, 57, 24, 0.1) !important; }
+.mweapons caption.wcap-heat {
+  caption-side: top; text-align: left; padding: 0.1rem 0.3rem 0.25rem;
+  font-size: 0.72rem; font-weight: 700; color: #c0392b;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.card-quirks .q-sep { color: #9a9a92; margin: 0 0.15rem; }
+.toolbar-opt { font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer; }
+
+/* The print sheet: a grid of cards, swapped in for the whole page when printing. */
+#print-area { display: none; }
+.sheet {
+  display: grid;
+  gap: 5mm;
+  align-items: start;
+}
+.sheet.cols-1 { grid-template-columns: 1fr; }
+.sheet.cols-2 { grid-template-columns: 1fr 1fr; }
+
+/* "2 × 2 (fit)": four fixed quarter-page cells per page, one .print-page per
+   sheet of four (hard break between). Cells are sized to fit Letter AND A4
+   (10mm margins) in each orientation. The card's render WIDTH and scale are set
+   per-card by JS (fitCardsToCells): it renders the card wide enough that its
+   columns don't collide, picks the width whose aspect best fills the cell, then
+   scales + centers it. */
+.fit-cell { overflow: hidden; }
+.fit-scale { transform-origin: top left; } /* width + transform set per card by JS */
+/* Cell heights leave room for the per-page sheet header (force name / BV /
+   page no.) while the 2×2 block still fits Letter AND A4 (10mm margins). */
+.sheet.fit-portrait {
+  grid-template-columns: repeat(2, 95mm);
+  grid-template-rows: repeat(2, 128mm);
+}
+.sheet.fit-portrait .fit-cell { width: 95mm; height: 128mm; }
+.sheet.fit-landscape {
+  grid-template-columns: repeat(2, 126mm);
+  grid-template-rows: repeat(2, 87mm);
+}
+.sheet.fit-landscape .fit-cell { width: 126mm; height: 87mm; }
+.print-page { display: flex; flex-direction: column; }
+
+/* Per-sheet header: force name (left), total BV, page x of y (right). */
+.sheet-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 9pt;
+  color: #333;
+  border-bottom: 1px solid #999;
+  padding-bottom: 1mm;
+  margin-bottom: 2mm;
+}
+.sheet-head-name { font-weight: 800; font-size: 12pt; color: #000; }
+.sheet-head-page { margin-left: auto; }
+
+/* Keep print cards in their full multi-column layout. A single card is ~340px
+   (≈ 90mm) wide on the site, where the 2-column layout (data | armor diagram)
+   shows everything. On the print page the responsive ≤760px breakpoint would
+   otherwise collapse it to one tall column — losing the side-by-side look and
+   mismatching the off-screen measured scale. Scoped to .sheet so it applies in
+   BOTH the measuring pass and the print (not gated by @media). */
+.sheet .ms-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+/* Doll cards (vehicle/fighter/proto/dropship) are content-light on the left — give
+   the doll column more width (bigger doll → taller card → fills the cell better)
+   and centre the short text column so it doesn't leave a bottom gap. */
+.sheet .doll-card .ms-grid { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) !important; }
+.sheet .doll-card .ms-left { align-self: center; }
+/* Infantry: stack the wide 3-column top into 2 columns (brand on its own row)
+   so the card is taller/squarer instead of short-and-wide. */
+.sheet .inf-top { grid-template-columns: 1fr 1fr !important; align-items: start; }
+.sheet .inf-top .ms-brand { grid-column: 1 / -1; }
+
+/* On a printed sheet the per-location damage <select>s can't be used — pen-mark
+   the pips instead. Drop the dropdowns (keep the facing labels + hit numbers) so
+   the dolls read as clean record-sheet diagrams. */
+.sheet .dmg-ctl select { display: none; }
+.sheet .dmg-ctl { gap: 0; }
+
+.sheet .ba-note { display: none; } /* non-essential caveat — drop it on paper */
+
+/* ---- Battle tracker ---- */
+#battle { display: none; }
+body.battle-mode #browse,
+body.battle-mode .input,
+body.battle-mode #force-panel,
+body.battle-mode footer { display: none; }
+body.battle-mode #battle { display: block; }
+.bt-bar {
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  background: #15171c; color: #f4f4f1; padding: 0.6rem 1rem; border-radius: 10px; margin-bottom: 1rem;
+}
+.bt-title { font-weight: 800; letter-spacing: 0.02em; }
+.bt-vs { font-size: 0.95rem; }
+.bt-spacer { flex: 1 1 auto; }
+.bt-bar button { background: #b45309; color: #fff; border: none; border-radius: 6px; padding: 0.35rem 0.9rem; cursor: pointer; font: inherit; font-weight: 700; }
+.bt-rosters { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 720px) { .bt-rosters { grid-template-columns: 1fr; } }
+.bt-side { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 0.6rem 0.7rem; }
+.bt-side-h { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; margin-bottom: 0.5rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+.bt-units { display: flex; flex-direction: column; gap: 0.2rem; }
+.bt-unit { display: flex; align-items: center; gap: 0.55rem; padding: 0.25rem 0.4rem; border-radius: 6px; }
+.bt-unit.bt-active { background: rgba(180, 83, 9, 0.16); outline: 1.5px solid #b45309; }
+.bt-unit.bt-out { opacity: 0.55; }
+.bt-unit.bt-out .bt-track { text-decoration: line-through; }
+.bt-dot { width: 0.7rem; height: 0.7rem; border-radius: 50%; flex: 0 0 auto; }
+.bt-dot.bt-ok { background: #2e7d32; }
+.bt-dot.bt-hit { background: #e0a800; }
+.bt-dot.bt-ko { background: #c0392b; }
+.bt-track { flex: 1 1 auto; text-align: left; background: none; border: none; color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; padding: 0.1rem 0; }
+.bt-track:hover { color: var(--accent); }
+.bt-bv { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 700; font-size: 0.82rem; }
+.bt-kill { background: none; border: none; cursor: pointer; font-size: 0.85rem; opacity: 0.5; }
+.bt-kill:hover { opacity: 1; }
+/* Battle setup dialog. */
+.bt-modal { position: fixed; inset: 0; z-index: 1100; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.bt-modal[hidden] { display: none; }
+.bt-modal-box { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem 1.4rem; width: min(30rem, 100%); }
+.bt-modal-box h3 { margin: 0 0 0.8rem; }
+.bt-field { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.9rem; margin-bottom: 0.8rem; }
+.bt-field select, .bt-field input { background: var(--panel-2); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 0.4rem 0.5rem; font: inherit; }
+.bt-hint { font-size: 0.78rem; line-height: 1.4; margin: 0 0 1rem; }
+.bt-modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+.bt-prompt { text-align: center; padding: 2rem 1rem; font-size: 0.95rem; }
+.bt-modes { display: flex; gap: 0.4rem; margin-bottom: 0.9rem; }
+.bt-mode { flex: 1; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 0.4rem; cursor: pointer; font: inherit; color: var(--ink); }
+.bt-mode.is-on { background: #b45309; color: #fff; border-color: #b45309; font-weight: 700; }
+.bt-conn { font-size: 0.8rem; font-weight: 700; }
+.bt-conn-online { color: #4ade80; }
+.bt-conn-connecting { color: #facc15; }
+.bt-conn-offline { color: #f87171; }
+
+/* Initiative strip */
+.bt-init {
+  display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 0.45rem 0.75rem; margin-bottom: 1rem; font-size: 0.9rem;
+}
+.bt-init-round { font-weight: 800; letter-spacing: 0.02em; }
+.bt-init button { background: #b45309; color: #fff; border: none; border-radius: 6px; padding: 0.3rem 0.8rem; cursor: pointer; font: inherit; font-weight: 700; }
+.bt-init-roll {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  background: rgba(127, 127, 127, 0.12); border: 1px solid var(--line);
+  border-radius: 6px; padding: 0.2rem 0.55rem;
+}
+.bt-init-roll b { font-size: 1.05rem; }
+.bt-init-roll.is-win { background: rgba(74, 222, 128, 0.18); border-color: #4ade80; }
+.bt-init-win { font-weight: 800; color: #16a34a; }
+.bt-init-tie { font-weight: 700; color: #facc15; }
+.bt-bonus { display: inline-flex; align-items: center; gap: 0.15rem; margin-left: 0.2rem; }
+.bt-bonus-btn { background: rgba(127,127,127,0.18) !important; color: inherit !important; width: 1.4rem; padding: 0.05rem 0 !important; line-height: 1; text-align: center; }
+.bt-bonus-v { min-width: 1.4rem; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bt-toggle { background: rgba(127,127,127,0.16) !important; color: inherit !important; font-weight: 600 !important; }
+.bt-toggle.is-on { background: rgba(74,222,128,0.22) !important; color: #16a34a !important; }
+
+/* Cinematic activation order */
+.bt-activation {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 0.5rem 0.75rem; margin-bottom: 1rem;
+}
+.bt-act-head { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.45rem; font-size: 0.9rem; }
+.bt-brk { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.25rem 0; border-top: 1px dashed var(--line); }
+.bt-brk:first-of-type { border-top: none; }
+.bt-brk-h { flex: 0 0 4.5rem; font-weight: 800; font-size: 0.82rem; opacity: 0.8; padding-top: 0.2rem; }
+.bt-brk-units { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.bt-act {
+  font: inherit; font-size: 0.85rem; border-radius: 6px;
+  border: 1px solid var(--line); background: var(--bg); color: inherit;
+  padding: 0.2rem 0.4rem; border-left-width: 4px;
+  display: inline-flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; line-height: 1.2;
+}
+.bt-act-mark { font: inherit; font-weight: 600; cursor: pointer; border: none; background: none; color: inherit; padding: 0; text-align: left; }
+.bt-act-mark:disabled { cursor: default; }
+.bt-act-name { font-weight: 600; }
+.bt-act-stat { font-size: 0.64rem; opacity: 0.72; font-variant-numeric: tabular-nums; }
+.bt-act-j { color: #16a34a; }
+.bt-act-leg { color: #c0392b; }
+.bt-act-you { border-left-color: #2563eb; }
+.bt-act-foe { border-left-color: #dc2626; }
+.bt-act.is-acted { opacity: 0.5; }
+.bt-act.is-acted .bt-act-name { text-decoration: line-through; }
+.bt-act.is-next { outline: 2px solid #b45309; outline-offset: 1px; }
+.bt-modes { display: flex; gap: 0.15rem; }
+.bt-mode-btn {
+  font: inherit; font-size: 0.6rem; font-weight: 700; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--muted);
+  padding: 0 0.2rem; line-height: 1.4;
+}
+.bt-mode-btn.on { background: #b45309; border-color: #b45309; color: #fff; }
+.bt-mode-ro { font-size: 0.6rem; font-weight: 700; color: var(--muted); }
+.bt-cancel-order {
+  font-size: 0.7rem; line-height: 1.2; margin-left: 0.25rem; padding: 0 0.3rem;
+  border: 1px solid var(--line); border-radius: 4px; background: var(--bg);
+  color: #c0392b; cursor: pointer; font-weight: 800;
+}
+.bt-cancel-order:hover { background: rgba(192,57,24,0.12); border-color: #c0392b; }
+.bt-phase { font-size: 0.66rem; font-weight: 800; padding: 0 0.35rem; border-radius: 999px; }
+.bt-phase-move { background: rgba(37,99,235,0.18); color: #2563eb; }
+.bt-phase-combat { background: rgba(220,38,38,0.18); color: #dc2626; }
+.bt-phase-end { background: rgba(180,83,9,0.18); color: #b45309; }
+/* End phase: per-unit falling-check prompts. */
+.bt-fall {
+  display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;
+  padding: 0.35rem 0.5rem; margin: 0.25rem 0; border-radius: 6px;
+  border-left: 4px solid #b45309; background: rgba(180,83,9,0.1);
+}
+.bt-fall-name { font-weight: 800; }
+.bt-fall-why { color: #b45309; font-weight: 700; font-size: 0.86rem; }
+.bt-acted-tag { color: #16a34a; font-weight: 800; }
+.bt-unit.bt-acted .bt-track { opacity: 0.6; }
+
+/* ---- On-screen print preview (WYSIWYG) ---- */
+.pp-bar { display: none; }
+body.previewing { overflow: hidden; }
+body.previewing .pp-bar {
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1001;
+  background: #15171c; color: #f4f4f1; padding: 0.5rem 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+.pp-bar .pp-title { font-weight: 800; letter-spacing: 0.02em; }
+.pp-bar .pp-ctl { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; }
+.pp-bar .pp-num { font-variant-numeric: tabular-nums; min-width: 2.6rem; text-align: center; }
+.pp-bar .pp-spacer { flex: 1 1 auto; }
+.pp-bar input[type="range"] { width: 9rem; }
+.pp-bar select, .pp-bar button {
+  font: inherit; background: #2a2d34; color: #f4f4f1; border: 1px solid #4c4f57;
+  border-radius: 6px; padding: 0.25rem 0.6rem; cursor: pointer;
+}
+.pp-bar button.primary { background: #b45309; border-color: #b45309; font-weight: 700; }
+body.previewing #print-area {
+  display: block; position: fixed; inset: 0; z-index: 1000;
+  padding: 4.5rem 1rem 2rem; background: #6b6e74; overflow: auto; text-align: center;
+}
+body.previewing .print-page {
+  background: #fff; box-shadow: 0 6px 22px rgba(0, 0, 0, 0.5);
+  width: fit-content; margin: 0 auto 1.4rem; padding: 8mm;
+}
+body.previewing #print-area > .sheet {
+  background: #fff; box-shadow: 0 6px 22px rgba(0, 0, 0, 0.5);
+  padding: 8mm; margin: 0 auto; max-width: 210mm; text-align: left;
+}
+body.previewing #print-area > .sheet-head { max-width: 210mm; margin: 0 auto; color: #000; }
+
+/* Print: keep an arc's header with at least its first rows, avoid mid-arc breaks. */
+@media print {
+  .dropship-weapons .arc-head { break-after: avoid; }
+  .dropship-weapons tr { break-inside: avoid; }
+
+  /* Force "Print sheet": hide the app chrome and lay out only the card grid.
+     (@page size/margin is set at print time by the layout selector.) */
+  body.print-mode #app { display: none; }
+  body.print-mode #print-area { display: block; }
+  body.print-mode .card { break-inside: avoid; page-break-inside: avoid; box-shadow: none; }
+  /* Each sheet of four lands on its own page in the 2×2 layout. */
+  body.print-mode .print-page { break-after: page; break-inside: avoid; }
+  body.print-mode .print-page:last-child { break-after: auto; }
+  /* Print the card fills/banners faithfully (browsers omit backgrounds otherwise). */
+  body.print-mode .card,
+  body.print-mode .card * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Handoff battle banner: shown when a battle is opened from the OVERRIDE GM
+   Tool and one or more campaign units had no match in the bundled library. */
+.bt-handoff-warn {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #6b5d2a;
+  border-radius: 6px;
+  background: #2a2618;
+  color: #e8dca0;
+  font-size: 0.9rem;
+}
+.bt-handoff-warn ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+
+/* Campaign briefing panel: the handoff's tabletop setup, shown atop a battle
+   opened from the OVERRIDE GM Tool. */
+.bt-briefing {
+  margin: 0 0 0.8rem;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid #33465e;
+  border-radius: 6px;
+  background: #171d26;
+}
+.bt-briefing > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #cfe0f5;
+}
+.bt-brief-table {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 4px;
+  background: #24405e;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.bt-brief-row { margin-top: 0.5rem; font-size: 0.88rem; }
+.bt-brief-k {
+  display: inline-block;
+  min-width: 3.5rem;
+  color: #8aa0bb;
+  font-weight: 600;
+}
+.bt-brief-rule {
+  padding: 0.05rem 0.4rem;
+  border-radius: 4px;
+  background: #2a2618;
+  color: #e8dca0;
+  font-size: 0.8rem;
+}
+.bt-brief-sides {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.6rem;
+}
+.bt-brief-side { flex: 1 1 14rem; }
+.bt-brief-side h4 { margin: 0 0 0.3rem; color: #cfe0f5; }
+.bt-brief-notes { margin: 0; padding-left: 1.1rem; font-size: 0.86rem; }
+.bt-brief-air { margin-top: 0.3rem; font-size: 0.8rem; color: #8ab0d0; }

@@ -1,0 +1,67 @@
+#building block data file
+<BlockVersion>
+1
+</BlockVersion>
+
+<UnitType>
+Aero
+</UnitType>
+
+<Name>
+Test Fighter
+</Name>
+
+<Model>
+TF-1
+</Model>
+
+<type>
+IS Level 2
+</type>
+
+<motion_type>
+Aerodyne
+</motion_type>
+
+<SafeThrust>
+5
+</SafeThrust>
+
+<heatsinks>
+12
+</heatsinks>
+
+<sink_type>
+0
+</sink_type>
+
+<armor>
+40
+24
+24
+16
+</armor>
+
+<Nose Equipment>
+Large Laser
+</Nose Equipment>
+
+<Left Wing Equipment>
+Medium Laser
+</Left Wing Equipment>
+
+<Right Wing Equipment>
+Medium Laser
+</Right Wing Equipment>
+
+<Aft Equipment>
+SRM 6
+</Aft Equipment>
+
+<Fuselage Equipment>
+IS Ammo SRM-6
+</Fuselage Equipment>
+
+<tonnage>
+50.0
+</tonnage>

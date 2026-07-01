@@ -1,0 +1,34 @@
+chassis:Locust
+model:LCT-1V
+
+Config:Biped
+TechBase:Inner Sphere
+Era:2499
+Rules Level:1
+
+Mass:20
+Engine:160 Fusion Engine
+Structure:Standard
+Myomer:Standard
+
+Heat Sinks:10 Single
+Walk MP:8
+Jump MP:0
+
+Armor:Standard(Inner Sphere)
+LA Armor:4
+RA Armor:4
+LT Armor:8
+RT Armor:8
+CT Armor:10
+HD Armor:8
+LL Armor:8
+RL Armor:8
+RTL Armor:2
+RTR Armor:2
+RTC Armor:2
+
+Weapons:3
+Medium Laser, Center Torso
+Machine Gun, Left Arm
+Machine Gun, Right Arm

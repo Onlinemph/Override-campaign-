@@ -1,0 +1,35 @@
+chassis:Test Tripod
+model:TR-1
+
+Config:Tripod
+TechBase:Inner Sphere
+Era:3145
+Rules Level:3
+
+Mass:75
+Engine:300 Fusion Engine
+Structure:Standard
+Myomer:Standard
+
+Heat Sinks:12 Double
+Walk MP:4
+Jump MP:0
+
+Armor:Standard(Inner Sphere)
+LA Armor:20
+RA Armor:20
+LT Armor:22
+RT Armor:22
+CT Armor:30
+HD Armor:9
+LL Armor:24
+RL Armor:24
+CL Armor:24
+RTL Armor:7
+RTR Armor:7
+RTC Armor:8
+
+Weapons:3
+Medium Laser, Left Arm
+Medium Laser, Right Arm
+SRM 6, Center Leg

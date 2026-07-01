@@ -11,6 +11,7 @@ import {
 } from './fixtures.js';
 import { validateCampaign } from './campaign/schema.js';
 import { deriveFormationOmp } from './engine/movement.js';
+import { enrichTruth } from './roster/apply.js';
 
 interface FixtureJson {
   seed: string;
@@ -30,8 +31,8 @@ interface FixtureJson {
   markers?: Array<Record<string, any>>;
 }
 
-export function loadCampaignFixture(path: string): TruthState {
-  return buildCampaign(JSON.parse(readFileSync(path, 'utf8')), path);
+export function loadCampaignFixture(path: string, enrich = true): TruthState {
+  return buildCampaign(JSON.parse(readFileSync(path, 'utf8')), path, enrich);
 }
 
 /**
@@ -106,7 +107,7 @@ export function buildFormationEntities(f: any):
 }
 
 /** Build truth from a parsed campaign object, validating first with friendly errors. */
-export function buildCampaign(j: FixtureJson, source = 'campaign'): TruthState {
+export function buildCampaign(j: FixtureJson, source = 'campaign', enrich = true): TruthState {
   const problems = validateCampaign(j);
   if (problems.length > 0) {
     throw new Error(`${source} has ${problems.length} problem(s):\n  - ` + problems.join('\n  - '));
@@ -210,6 +211,19 @@ export function buildCampaign(j: FixtureJson, source = 'campaign'): TruthState {
       ...(o.targetContactId ? { targetContactId: o.targetContactId } : {}),
     };
     truth.orders[order.id] = order;
+  }
+
+  // Fold the real record sheets into the starting state: derive movement, class, and
+  // EW gear (ECM / probes / stealth) from each unit's model against the bundled card
+  // library, filling only unset fields (explicit fixture values win). Runs before
+  // Campaign.create captures CAMPAIGN_INIT, so it stays replay-consistent. Skipped for
+  // the campaign-name listing (enrich=false) and via CAMPAIGN_NO_ENRICH=1.
+  if (enrich && process.env.CAMPAIGN_NO_ENRICH !== '1') {
+    const summary = enrichTruth(truth);
+    if (summary.available && summary.unitsChanged > 0) {
+      console.log(`Enriched ${summary.unitsChanged} unit(s) from the card library ` +
+        `(movement / class / ECM / sensors derived from real record sheets).`);
+    }
   }
   return truth;
 }

@@ -9,8 +9,8 @@
  */
 import { createServer } from 'node:http';
 import { timingSafeEqual } from 'node:crypto';
-import { readFileSync, readdirSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { dirname, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
 import { Campaign, replay } from '../core/truth.js';
@@ -20,6 +20,7 @@ import { commandNodesOf } from '../engine/net.js';
 import { supplyEnvelope } from '../engine/logistics.js';
 import { loadCampaignFixture, buildFormationEntities } from '../demo.js';
 import { buildMul } from '../handoff/mul.js';
+import { buildBattleRoster } from '../handoff/battle.js';
 import { hashPick } from '../core/rng.js';
 import {
   validateCampaign, TERRAINS, INFRA, NODE_TYPES, UNIT_CLASSES, EMCONS, POSTURES,
@@ -109,7 +110,7 @@ function listCampaigns(): Array<{ path: string; name: string }> {
       const p = resolve(d, f);
       if (seen.has(p)) continue;
       seen.add(p);
-      try { out.push({ path: p, name: loadCampaignFixture(p).config.name }); }
+      try { out.push({ path: p, name: loadCampaignFixture(p, false).config.name }); }
       catch { /* not a valid campaign file — skip */ }
     }
   }
@@ -155,6 +156,38 @@ const LOGIN_HTML = `<!doctype html><meta charset="utf-8"><title>OVERRIDE — GM 
 function page(res: any, file: string) {
   res.writeHead(200, { 'content-type': 'text/html' });
   res.end(readFileSync(join(here, '../ui', file)));
+}
+
+// ── The vendored card builder, served as the in-app battle tracker ──
+// `npm run build:battle` compiles cards/ into cards/dist-web/ (the app + the
+// bundled MegaMek unit library). We serve that tree verbatim under /battle/.
+const BATTLE_ROOT = join(here, '../../cards/dist-web');
+const BATTLE_MIME: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css',
+  '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json',
+  '.zip': 'application/zip', '.mtf': 'text/plain; charset=utf-8',
+  '.blk': 'text/plain; charset=utf-8', '.txt': 'text/plain; charset=utf-8',
+};
+
+function serveBattle(res: any, rel: string): void {
+  const full = join(BATTLE_ROOT, rel);
+  if (full !== BATTLE_ROOT && !full.startsWith(BATTLE_ROOT + sep)) {
+    return json(res, 403, { error: 'forbidden' });
+  }
+  if (!existsSync(full) || statSync(full).isDirectory()) {
+    if (rel === 'index.html') {
+      res.writeHead(503, { 'content-type': 'text/html; charset=utf-8' });
+      return res.end(
+        '<!doctype html><meta charset="utf-8"><title>Battle tracker not built</title>' +
+        '<body style="font-family:system-ui;max-width:40rem;margin:4rem auto;line-height:1.5">' +
+        '<h1>Battle tracker not built yet</h1><p>Run <code>npm run build:battle</code> ' +
+        'in the project root, then reload this page.</p></body>');
+    }
+    return json(res, 404, { error: 'not found' });
+  }
+  res.writeHead(200, { 'content-type': BATTLE_MIME[extname(full).toLowerCase()] ?? 'application/octet-stream' });
+  res.end(readFileSync(full));
 }
 
 async function readBody(req: any): Promise<any> {
@@ -204,6 +237,11 @@ const server = createServer(async (req, res) => {
       res.writeHead(200, { 'content-type': asset[2] === 'css' ? 'text/css' : 'text/javascript' });
       return res.end(readFileSync(join(here, '../ui', asset[1])));
     }
+    // The card builder battle tracker (vendored under cards/, built to dist-web/).
+    // Trailing slash matters: the app uses relative asset URLs (./units/…).
+    if (path === '/battle') { res.writeHead(302, { location: '/battle/' }); return res.end(); }
+    if (path === '/battle/') return serveBattle(res, 'index.html');
+    if (path.startsWith('/battle/')) return serveBattle(res, decodeURIComponent(path.slice('/battle/'.length)));
 
     // GM API
     if (path === '/api/gm/state') return json(res, 200, gmState());
@@ -398,6 +436,13 @@ const server = createServer(async (req, res) => {
       if (!pkg) return json(res, 404, { error: 'no such handoff' });
       res.writeHead(200, { 'content-type': 'application/xml' });
       return res.end(buildMul(campaign.truth, pkg, mul[2]));
+    }
+    // Battle roster for the card builder: model names + pilot skills + setup per side.
+    const battleApi = path.match(/^\/api\/gm\/handoff\/([^/]+)\/battle$/);
+    if (battleApi) {
+      const pkg = campaign.truth.handoffs[decodeURIComponent(battleApi[1])];
+      if (!pkg) return json(res, 404, { error: 'no such handoff' });
+      return json(res, 200, buildBattleRoster(campaign.truth, pkg));
     }
 
     // ── M3: the air board ──

@@ -1,0 +1,83 @@
+#building block data file
+<BlockVersion>
+1
+</BlockVersion>
+
+<UnitType>
+Dropship
+</UnitType>
+
+<Name>
+Test Dropship
+</Name>
+
+<Model>
+DS-1
+</Model>
+
+<year>
+3067
+</year>
+
+<type>
+IS Level 2
+</type>
+
+<motion_type>
+Spheroid
+</motion_type>
+
+<transporters>
+mechbay:4.0:1
+asfbay:2.0:1:1
+cargobay:1800.0:1:2
+crewquarters:140.0:0
+</transporters>
+
+<SafeThrust>
+4
+</SafeThrust>
+
+<heatsinks>
+40
+</heatsinks>
+
+<sink_type>
+1
+</sink_type>
+
+<structural_integrity>
+12
+</structural_integrity>
+
+<armor>
+300
+250
+250
+200
+</armor>
+
+<Nose Equipment>
+(B) LRM 20
+LRM 20
+</Nose Equipment>
+
+<Left Side Equipment>
+Medium Laser
+</Left Side Equipment>
+
+<Right Side Equipment>
+Medium Laser
+</Right Side Equipment>
+
+<Aft Equipment>
+</Aft Equipment>
+
+<Hull Equipment>
+IS Ammo LRM-20
+IS Ammo LRM-20
+</Hull Equipment>
+
+<tonnage>
+3000.0
+</tonnage>

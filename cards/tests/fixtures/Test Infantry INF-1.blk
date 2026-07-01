@@ -1,0 +1,38 @@
+#building block data file
+<UnitType>
+Infantry
+</UnitType>
+<Name>
+Test Infantry
+</Name>
+<Model>
+INF-1
+</Model>
+<squad_size>
+7
+</squad_size>
+<squadn>
+4
+</squadn>
+<Primary>
+InfantryAssaultRifle
+</Primary>
+<Secondary>
+SRM Launcher
+</Secondary>
+<secondn>
+2
+</secondn>
+<type>
+IS Level 2
+</type>
+<motion_type>
+Jump
+</motion_type>
+<antimek>
+5
+</antimek>
+<Field Guns Equipment>
+ISLAC5
+ISLAC5
+</Field Guns Equipment>

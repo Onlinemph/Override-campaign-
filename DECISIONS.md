@@ -475,3 +475,29 @@ time (`hexLine`), so sparse authored paths or far-apart clicked waypoints no lon
 teleport. The `m1` acceptance scenario keeps its scripted pace by carrying the old ×5
 cross-country factor into the battalion's authored OMP (1 → 5); all other balance numbers
 move to the new scale.
+
+## D-017 ✅ Embedded card builder: record-sheet stats + in-app battle tracker
+The OVERRIDE Card Builder is vendored under `cards/` (source + its bundled MegaMek library)
+and integrated two ways; the coupling surface is three small bridge modules, so neither
+codebase imports the other's internals beyond a couple of narrow contracts.
+1. **Record sheets are the source of truth.** The card core runs unchanged in Node, so the
+   campaign parses each unit's real `.mtf`/`.blk` (`src/roster/`: pure `derive.ts`, fs glue
+   `library.ts`, policy `apply.ts`) and fills movement / class / BV / EW tags. Enrichment
+   runs inside `buildCampaign` **before** `CAMPAIGN_INIT`, so it's replay-safe; it fills only
+   unset fields (explicit wins, tags merge) and only writes fields the engines already read,
+   so ECM/sensors/speed take effect on the map with no engine change. Equipment-grounded
+   tags only — mission/role tags (RECON/DECOY/…) stay hand-authored.
+2. **In-app battle tracker at `/battle`.** The campaign emits a compact roster (models +
+   pilot skills + fog-of-war setup) that the tracker resolves against the library and loads
+   as real Override cards with a briefing panel. The return leg posts a `BattleResult`
+   (DESTROYED vs SALVAGE, ejected crews, survivor-inferred victor) to the same-origin ingest
+   endpoint; ingest now refuses an already-`RESOLVED` engagement so it can't double-apply.
+   `BattleResult.ejections[].pos` is optional — the tracker has no board coordinates, so the
+   importer drops the crew at the battle hex.
+3. **Setup stays one-command and cross-platform.** `npm run setup` / `update`, a `predev`
+   hook that builds the tracker on demand, and a pure-Node zip fallback so the build needs
+   only Node (no `unzip`/WSL on Windows). CI builds the tracker from a clean checkout.
+
+*(Originally built on the Milestone-5 branch, then ported onto this M6 base — the additive
+core compiled against M6's types unchanged; only the server routes, GM button, campaign-load
+hook, and the double-ingest guard were re-wired.)*

@@ -282,7 +282,7 @@ export interface BattleResult {
   unitOutcomes: Array<{ unitId: Id; damage: DamageState; fpRemaining?: number;
                         ammoState: string;
                         pilotOutcomes: Array<{ pilotId: Id; status: Pilot['status'] }> }>;
-  ejections: Array<{ pilotId: Id; pos: Position }>;
+  ejections: Array<{ pilotId: Id; pos?: Position }>; // pos filled from the battle hex if omitted
   withdrewVia?: Record<Id, 'N' | 'NE' | 'SE' | 'S' | 'SW' | 'NW'>;
   turnsElapsed: number; notes: string;
 }

@@ -5,12 +5,16 @@
   "type": "module",
   "description": "Double-blind campaign manager for tabletop BattleTech (OVERRIDE / SKYWATCH / DEEP SKY)",
   "scripts": {
+    "setup": "npm install && npm run build:battle",
+    "update": "node scripts/update.mjs",
+    "predev": "node scripts/ensure-battle.mjs",
     "dev": "tsx src/server/index.ts",
     "dev:watch": "tsx watch src/server/index.ts",
     "stop": "node scripts/kill-port.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:battle": "npm --prefix cards install && npm --prefix cards run build:web"
   },
   "dependencies": {
     "ws": "^8.18.0"

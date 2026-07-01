@@ -1,0 +1,34 @@
+chassis:Test Quad
+model:QD-1
+
+Config:Quad
+TechBase:Inner Sphere
+Era:3050
+Rules Level:2
+
+Mass:80
+Engine:320 Fusion Engine
+Structure:Standard
+Myomer:Standard
+
+Heat Sinks:10 Single
+Walk MP:4
+Jump MP:0
+
+Armor:Standard(Inner Sphere)
+FLL Armor:24
+FRL Armor:24
+LT Armor:24
+RT Armor:24
+CT Armor:30
+HD Armor:9
+RLL Armor:24
+RRL Armor:24
+RTL Armor:8
+RTR Armor:8
+RTC Armor:8
+
+Weapons:3
+PPC, Front Left Leg
+PPC, Front Right Leg
+Medium Laser, Rear Left Leg

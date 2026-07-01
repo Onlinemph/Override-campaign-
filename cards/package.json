@@ -1,0 +1,51 @@
+{
+  "name": "mtf2override",
+  "version": "0.1.0",
+  "description": "Convert MegaMek .mtf BattleMech files into BattleTech: Override record-card stats.",
+  "type": "module",
+  "bin": {
+    "mtf2override": "dist/cli/index.js"
+  },
+  "exports": {
+    ".": "./dist/core/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsx src/cli/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev:web": "vite",
+    "extract-units": "node scripts/extract-units.mjs",
+    "build-bv-index": "node scripts/build-bv-index.mjs",
+    "build-avail-index": "node scripts/build-avail-index.mjs",
+    "build-rat-index": "node scripts/build-rat-index.mjs",
+    "build-quirk-index": "node scripts/build-quirk-index.mjs",
+    "build-weaponquirk-index": "node scripts/build-weaponquirk-index.mjs",
+    "build-role-index": "node scripts/build-role-index.mjs",
+    "make-icons": "node scripts/make-icons.mjs",
+    "build:web": "node scripts/extract-units.mjs && vite build && node scripts/inline.mjs",
+    "preview:web": "vite preview",
+    "preview:card": "tsx scripts/card-preview.ts",
+    "audit": "tsx scripts/audit-units.ts",
+    "typecheck:web": "tsc -p tsconfig.web.json"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "adm-zip": "^0.5.18",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "@supabase/realtime-js": "^2.108.2"
+  }
+}

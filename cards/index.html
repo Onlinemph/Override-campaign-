@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>mtf2override — MTF / BLK to BattleTech: Override card</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <meta name="theme-color" content="#15171c" />
+    <link rel="apple-touch-icon" href="./icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Override Cards" />
+  </head>
+  <body>
+    <main id="app">
+      <header>
+        <h1>mtf2override</h1>
+        <p class="tagline">
+          Convert a MegaMek <code>.mtf</code> BattleMech or <code>.blk</code>
+          Battle Armor / combat vehicle into BattleTech: Override record-card
+          stats. Everything runs in your browser.
+        </p>
+      </header>
+
+      <section class="browse" id="browse">
+        <div class="browse-header">
+          <h2 class="browse-title">Browse Units <span class="browse-count muted" id="browse-count"></span></h2>
+          <button id="browse-toggle" type="button" class="browse-toggle" aria-expanded="true" aria-controls="browse-body">▲ Hide</button>
+        </div>
+        <div id="browse-body" class="browse-body">
+          <div class="browse-controls">
+            <select id="browse-cat" class="browse-cat">
+              <option value="">All categories</option>
+            </select>
+            <select id="browse-faction" class="browse-cat" title="Filter by MUL faction availability">
+              <option value="">Any faction</option>
+            </select>
+            <select id="browse-era" class="browse-cat" title="Filter by MUL era availability">
+              <option value="">Any era</option>
+            </select>
+            <input id="browse-q" type="search" class="browse-q" placeholder="Search by name…" autocomplete="off" spellcheck="false" />
+          </div>
+          <div id="browse-list" class="browse-list" role="listbox" aria-label="Unit list"></div>
+          <p class="browse-status muted" id="browse-status">Loading unit index…</p>
+        </div>
+      </section>
+
+      <section class="input">
+        <div class="toolbar">
+          <button id="upload" type="button">Upload .mtf / .blk file(s)</button>
+          <input id="file" type="file" accept=".mtf,.blk,text/plain" multiple hidden />
+          <button id="clear" type="button">Clear</button>
+          <label class="toolbar-opt"><input type="checkbox" id="show-quirks" /> Show quirks</label>
+        </div>
+        <div class="input-actions">
+          <button id="add-force" type="button">＋ Add to Force</button>
+        </div>
+      </section>
+
+      <section class="force" id="force-panel">
+        <div class="force-header">
+          <h2 class="force-title">Force</h2>
+          <select id="force-pick" class="force-pick" title="Active force" aria-label="Active force"></select>
+          <span class="force-count muted" id="force-count"></span>
+          <div class="force-manage">
+            <button id="force-new" type="button">New</button>
+            <button id="force-rename" type="button">Rename</button>
+            <button id="force-delete" type="button">Delete</button>
+          </div>
+        </div>
+        <div id="force-list" class="force-list"></div>
+        <p id="force-total" class="force-total"></p>
+        <div class="force-actions">
+          <label class="force-cols-label">Layout
+            <select id="force-cols" class="force-cols">
+              <option value="fit" selected>2 × 2 — portrait (fit)</option>
+              <option value="fitL">2 × 2 — landscape (fit)</option>
+              <option value="p2">2 per row (portrait)</option>
+              <option value="p1">1 per row (portrait)</option>
+            </select>
+          </label>
+          <button id="force-print" type="button" class="primary" disabled>Print sheet</button>
+          <button id="force-export" type="button">Export</button>
+          <button id="force-import" type="button">Import</button>
+          <input id="force-import-file" type="file" accept="application/json,.json" hidden />
+          <button id="force-share" type="button">Copy link</button>
+          <button id="force-battle" type="button">⚔ Battle</button>
+          <button id="force-clear" type="button">Clear</button>
+        </div>
+        <div class="rat-gen">
+          <button id="rat-toggle" type="button" class="rat-toggle" aria-expanded="false">🎲 Generate from RAT</button>
+          <div id="rat-body" class="rat-body" hidden>
+            <div class="rat-row">
+              <select id="rat-source" class="browse-cat" aria-label="RAT era / source"></select>
+              <select id="rat-faction" class="browse-cat" aria-label="RAT faction"></select>
+            </div>
+            <div class="rat-row">
+              <select id="rat-table" class="browse-cat" aria-label="RAT table"></select>
+              <label class="rat-count-label">Count <input id="rat-count" type="number" min="1" max="12" value="4" class="rat-count" /></label>
+              <button id="rat-roll" type="button">Roll table</button>
+              <button id="rat-lance" type="button" title="Roll one 'Mech per weight class from this faction">Roll lance</button>
+            </div>
+            <div class="rat-row rat-scenario-row">
+              <span class="rat-scn-h">Scenario:</span>
+              <span class="rat-scn-lbl">vs</span>
+              <select id="rat-faction-b" class="browse-cat" aria-label="Opposing faction"></select>
+              <label class="rat-count-label">~BV <input id="rat-bv" type="number" min="500" step="500" value="5000" class="rat-bv" /></label>
+              <button id="rat-scenario" type="button" title="Roll two BV-matched forces (faction above vs this one)">Generate scenario</button>
+            </div>
+            <span id="rat-status" class="muted rat-status"></span>
+          </div>
+        </div>
+        <div class="pilot-stable">
+          <button id="pilot-toggle" type="button" class="rat-toggle" aria-expanded="false">👤 Pilot stable</button>
+          <div id="pilot-body" class="rat-body" hidden>
+            <div id="pilot-list" class="pilot-list"></div>
+            <div class="pilot-form">
+              <input id="pf-name" placeholder="Pilot name" class="pf-name" />
+              <label class="rat-count-label">G <input id="pf-gun" type="number" min="0" max="8" value="4" class="pf-num" /></label>
+              <label class="rat-count-label">P <input id="pf-pil" type="number" min="0" max="8" value="5" class="pf-num" /></label>
+              <input id="pf-abil" placeholder="abilities / notes (optional)" class="pf-abil" />
+              <button id="pf-save" type="button">Add pilot</button>
+            </div>
+          </div>
+        </div>
+        <div class="analytics">
+          <button id="analytics-toggle" type="button" class="rat-toggle" aria-expanded="false">📊 Force analytics</button>
+          <div id="analytics-body" class="rat-body" hidden>
+            <div class="analytics-actions">
+              <button id="analytics-print" type="button">Print muster sheet</button>
+            </div>
+            <div id="analytics-out"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="battle"></section>
+
+      <section id="output" class="output" aria-live="polite"></section>
+
+      <footer>
+        <p>
+          TMM upper bands (run &ge; 13) are inferred and unverified. Validate
+          against the DFA Override Card Generator.
+        </p>
+        <p class="muted" id="build"></p>
+      </footer>
+    </main>
+
+    <!-- Battle setup dialog. -->
+    <div id="battle-setup" class="bt-modal" hidden>
+      <div class="bt-modal-box">
+        <h3>Start a battle</h3>
+        <div class="bt-modes">
+          <button type="button" class="bt-mode is-on" data-mode="local">Solo / local</button>
+          <button type="button" class="bt-mode" data-mode="host">Host online</button>
+          <button type="button" class="bt-mode" data-mode="join">Join online</button>
+        </div>
+        <label class="bt-field">Your force
+          <select id="battle-your"></select>
+        </label>
+        <label class="bt-field bt-when-local">Enemy force link <span class="muted">(optional)</span>
+          <input id="battle-foe-url" type="text" placeholder="Paste a force share link…" />
+        </label>
+        <label class="bt-field bt-when-join" hidden>Room link or code
+          <input id="battle-room" type="text" placeholder="Paste the room link your opponent sent…" />
+        </label>
+        <p class="muted bt-hint" id="battle-hint"></p>
+        <div class="bt-modal-actions">
+          <button id="battle-start" type="button" class="primary">Start battle</button>
+          <button id="battle-cancel" type="button">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Print preview toolbar (shown only while previewing). -->
+    <div id="pp-bar" class="pp-bar">
+      <span class="pp-title">Print preview</span>
+      <label class="pp-ctl">Fill <input id="pp-fill" type="range" min="100" max="135" value="116" /><span id="pp-fill-val" class="pp-num">116%</span></label>
+      <label class="pp-ctl">Layout
+        <select id="pp-layout">
+          <option value="fit">2 × 2 — portrait</option>
+          <option value="fitL">2 × 2 — landscape</option>
+          <option value="p2">2 per row</option>
+          <option value="p1">1 per row</option>
+        </select>
+      </label>
+      <span class="pp-ctl">Zoom <button id="pp-zoom-out" type="button">−</button><span id="pp-zoom-val" class="pp-num">75%</span><button id="pp-zoom-in" type="button">+</button></span>
+      <span class="pp-spacer"></span>
+      <button id="pp-print" type="button" class="primary">🖨 Print</button>
+      <button id="pp-close" type="button">Close</button>
+    </div>
+
+    <!-- Print-only container: filled by the Force "Print sheet" button. Lives
+         outside #app so the print stylesheet can swap it in for the whole page. -->
+    <div id="print-area" aria-hidden="true"></div>
+
+    <script type="module" src="/src/web/main.ts"></script>
+  </body>
+</html>
