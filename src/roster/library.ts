@@ -13,7 +13,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { convertAny } from '../../cards/src/core/index.js';
-import { buildNameIndex, resolveModel } from '../../cards/src/web/handoff-import.js';
+import { buildNameIndex, normalizeName, resolveModel } from '../../cards/src/web/handoff-import.js';
 import type { UnitIndexEntry } from '../../cards/src/web/handoff-import.js';
 import { deriveUnitFields } from './derive.js';
 import type { DerivedUnitFields, ParsedCardLike } from './derive.js';
@@ -95,4 +95,25 @@ export function loadCardByModel(model: string): LoadedCard | null {
 export function deriveFieldsForModel(model: string): DerivedUnitFields | null {
   const c = loadCardByModel(model);
   return c ? deriveUnitFields(c.parsed, c.text, c.bv, c.role) : null;
+}
+
+/**
+ * Search the bundled library by name substring (for the campaign editor's unit
+ * picker). Returns up to `limit` matches with the derived class + BV so the editor
+ * can author a correct unit; the rest fills in via enrichment on load.
+ */
+export function searchLibrary(
+  query: string, limit = 20,
+): Array<{ name: string; class: string; bv?: number }> {
+  const L = lib();
+  const q = normalizeName(query);
+  if (!L || q.length < 2) return [];
+  const out: Array<{ name: string; class: string; bv?: number }> = [];
+  for (const entry of L.index.values()) {
+    if (!normalizeName(entry.name).includes(q)) continue;
+    const d = deriveFieldsForModel(entry.name);
+    if (d) out.push({ name: entry.name, class: d.class, ...(d.bv != null ? { bv: d.bv } : {}) });
+    if (out.length >= limit) break;
+  }
+  return out;
 }

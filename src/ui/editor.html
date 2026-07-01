@@ -442,6 +442,9 @@ function formationForm(f) {
     <div class="row"><label>RDY</label><input class="s" value="${f.rdy}" oninput="camp.formations[${idx}].rdy=+this.value;validate()">
       <label><input type="checkbox" ${f._commandNode?'checked':''} onchange="camp.formations[${idx}]._commandNode=this.checked"> command node</label></div>
     <h2 style="margin-top:6px">Units</h2>
+    <div class="row"><input class="m" placeholder="🔎 add from library (e.g. Warhammer)…" oninput="libSearch(${idx},this.value)">
+      <span class="kv">picks the real model &amp; class; stats fill in on load</span></div>
+    <div id="lib-results-${idx}" class="kv" style="margin:2px 0 4px"></div>
     ${(f.units||[]).map((u,ui)=>`<div class="row">
       <input class="m" value="${u.name}" title="name" oninput="camp.formations[${idx}].units[${ui}].name=this.value;redraw()">
       <input class="m" value="${u.model||''}" title="model" oninput="camp.formations[${idx}].units[${ui}].model=this.value">
@@ -451,6 +454,31 @@ function formationForm(f) {
       <button class="danger" onclick="camp.formations[${idx}].units.splice(${ui},1);redraw()">✕</button></div>`).join('')}
     <div class="row"><button onclick="camp.formations[${idx}].units.push({name:'Unit',model:'GEN-1',class:'MECH',tags:[]});redraw()">+ unit</button>
       <button class="danger" onclick="camp.formations.splice(${idx},1);sel=null;redraw()">delete formation</button></div>`;
+}
+
+// Unit picker: search the bundled card library and add a real unit (model + class).
+// The rest of the stats (movement, BV, ECM/probe tags) fill in via record-sheet
+// enrichment when the campaign loads.
+let _libTimer;
+function libSearch(idx, q) {
+  clearTimeout(_libTimer);
+  const box = document.getElementById('lib-results-' + idx);
+  if (!box) return;
+  if (!q || q.trim().length < 2) { box.innerHTML = ''; return; }
+  _libTimer = setTimeout(async () => {
+    try {
+      const r = await fetch('/api/gm/units/search?q=' + encodeURIComponent(q.trim()));
+      const { units } = await r.json();
+      box.innerHTML = units.length
+        ? units.map(u => `<button class="tool" onclick='addLibUnit(${idx},${JSON.stringify(u).replace(/'/g, '&#39;')})'>` +
+            `${u.name} <span class="kv">${u.class}${u.bv ? ' · BV ' + u.bv : ''}</span></button>`).join(' ')
+        : '<span class="kv">no matches</span>';
+    } catch { box.innerHTML = '<span class="kv">library search unavailable — run npm run build:battle</span>'; }
+  }, 200);
+}
+function addLibUnit(idx, u) {
+  camp.formations[idx].units.push({ name: u.name, model: u.name, class: u.class, tags: [] });
+  redraw(); validate();
 }
 
 function facilityForm(f) {

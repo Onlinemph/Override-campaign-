@@ -22,6 +22,7 @@ import { loadCampaignFixture, buildFormationEntities } from '../demo.js';
 import { buildMul } from '../handoff/mul.js';
 import { buildBattleRoster } from '../handoff/battle.js';
 import { enrichUnit } from '../roster/apply.js';
+import { searchLibrary } from '../roster/library.js';
 import { hashPick } from '../core/rng.js';
 import {
   validateCampaign, TERRAINS, INFRA, NODE_TYPES, UNIT_CLASSES, EMCONS, POSTURES,
@@ -441,6 +442,10 @@ const server = createServer(async (req, res) => {
       if (!pkg) return json(res, 404, { error: 'no such handoff' });
       res.writeHead(200, { 'content-type': 'application/xml' });
       return res.end(buildMul(campaign.truth, pkg, mul[2]));
+    }
+    // Editor unit picker: search the bundled library by name (derived class + BV).
+    if (path === '/api/gm/units/search') {
+      return json(res, 200, { units: searchLibrary(url.searchParams.get('q') ?? '') });
     }
     // Battle roster for the card builder: model names + pilot skills + setup per side.
     const battleApi = path.match(/^\/api\/gm\/handoff\/([^/]+)\/battle$/);

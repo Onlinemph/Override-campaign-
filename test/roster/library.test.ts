@@ -5,7 +5,9 @@
  * exercise it locally.
  */
 import { describe, expect, it } from 'vitest';
-import { deriveFieldsForModel, isLibraryAvailable, loadCardByModel } from '../../src/roster/library.js';
+import {
+  deriveFieldsForModel, isLibraryAvailable, loadCardByModel, searchLibrary,
+} from '../../src/roster/library.js';
 
 const has = isLibraryAvailable();
 
@@ -27,6 +29,14 @@ describe.skipIf(!has)('roster/library — real record sheets', () => {
 
   it('returns null for a model with no library match', () => {
     expect(deriveFieldsForModel('Definitely Not A Real Mech ZZ-9')).toBeNull();
+  });
+
+  it('searches the library for the editor picker (name → class + BV)', () => {
+    const hits = searchLibrary('warhammer', 5);
+    expect(hits.length).toBeGreaterThan(0);
+    expect(hits.length).toBeLessThanOrEqual(5);
+    expect(hits.every(h => /warhammer/i.test(h.name) && typeof h.class === 'string')).toBe(true);
+    expect(searchLibrary('a')).toEqual([]); // too-short queries return nothing
   });
 });
 

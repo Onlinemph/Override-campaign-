@@ -86,6 +86,12 @@ ingests and unfreezes the campaign (double-ingest is refused).
 if it's missing. Needs only Node — the build unpacks the library with a pure-Node fallback,
 so no `unzip`/WSL on Windows.
 
+Derivation runs everywhere units enter play (initial force, `/api/gm/load`, and GM
+reinforcement spawns), a unit's MUL role maps `Scout`→`RECON`, and the derived gear +
+sensor reach show in the own-forces panels and map tooltips. The **`/editor`** unit rows
+have a **library search** — type a chassis, pick a real unit, and its model/class are set
+(the rest derives on load).
+
 ## Build your own campaign
 
 Campaigns are plain JSON — copy `demo/campaign.json` and edit it, or write one from
