@@ -18,7 +18,9 @@ import { JsonlEventStore, MemoryEventStore } from '../core/log.js';
 import { project } from '../projection/project.js';
 import { commandNodesOf } from '../engine/net.js';
 import { supplyEnvelope } from '../engine/logistics.js';
-import { loadCampaignFixture, buildFormationEntities } from '../demo.js';
+import { loadCampaignFixture, buildFormationEntities, buildCampaign } from '../demo.js';
+import { generateCampaign } from '../campaign/generate.js';
+import { rollForce, campaignUnitsFromForce } from '../roster/roll.js';
 import { buildMul } from '../handoff/mul.js';
 import { buildBattleRoster } from '../handoff/battle.js';
 import { enrichUnit } from '../roster/apply.js';
@@ -326,6 +328,40 @@ const server = createServer(async (req, res) => {
         const truth = loadCampaignFixture(String(b.path));
         campaign = Campaign.create(truth);          // fresh in-memory session
         activeLogPath = undefined;                  // not persisted unless restarted with --log
+        broadcast();
+        return json(res, 200, { ok: true, name: truth.config.name });
+      } catch (e: any) {
+        return json(res, 200, { ok: false, reason: String(e?.message ?? e).slice(0, 400) });
+      }
+    }
+    // ── Campaign generator ──
+    if (path === '/api/gm/generate' && req.method === 'POST') {
+      const b = await readBody(req);
+      const camp = generateCampaign({
+        name: b.name, seed: b.seed, width: Number(b.width) || 20, height: Number(b.height) || 14,
+        sides: Array.isArray(b.sides) ? b.sides : undefined,
+      });
+      return json(res, 200, { campaign: camp });
+    }
+    if (path === '/api/gm/roll-force' && req.method === 'POST') {
+      const b = await readBody(req);
+      const units = rollForce({
+        count: Math.max(1, Math.min(24, Number(b.count) || 4)),
+        seed: b.seed, classes: b.classes, era: b.era, weight: b.weight,
+        minBv: b.minBv, maxBv: b.maxBv,
+      });
+      return json(res, 200, { units });
+    }
+    if (path === '/api/gm/import-force' && req.method === 'POST') {
+      const b = await readBody(req);
+      return json(res, 200, { units: campaignUnitsFromForce(b.force) });
+    }
+    if (path === '/api/gm/start' && req.method === 'POST') {
+      const b = await readBody(req);
+      try {
+        const truth = buildCampaign(b.campaign, 'generated campaign'); // validates + enriches
+        campaign = Campaign.create(truth);
+        activeLogPath = undefined;
         broadcast();
         return json(res, 200, { ok: true, name: truth.config.name });
       } catch (e: any) {

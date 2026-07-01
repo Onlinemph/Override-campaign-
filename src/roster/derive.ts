@@ -15,6 +15,8 @@ import type { FuelLedger, UnitClass } from '../core/types.js';
 export interface ParsedCardLike {
   kind: 'mech' | 'battlearmor' | 'vehicle' | 'fighter' | 'infantry' | 'protomech' | 'dropship';
   card: {
+    mass?: number; // 'Mech card tonnage
+    tonnage?: number; // vehicle / fighter / dropship / proto tonnage
     walkMove?: number; // 'Mech card
     runMove?: number;
     walkMP?: number; // BA card
@@ -41,6 +43,7 @@ export interface DerivedUnitFields {
   maxThrust?: number;
   fuel?: FuelLedger;
   bv?: number;
+  tonnage?: number;
   tags: string[];
 }
 
@@ -95,7 +98,8 @@ export function deriveUnitFields(
   // MUL battlefield role → campaign mission tag. Only "Scout" maps cleanly to an
   // engine effect (RECON extends a VTOL's sensor range); other roles are advisory.
   if (role && /scout/i.test(role) && !tags.includes('RECON')) tags.push('RECON');
-  const base = { bv, tags };
+  const tonnage = c.mass ?? c.tonnage;
+  const base = { bv, tags, ...(tonnage !== undefined ? { tonnage } : {}) };
 
   switch (parsed.kind) {
     case 'mech': {

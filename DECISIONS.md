@@ -518,3 +518,21 @@ The tracker's play mode was ground/'Mech-centric; aerospace is now first-class e
    carrier's current air hex (or the air hex over its theater on the ground), so RTB
    distance and joker/bingo track the carrier as it moves, and fall back when it's killed.
    Bounded on purpose — carrier rearm/turnaround (crews live on facilities) is left for later.
+
+## D-019 ✅ Campaign generator (map + armies from the card library)
+Instead of only editing the demo, the GM can generate a campaign in the editor.
+1. **Coherent, seeded terrain** (`src/campaign/generate.ts`, pure): terrain is grown as
+   blobs (woods/hills/water/rough/swamp/mountain) from random centers via frontier growth,
+   plus a town or two joined by a greedy hex-path road — so a map reads like a place, not
+   speckle. A local mulberry32 PRNG (seeded from a string hash) keeps it deterministic and
+   testable; this is authoring-time randomness, deliberately NOT the campaign's logged RNG.
+   `generateCampaign` emits the same JSON the editor/loader already validate.
+2. **Armies from the library** (`src/roster/roll.ts`): `rollForce` pre-filters the index by
+   category+era (cheap, no parse), seeded-shuffles, then derives candidates to apply exact
+   class / weight (tonnage added to derivation) / BV filters. `campaignUnitsFromForce`
+   converts a card-builder force export into unit specs, resolving class from the library.
+   Both degrade to empty without a built library.
+3. **Server + editor.** GM-gated endpoints `/api/gm/generate|roll-force|import-force|start`;
+   `start` builds + launches a generated campaign object in memory (no file round-trip). The
+   editor gains a Generate bar and an Armies bar (roll/import, placed at per-side spawn
+   corners). Objectives/bases stay the GM's to paint — the generator does map + armies only.

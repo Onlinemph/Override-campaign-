@@ -59,6 +59,12 @@ export function isLibraryAvailable(): boolean {
   return lib() !== null;
 }
 
+/** The unit index entries (name/path/category/era), or null with no library. */
+export function libraryIndex(): UnitIndexEntry[] | null {
+  const L = lib();
+  return L ? [...L.index.values()] : null;
+}
+
 const bvKey = (s: string): string => s.toLowerCase().replace(/\s+/g, ' ').trim();
 const fileStem = (p: string): string =>
   (p.replace(/\\/g, '/').split('/').pop() ?? '').replace(/\.(mtf|blk)$/i, '');

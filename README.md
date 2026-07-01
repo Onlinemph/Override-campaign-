@@ -110,7 +110,18 @@ The loader validates on start and reports any mistakes in plain language
 Run yours with `npm run dev -- mycampaign.json --log mywar.jsonl`.
 Or use the **visual editor at `/editor`**: paint terrain/infra/objectives on the map,
 drop units and facilities, set sides and victory conditions, and download a validated
-`campaign.json` (live error-checking as you build). A **System (DEEP SKY) view** in the same editor builds the node-and-lane graph visually
+`campaign.json` (live error-checking as you build).
+
+**Campaign generator (in the editor).** Don't start from a blank map — hit **🎲 Generate**
+(name / size / seed) for a **coherent random map**: clustered woods, hills, water, rough,
+swamp and mountains plus a town or two joined by a road, seeded so it's reproducible. Then
+paint over it and add objectives/bases with the normal tools. Under **Armies**, **🎲 Roll
+force** pulls a real force from the bundled card library for the active side (filter by
+class / weight class / era / BV) — or **Import card force** drops in a force you built in the
+`/battle` app. Stats derive from the record sheets on load. **▶ Start campaign** builds and
+launches the generated campaign live on the GM screen (no file round-trip needed).
+
+A **System (DEEP SKY) view** in the same editor builds the node-and-lane graph visually
 — drop nodes by type, draw lanes (with AU distances), place vessels, set secret pirate
 points and node objectives. Satellites, orders and markers round-trip and can be
 hand-tuned in the file.

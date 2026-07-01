@@ -29,6 +29,32 @@
   <span id="valid" class="kv"></span>
 </div>
 
+<div class="bar" style="background:#161d26">
+  <b class="kv">🎲 Generate:</b>
+  <input id="g-name" placeholder="name" value="Generated Campaign" style="width:12em">
+  <label class="kv">W <input id="g-w" type="number" value="20" min="4" max="60" style="width:4em"></label>
+  <label class="kv">H <input id="g-h" type="number" value="14" min="4" max="60" style="width:4em"></label>
+  <input id="g-seed" placeholder="seed" value="" style="width:7em">
+  <button onclick="generateMap()">Generate map</button>
+  <span class="kv">then paint terrain &amp; add objectives below · </span>
+  <button onclick="startCampaign()" title="Build & start this campaign live on the GM screen">▶ Start campaign</button>
+</div>
+
+<div class="bar" style="background:#161d26">
+  <b class="kv">Armies (active side):</b>
+  <label class="kv">n <input id="a-count" type="number" value="4" min="1" max="24" style="width:3.5em"></label>
+  <select id="a-class" class="kv"><option value="">any class</option>
+    <option>MECH</option><option>VEHICLE</option><option>VTOL</option><option>BA</option>
+    <option>INFANTRY</option><option>PROTO</option><option>ASF</option><option>CONV_FIGHTER</option><option>DROPSHIP</option></select>
+  <select id="a-weight" class="kv"><option value="">any weight</option>
+    <option>LIGHT</option><option>MEDIUM</option><option>HEAVY</option><option>ASSAULT</option></select>
+  <input id="a-era" placeholder="era (e.g. 3025)" style="width:8em">
+  <label class="kv">≤BV <input id="a-bv" type="number" placeholder="—" style="width:5em"></label>
+  <button onclick="rollForce()">🎲 Roll force</button>
+  <button onclick="importCardForce()">Import card force…</button>
+  <span id="a-status" class="kv"></span>
+</div>
+
 <div class="cols">
   <div class="col" style="flex:1.9;min-width:520px">
     <div class="panel">
@@ -528,6 +554,61 @@ function validate() {
     else { el.innerHTML = `<span class="bad">✗ ${r.problems.length} problem(s)</span>`;
       box.textContent = r.problems.map(p => '• ' + p).join('\n'); }
   }, 250);
+}
+
+// ── campaign generator ──
+async function generateMap() {
+  const body = { name: $('g-name').value || 'Generated Campaign',
+    width: +$('g-w').value || 20, height: +$('g-h').value || 14,
+    seed: $('g-seed').value || undefined,
+    sides: camp && camp.sides && camp.sides.length ? camp.sides.map(s => ({ id: s.id, name: s.name })) : undefined };
+  const r = await (await fetch('/api/gm/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })).json();
+  camp = r.campaign; if (!camp.system) camp.system = { nodes: [], lanes: [] };
+  activeSide = camp.sides[0].id; sel = null; sysPos = {}; linkFrom = null; bumpSeq();
+  redraw();
+}
+async function startCampaign() {
+  validate();
+  if (!confirm('Build and start this campaign live on the GM screen? (Unsaved edits become the running game.)')) return;
+  const r = await (await fetch('/api/gm/start', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ campaign: camp }) })).json();
+  if (r.ok) location.href = '/gm';
+  else alert('Could not start: ' + r.reason);
+}
+// place a rolled/imported set of units as a new formation for the active side
+function spawnHexFor(i) {
+  const t = theater(), pad = 1;
+  const corners = [[pad, pad], [t.width - 1 - pad, t.height - 1 - pad], [pad, t.height - 1 - pad], [t.width - 1 - pad, pad]];
+  return corners[i % corners.length];
+}
+function placeForce(name, units) {
+  if (!units.length) { $('a-status').textContent = 'no units'; return; }
+  const sideIdx = camp.sides.findIndex(s => s.id === activeSide);
+  const [q, r] = spawnHexFor(Math.max(0, sideIdx));
+  const id = genId(activeSide + '-f');
+  camp.formations.push({ id, sideId: activeSide, name, theaterId: theater().id, q, r,
+    omp: 4, sigBase: 7, emcon: 'PASSIVE', posture: 'NONE', rdy: 10,
+    units: units.map(u => ({ name: u.name || u.model, model: u.model, class: u.class || 'MECH', tags: u.tags || [],
+      ...(u.gunnery !== undefined ? { gunnery: u.gunnery } : {}), ...(u.piloting !== undefined ? { piloting: u.piloting } : {}) })) });
+  sel = { kind: 'formation', id };
+  $('a-status').textContent = `+${units.length} at ${q},${r}`;
+  redraw();
+}
+async function rollForce() {
+  const body = { count: +$('a-count').value || 4, seed: (camp.seed || 'ROLL') + ':' + activeSide + ':' + Date.now(),
+    classes: $('a-class').value ? [$('a-class').value] : undefined,
+    weight: $('a-weight').value || undefined, era: $('a-era').value || undefined,
+    maxBv: $('a-bv').value ? +$('a-bv').value : undefined };
+  $('a-status').textContent = 'rolling…';
+  const r = await (await fetch('/api/gm/roll-force', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })).json();
+  if (!r.units || !r.units.length) { $('a-status').textContent = 'no matches (build the library?)'; return; }
+  placeForce(`${activeSide} force ${idSeq + 1}`, r.units);
+}
+async function importCardForce() {
+  const txt = prompt('Paste a card-builder force JSON (from /battle → Export):');
+  if (!txt) return;
+  let force; try { force = JSON.parse(txt); } catch { alert('That is not valid JSON.'); return; }
+  const r = await (await fetch('/api/gm/import-force', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ force }) })).json();
+  placeForce(force.name || `${activeSide} imported`, r.units || []);
 }
 
 // ── file ops ──
