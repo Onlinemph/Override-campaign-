@@ -22,7 +22,12 @@ const here = dirname(fileURLToPath(import.meta.url));
 // Roots that may hold units-index.json + units/ + bv-index.json, best first.
 const ROOTS = ['../../cards/dist-web', '../../cards/public'].map(r => join(here, r));
 
-interface Lib { root: string; index: Map<string, UnitIndexEntry>; bv: Record<string, number> }
+interface Lib {
+  root: string;
+  index: Map<string, UnitIndexEntry>;
+  bv: Record<string, number>;
+  role: Record<string, string>;
+}
 let cache: Lib | null = null;
 let loaded = false;
 
@@ -34,10 +39,13 @@ function lib(): Lib | null {
     if (!existsSync(idxPath)) continue;
     try {
       const entries = JSON.parse(readFileSync(idxPath, 'utf8')) as UnitIndexEntry[];
-      const bvPath = join(root, 'bv-index.json');
-      const bv = existsSync(bvPath)
-        ? (JSON.parse(readFileSync(bvPath, 'utf8')) as Record<string, number>) : {};
-      cache = { root, index: buildNameIndex(entries), bv };
+      const readJson = <T>(name: string, fallback: T): T => {
+        const p = join(root, name);
+        return existsSync(p) ? (JSON.parse(readFileSync(p, 'utf8')) as T) : fallback;
+      };
+      const bv = readJson<Record<string, number>>('bv-index.json', {});
+      const role = readJson<Record<string, string>>('role-index.json', {});
+      cache = { root, index: buildNameIndex(entries), bv, role };
       return cache;
     } catch {
       /* try the next root */
@@ -61,6 +69,7 @@ export interface LoadedCard {
   text: string;
   parsed: ParsedCardLike;
   bv?: number;
+  role?: string;
 }
 
 /** Resolve a model name to a parsed card + its raw text + BV, or null. */
@@ -75,7 +84,8 @@ export function loadCardByModel(model: string): LoadedCard | null {
     const text = readFileSync(file, 'utf8');
     const parsed = convertAny(text, hit.path) as unknown as ParsedCardLike;
     const bv = L.bv[bvKey(fileStem(hit.path))] ?? L.bv[bvKey(hit.name)];
-    return { model, path: hit.path, text, parsed, ...(bv != null ? { bv } : {}) };
+    const role = L.role[bvKey(fileStem(hit.path))] ?? L.role[bvKey(hit.name)];
+    return { model, path: hit.path, text, parsed, ...(bv != null ? { bv } : {}), ...(role ? { role } : {}) };
   } catch {
     return null; // unparseable / unsupported unit type — caller keeps its own data
   }
@@ -84,5 +94,5 @@ export function loadCardByModel(model: string): LoadedCard | null {
 /** Derive campaign Unit fields for a model name straight from the library. */
 export function deriveFieldsForModel(model: string): DerivedUnitFields | null {
   const c = loadCardByModel(model);
-  return c ? deriveUnitFields(c.parsed, c.text, c.bv) : null;
+  return c ? deriveUnitFields(c.parsed, c.text, c.bv, c.role) : null;
 }

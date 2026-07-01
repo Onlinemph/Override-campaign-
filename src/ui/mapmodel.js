@@ -74,9 +74,13 @@
     const markers = [];
     (v.ownFormations || []).forEach(f => {
       if (!f.pos) return;
+      const gear = [...new Set((f.units || []).flatMap(u => (u.tags || [])
+        .filter(t => ['ECM', 'ANGEL_ECM', 'BEAGLE', 'STEALTH', 'C3M', 'HQ', 'RECON'].includes(t))))];
       markers.push({ q: f.pos.q, r: f.pos.r, kind: 'formation', side: v.sideId,
         label: classLetter(f.units), sub: f.name, dark: f.emcon === 'DARK',
-        title: `${f.name} · RDY ${f.rdy} · ${f.emcon}/${f.posture} · ${f.onNet ? 'ON-NET' : 'OFF-NET'}` });
+        title: `${f.name} · RDY ${f.rdy} · ${f.emcon}/${f.posture} · ${f.onNet ? 'ON-NET' : 'OFF-NET'}` +
+               (f.sensor ? ` · sensors ${f.sensor.passive}/${f.sensor.active}` : '') +
+               (gear.length ? ` · ${gear.join(',')}` : '') });
     });
     (v.ownFacilities || []).forEach(fc => {
       markers.push({ q: fc.pos.q, r: fc.pos.r, kind: 'facility', side: v.sideId,

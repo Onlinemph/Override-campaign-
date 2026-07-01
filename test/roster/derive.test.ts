@@ -87,4 +87,11 @@ describe('deriveUnitFields — movement & class per kind', () => {
     const ds: ParsedCardLike = { kind: 'dropship', card: { safeThrust: 3, maxThrust: 5 } };
     expect(deriveUnitFields(ds, '')).toMatchObject({ class: 'DROPSHIP', safeThrust: 3, maxThrust: 5 });
   });
+
+  it('maps the MUL Scout role to a RECON tag, but leaves other roles alone', () => {
+    const mech: ParsedCardLike = { kind: 'mech', card: { walkMove: 8, runMove: 12, jump: 0 } };
+    expect(deriveUnitFields(mech, '', undefined, 'Scout').tags).toContain('RECON');
+    expect(deriveUnitFields(mech, '', undefined, 'Sniper').tags).not.toContain('RECON');
+    expect(deriveUnitFields(mech, '', undefined, undefined).tags).not.toContain('RECON');
+  });
 });

@@ -9,6 +9,7 @@ import type { AirPos, ClockMode, DamageState, Emcon, GroundPos, Id, LadderLevel,
 export interface OwnUnitView {
   id: Id; name: string; model: string; class: string;
   damage: DamageState; ammoState: string;
+  tags: string[]; // ECM / probe / stealth / … (derived from the record sheet)
 }
 
 export interface OwnFormationView {
@@ -16,6 +17,8 @@ export interface OwnFormationView {
   omp: number; br: number; rdy: number;
   emcon: Emcon; posture: Posture;
   onNet: boolean;
+  /** This formation's own sensor reach in op-hexes (best unit incl. probe/HQ). */
+  sensor?: { passive: number; active: number };
   routed?: boolean; // RDY≤1: uncommandable until it rallies (core §3.2/§7.4)
   currentOrder?: { id: Id; kind: string; completed: boolean; path?: Array<{ q: number; r: number }> };
   units: OwnUnitView[];

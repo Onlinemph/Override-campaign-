@@ -82,11 +82,19 @@
       emconWord(f.emcon) + (post ? `, ${post}` : ''),
       f.onNet ? 'linked to command net' : 'off-net — running on standing orders',
     ];
+    if (f.sensor) head.push(`sensors ${f.sensor.passive}/${f.sensor.active} hex (passive/active)`);
     if (f.currentOrder) {
       const eta = moveEtaTick(f, now);
       head.push(`ordered to ${orderWords(f.currentOrder.kind)}` + (eta != null ? `, ETA ~${clock(eta)}` : ''));
     }
     let line = head.join(' · ');
+    // Notable gear derived from the record sheets (ECM raises enemy detection TN; a
+    // probe or mobile HQ is what lifts the sensor reach shown above).
+    const GEAR = { ECM: 'ECM', ANGEL_ECM: 'Angel ECM', BEAGLE: 'active probe',
+                   STEALTH: 'stealth armor', C3M: 'C3 master', HQ: 'mobile HQ', RECON: 'recon' };
+    const gear = [...new Set((f.units || []).flatMap(u =>
+      (u.tags || []).filter(t => GEAR[t])))];
+    if (gear.length) line += `\n   ⚙ gear: ${gear.map(t => GEAR[t]).join(', ')}`;
     if (f.flight) {
       const fl = f.flight;
       const ready = fl.turnaroundReadyTick != null && now != null && now < fl.turnaroundReadyTick

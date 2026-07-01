@@ -87,9 +87,14 @@ export function extractTags(text: string, motionType?: string): string[] {
  * Returns sane defaults for the exotic move layouts; the enrich policy decides
  * whether these overwrite anything.
  */
-export function deriveUnitFields(parsed: ParsedCardLike, text: string, bv?: number): DerivedUnitFields {
+export function deriveUnitFields(
+  parsed: ParsedCardLike, text: string, bv?: number, role?: string,
+): DerivedUnitFields {
   const c = parsed.card;
   const tags = extractTags(text, c.motionType);
+  // MUL battlefield role → campaign mission tag. Only "Scout" maps cleanly to an
+  // engine effect (RECON extends a VTOL's sensor range); other roles are advisory.
+  if (role && /scout/i.test(role) && !tags.includes('RECON')) tags.push('RECON');
   const base = { bv, tags };
 
   switch (parsed.kind) {

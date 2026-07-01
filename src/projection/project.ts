@@ -13,6 +13,7 @@ import { DEEPSKY, LADDER_NAMES } from '../rules.js';
 import { isNight } from '../engine/clock.js';
 import { commandNodesOf } from '../engine/net.js';
 import { supplyEnvelope } from '../engine/logistics.js';
+import { formationSensors } from '../engine/detection.js';
 import { isFlight, jokerBingo, minFp } from '../engine/air.js';
 import { burnDaysRemaining, transitDays } from '../engine/space.js';
 import type { ContactView, OwnFacilityView, OwnFormationView, OwnSatelliteView,
@@ -46,10 +47,12 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
         units: f.unitIds.map(uid => {
           const u = truth.units[uid];
           return { id: u.id, name: u.name, model: u.model, class: u.class,
-                   damage: u.damage, ammoState: u.ammoState };
+                   damage: u.damage, ammoState: u.ammoState, tags: [...u.tags] };
         }),
         inSupply: f.supply.inSupply,
       };
+      // own sensor reach (reflects derived probe/HQ gear) — for the inspect panel & rings
+      if (f.pos.kind === 'ground') view.sensor = formationSensors(truth, f);
       if (f.alertState) view.alertState = f.alertState;
       // M4: a vessel's burn-day ledger is its own side's information, always
       if (f.pos.kind === 'node' || f.pos.kind === 'lane') {

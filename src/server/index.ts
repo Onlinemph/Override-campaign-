@@ -21,6 +21,7 @@ import { supplyEnvelope } from '../engine/logistics.js';
 import { loadCampaignFixture, buildFormationEntities } from '../demo.js';
 import { buildMul } from '../handoff/mul.js';
 import { buildBattleRoster } from '../handoff/battle.js';
+import { enrichUnit } from '../roster/apply.js';
 import { hashPick } from '../core/rng.js';
 import {
   validateCampaign, TERRAINS, INFRA, NODE_TYPES, UNIT_CLASSES, EMCONS, POSTURES,
@@ -307,6 +308,10 @@ const server = createServer(async (req, res) => {
           sigBase: Number(b.sigBase ?? 7), omp: Number(b.omp ?? 4),
           emcon: EMCONS.includes(b.emcon) ? b.emcon : 'PASSIVE', units };
         const { formation, units: built, pilots, jumpDrives } = buildFormationEntities(spec);
+        // Fill movement / class / EW gear from each unit's model before the spawn is
+        // logged, so reinforcements get the same record-sheet treatment as the initial
+        // force (explicit spec values still win).
+        for (const u of built) enrichUnit(u);
         campaign.spawnFormation(formation, built, pilots, jumpDrives);
         broadcast();
         return json(res, 200, { ok: true, id, name: spec.name, units: built.length });
