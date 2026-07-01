@@ -416,6 +416,7 @@ function thresholds(s: TruthState, f: Formation, emit: (e: GameEvent) => void): 
 export function airPass(s: TruthState, dt: number, emit: (e: GameEvent) => void): void {
   for (const f of Object.values(s.formations)) {
     if (f.destroyed || !isFlight(s, f)) continue;
+    if (f.mounted) continue; // stowed in a carrier bay: no ledger, no flight (carrierPass)
     alertUpkeep(s, f, dt, emit);
     const order = activeAirOrder(s, f);
     if (f.pos.kind === 'ground') {

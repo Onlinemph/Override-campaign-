@@ -97,6 +97,8 @@ export function buildFormationEntities(f: any):
     posture: f.posture, rdy: f.rdy, facing: f.facing,
     carriedSp: f.carriedSp, squawk: f.squawk, neutral: f.neutral,
     ...(f.mountedOn ? { mounted: { carrierFormationId: f.mountedOn } } : {}),
+    ...(f.carrier ? { carrier: { bays: f.carrier.bays ?? 2, crews: f.carrier.crews ?? 1,
+                                 avFuelTons: f.carrier.avFuelTons ?? 0 } } : {}),
   });
   if (f.flight || f.airPos) {
     formation.air = { phase: f.airPos ? 'ENROUTE' : 'GROUNDED', speed: 'CRUISE',

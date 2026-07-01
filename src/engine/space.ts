@@ -237,6 +237,7 @@ export function spaceMovementPass(s: TruthState, dt: number, emit: (e: GameEvent
   const days = daysOf(dt);
   for (const f of Object.values(s.formations)) {
     if (f.destroyed) continue;
+    if (f.mounted) continue; // embarked: rides the carrier (carrierPass), no self-burn
     const order = activeSpaceOrder(s, f);
 
     // start a transit: at a node with a TRANSIT/COLD_COAST order ⇒ enter the lane

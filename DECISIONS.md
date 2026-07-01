@@ -536,3 +536,31 @@ Instead of only editing the demo, the GM can generate a campaign in the editor.
    `start` builds + launches a generated campaign object in memory (no file round-trip). The
    editor gains a Generate bar and an Armies bar (roll/import, placed at per-side spawn
    corners). Objectives/bases stay the GM's to paint — the generator does map + armies only.
+
+## D-020 ✅ Physical DropShips: carry, launch/recover, carrier rearm
+D-018.3 made a flight's *home* a carrier; this makes carriers physically haul and service
+units, closing the "units in storage" story.
+1. **Carriers carry.** `Formation.carrier { bays, crews, avFuelTons, crewBusyUntil }` marks a
+   DropShip; an embarked formation keeps its existing `mounted.carrierFormationId`. A new
+   `carrierPass` (`src/engine/carrier.ts`) runs in `tick.step` after movement/air/space and
+   before the net pass: for each embarked formation it snaps position to the carrier via a new
+   **`MOUNT_MOVED`** event (emitted only when the position actually changed — cheap for a
+   parked carrier, and deliberately *not* an "interesting" event, so riding along never
+   triggers clock compression). `movementPass`/`airPass`/`spaceMovementPass` skip
+   `f.mounted`, so an embarked unit never self-moves. A destroyed carrier strands its cargo
+   (`MOUNT_CHANGED null`) at its last hex rather than deleting it.
+2. **Embark/disembark** (`Campaign.embark`/`disembark`): load a co-located friendly ground
+   formation into a free bay; unload it into the carrier's hex or an adjacent one (an air
+   release over a hostile hex is the existing `combatDrop`, not a disembark).
+3. **Launch/recover** (`launchFromCarrier`/`recoverToCarrier`): launch pays takeoff (+climb
+   from a landed carrier) and homes the flight on the carrier (`air.homeCarrierId`, D-018.3);
+   recover requires the flight in the carrier's air hex (or over its theater when landed),
+   pays the landing burn, and stows it in a bay.
+4. **Carrier rearm** (`carrierRearm` + **`CARRIER_TURNAROUND_STARTED`**): the turnaround story
+   without a ground facility — draws `avFuelTons` and ties up one of the carrier's `crews`
+   (tracked in `crewBusyUntil`, mirroring a facility's `turnaroundCrews.busyUntil`) for
+   `SKYWATCH.TURNAROUND_PULSES`, topping the flight's fuel/ammo when the crew finishes.
+5. **Surfaces.** GM-gated endpoints `/api/gm/embark|disembark|launch|recover|carrier-rearm`;
+   a GM "Carrier ops" panel with a live carrier board (bays, free crews, av fuel, who's
+   aboard); authorable via `carrier` / `mountedOn` / `flight.homeCarrierId` in the campaign
+   file. All actions go through the log — replay stays byte-exact.

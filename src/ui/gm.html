@@ -134,6 +134,17 @@
       <div class="kv">tanker: from <input id="k-from" size="9"> to <input id="k-to" size="9">
         tons <input id="k-tons" size="4"> <button onclick="doTanker()">Offload</button></div>
       <div id="ca-msg" class="kv"></div></div>
+    <div class="panel"><h2>Carrier ops <small>— DropShips: load, launch, recover, rearm</small></h2>
+      <div class="kv">embark: carrier <input id="c-carrier" size="9"> unit <input id="c-unit" size="9">
+        <button onclick="doEmbark()">Load</button>
+        <button onclick="doDisembark()">Unload</button>
+        → <input id="c-hex" size="6" placeholder="q,r (opt)"></div>
+      <div class="kv">flight ops: carrier <input id="c-fcarrier" size="9"> flight <input id="c-flight" size="9">
+        <button onclick="doLaunch()">Launch</button>
+        <button onclick="doRecover()">Recover</button>
+        <button onclick="doCarrierRearm()">Rearm</button></div>
+      <div id="carrier-board" style="margin-top:6px"></div>
+      <div id="carrier-msg" class="kv"></div></div>
     <div class="panel"><h2>Reinforcements <small>— drop a new formation into the running game</small></h2>
       <div class="kv">name <input id="rf-name" size="16" placeholder="Relief Company">
         side <select id="rf-side"></select></div>
@@ -261,6 +272,23 @@ async function refresh() {
            <button onclick="turnaround('${f.id}','STANDARD')">turnaround</button>` : '') +
       '</div>';
   }).join('') : '<small>(no flights)</small>';
+
+  // carrier board: DropShips with bays, who's aboard, av fuel & crews
+  const carriers = Object.values(t.formations).filter(f => f.carrier && !f.destroyed);
+  const cb = document.getElementById('carrier-board');
+  if (cb) cb.innerHTML = carriers.length ? carriers.map(f => {
+    const aboard = Object.values(t.formations)
+      .filter(x => !x.destroyed && x.mounted && x.mounted.carrierFormationId === f.id);
+    const busy = (f.carrier.crewBusyUntil || []).filter(x => x > t.tick).length;
+    const where = f.pos.kind === 'ground' ? `${f.pos.q},${f.pos.r}`
+      : f.pos.kind === 'air' ? `✈ ${f.pos.gridQ},${f.pos.gridR}`
+      : f.pos.kind === 'node' ? `◈ ${f.pos.nodeId}` : '⋯ lane';
+    return `<div class="report"><b>${f.name}</b> <small>[${f.sideId}]</small> · ${where}
+      · bays ${aboard.length}/${f.carrier.bays} · crews ${f.carrier.crews - busy}/${f.carrier.crews} free
+      · av fuel ${f.carrier.avFuelTons.toFixed(1)} t` +
+      (aboard.length ? `<br><small>aboard: ${aboard.map(x => x.name).join(', ')}</small>` : '') +
+      '</div>';
+  }).join('') : '<small>(no carriers)</small>';
 
   // salvage
   document.getElementById('salvage-panel').style.display = (s.salvage || []).length ? '' : 'none';
@@ -555,6 +583,37 @@ async function doSar() {
 async function doTanker() {
   caMsg(await post('/api/gm/tanker', { tankerId: document.getElementById('k-from').value,
     receiverId: document.getElementById('k-to').value, tons: +document.getElementById('k-tons').value }));
+}
+function carrierMsg(r) {
+  document.getElementById('carrier-msg').textContent =
+    r.ok === false ? '✗ ' + r.reason
+    : r.readyTick != null ? `✓ rearming — ${(r.tonsDrawn ?? 0).toFixed(2)} t, ready ${clock(r.readyTick)}`
+    : r.at ? `✓ disembarked at ${r.at.q},${r.at.r}`
+    : r.pos ? `✓ launched into the air`
+    : '✓ done';
+  refresh();
+}
+async function doEmbark() {
+  carrierMsg(await post('/api/gm/embark', { carrierId: document.getElementById('c-carrier').value,
+    payloadId: document.getElementById('c-unit').value }));
+}
+async function doDisembark() {
+  const h = document.getElementById('c-hex').value.split(',').map(s => s.trim()).filter(Boolean);
+  const body = { payloadId: document.getElementById('c-unit').value };
+  if (h.length === 2) { body.q = +h[0]; body.r = +h[1]; }
+  carrierMsg(await post('/api/gm/disembark', body));
+}
+async function doLaunch() {
+  carrierMsg(await post('/api/gm/launch', { carrierId: document.getElementById('c-fcarrier').value,
+    flightId: document.getElementById('c-flight').value }));
+}
+async function doRecover() {
+  carrierMsg(await post('/api/gm/recover', { carrierId: document.getElementById('c-fcarrier').value,
+    flightId: document.getElementById('c-flight').value }));
+}
+async function doCarrierRearm() {
+  carrierMsg(await post('/api/gm/carrier-rearm', { carrierId: document.getElementById('c-fcarrier').value,
+    flightId: document.getElementById('c-flight').value }));
 }
 async function doSpawn() {
   // units textarea: one per line "Name | Model | CLASS"

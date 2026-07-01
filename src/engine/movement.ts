@@ -84,6 +84,7 @@ export function movementPass(
 ): void {
   for (const f of Object.values(s.formations)) {
     if (f.destroyed || !f.currentOrderId) continue;
+    if (f.mounted) continue; // embarked: rides the carrier (carrierPass), no self-move
     const order = s.orders[f.currentOrderId];
     if (!order || order.completed || f.pos.kind !== 'ground') continue;
     if (s.tick < order.effectiveTick) continue;

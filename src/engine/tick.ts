@@ -16,6 +16,7 @@ import { engagementPass } from './engagement.js';
 import { maintenancePass } from './logistics.js';
 import { airDetectionPass, airPass } from './air.js';
 import { spacePass } from './space.js';
+import { carrierPass } from './carrier.js';
 import { scoringPass } from './scoring.js';
 import { firesPass } from './fires.js';
 import { engineeringPass } from './engineering.js';
@@ -73,6 +74,7 @@ export function step(truth: TruthState, forceMode?: ClockMode): StepResult {
   engineeringPass(work, dt, emit); // minefield bites on movers + engineer toolkit (M7)
   airPass(work, dt, emit);      // flight ledgers, launches, chases, thresholds (M3)
   spacePass(work, dt, emit);    // lanes, light lag, jump board, skimming (M4)
+  carrierPass(work, emit);      // embarked units ride their carrier to its final position
   netPass(work, emit);          // positions changed: recompute nets before detection
   firesPass(work, emit);        // artillery shoots, counter-battery reveals it (M7)
   detectionPass(work, emit);

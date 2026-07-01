@@ -120,6 +120,11 @@ export interface Formation {
   onNet: boolean; netNodeId?: Id;
   currentOrderId?: Id; standingOrderIds: Id[];
   mounted?: { carrierFormationId: Id };
+  /** ext: carrier capability (DropShip/carrier). `bays` caps embarked formations; a
+   * recovered flight rearms from `crews` turnaround crews drawing on `avFuelTons` of
+   * aviation fuel. `crewBusyUntil` holds each in-progress rearm's ready tick. Presence is
+   * what lets a formation embark/service others. */
+  carrier?: { bays: number; crews: number; avFuelTons: number; crewBusyUntil?: Tick[] };
   alertState?: 'ALERT5' | 'ALERT15' | 'ALERT60' | 'STAND_DOWN'; // flights (SKYWATCH 3.1)
   supply: { lastSuppliedTick: Tick; inSupply: boolean };
   destroyed?: boolean;            // ext: tombstone so undelivered reports stay dead

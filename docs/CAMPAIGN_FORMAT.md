@@ -122,6 +122,8 @@ A formation lives in exactly **one** place — pick one position style:
   "emcon": "PASSIVE", "posture": "DUG_IN", "rdy": 10, "facing": 0,
   "alertState": "ALERT15",                      // flights only
   "flight": { "homeFacilityId": "blue-airbase" }, // marks an air formation grounded at a base
+  "carrier": { "bays": 2, "crews": 1, "avFuelTons": 40 }, // a DropShip/carrier
+  "mountedOn": "blue-dropship",                  // starts embarked in that carrier's bay
   "units": [ … ] }
 ```
 
@@ -136,7 +138,9 @@ A formation lives in exactly **one** place — pick one position style:
 | rdy | | 10 | readiness 0–10 |
 | facing | | 0 | |
 | alertState | | — | flights: `ALERT5 ALERT15 ALERT60 STAND_DOWN` |
-| flight | | — | `{ homeFacilityId }` — present ⇒ treated as an air formation |
+| flight | | — | `{ homeFacilityId, homeCarrierId }` — present ⇒ air formation. `homeCarrierId` makes it **carrier-based**: RTB and joker/bingo track that DropShip as it moves |
+| carrier | | — | `{ bays, crews, avFuelTons }` — marks a DropShip/carrier. `bays` caps embarked formations; recovered flights rearm from `crews` turnaround crews drawing `avFuelTons` of aviation fuel (GM screen → **Carrier ops**) |
+| mountedOn | | — | id of a carrier this formation starts **embarked** in — it rides that carrier and can't move/fly on its own until it disembarks, drops, or launches |
 
 ### `units[]`
 

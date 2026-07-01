@@ -6,7 +6,7 @@
 import type {
   AirPos, ClockMode, Contact, ContactReport, DamageState, DieRoll, Emcon, Emission,
   Engagement, Formation, GroundPos, HandoffPackage, Id, JumpDrive, LanePos, Marker,
-  NodePos, Order, Pilot, Posture, SalvageToken, TruthState, Tick, Unit,
+  NodePos, Order, Pilot, Position, Posture, SalvageToken, TruthState, Tick, Unit,
 } from './types.js';
 import { SKYWATCH } from '../rules.js';
 import { hexKey as hexKeyOf } from './types.js';
@@ -83,6 +83,8 @@ export type GameEvent =
   | { type: 'TURNAROUND_STARTED'; formationId: Id; facilityId: Id;
       mode: 'STANDARD' | 'HOT_PIT'; readyTick: Tick; tonsDrawn: number;
       mishapFarmFpLoss?: number; tick: Tick }
+  | { type: 'CARRIER_TURNAROUND_STARTED'; carrierId: Id; formationId: Id;
+      readyTick: Tick; tonsDrawn: number; tick: Tick } // ext: rearm from a DropShip
   // ── M4: DEEP SKY — lanes, light, fuel tonnage, the jump board ──
   | { type: 'LANE_PROGRESS'; formationId: Id; pos: LanePos; tick: Tick }
   | { type: 'ARRIVED_AT_NODE'; formationId: Id; pos: NodePos; tick: Tick }
@@ -107,6 +109,7 @@ export type GameEvent =
   | { type: 'CAMPAIGN_ENDED'; winnerSideId: Id | null; reason: string; tick: Tick }
   // ── M8: combined-arms kit ──
   | { type: 'MOUNT_CHANGED'; formationId: Id; carrierFormationId: Id | null }
+  | { type: 'MOUNT_MOVED'; formationId: Id; pos: Position; tick: Tick } // embarked unit rides its carrier
   | { type: 'TRANSPONDER_REVEALED'; formationId: Id; tick: Tick }   // false flag blown
   | { type: 'BLOCKADE_STATE'; sideId: Id; blockaded: boolean; tick: Tick }
   | { type: 'CLOCK_ADVANCED'; dt: number; tick: Tick }; // tick = NEW absolute tick
@@ -509,6 +512,24 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
       break;
     }
 
+    case 'CARRIER_TURNAROUND_STARTED': {
+      const f = s.formations[e.formationId];
+      const carrier = s.formations[e.carrierId];
+      if (carrier?.carrier) {
+        carrier.carrier.avFuelTons -= e.tonsDrawn;
+        (carrier.carrier.crewBusyUntil ??= []).push(e.readyTick);
+      }
+      if (f) {
+        f.air = { phase: 'GROUNDED', speed: 'CRUISE', ...f.air, turnaroundReadyTick: e.readyTick };
+        for (const uid of f.unitIds) {
+          const u = s.units[uid];
+          if (u?.fuel) u.fuel.fp = Math.round(u.fuel.tons * u.fuel.fpPerTon);
+          if (u) u.ammoState = 'FULL';
+        }
+      }
+      break;
+    }
+
     // ── M4: DEEP SKY ────────────────────────────────────────────────────────
     case 'LANE_PROGRESS':
       s.formations[e.formationId].pos = e.pos;
@@ -623,6 +644,12 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
         if (e.carrierFormationId) f.mounted = { carrierFormationId: e.carrierFormationId };
         else delete f.mounted;
       }
+      break;
+    }
+
+    case 'MOUNT_MOVED': {
+      const f = s.formations[e.formationId];
+      if (f) f.pos = e.pos;
       break;
     }
 

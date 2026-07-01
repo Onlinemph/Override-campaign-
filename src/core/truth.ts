@@ -2,8 +2,11 @@
  * core/truth.ts — campaign lifecycle: genesis, replay, the run loop with compression.
  */
 import type {
-  BattleResult, Emcon, Engagement, GroundPos, HandoffPackage, Id, Order, TruthState,
+  AirPos, BattleResult, Emcon, Engagement, GroundPos, HandoffPackage, Id, Order, TruthState,
 } from './types.js';
+import {
+  airQR, climbFp, isFlight, landingFp, takeoffFp, theaterAirHex,
+} from '../engine/air.js';
 import { applyEvent, type GameEvent, type LoggedEvent } from './events.js';
 import type { EventStore } from './log.js';
 import { MemoryEventStore } from './log.js';
@@ -15,7 +18,7 @@ import { rollDice } from './rng.js';
 import { CLOCK, DEEPSKY, ENGAGEMENT, LADDER, SKYWATCH, SUPPLY } from '../rules.js';
 import { classifyEncounter, emitJumpFlash, type Classification } from '../engine/space.js';
 import { COMBAT_DROP } from '../rules.js';
-import { AXIAL_DIRECTIONS } from '../hex/axial.js';
+import { AXIAL_DIRECTIONS, hexDistance } from '../hex/axial.js';
 
 /** Rebuild truth purely from the log: truth = fold(applyEvent, genesis, events). */
 export function replay(events: LoggedEvent[]): TruthState {
@@ -450,6 +453,190 @@ export class Campaign {
   /** A side acquires the pirate-point survey (espionage, captured nav data...). */
   surveyNode(nodeId: Id, sideId: Id): void {
     this.inject({ type: 'NODE_SURVEYED', nodeId, sideId, tick: this.truth.tick });
+  }
+
+  // ── Carrier ops: embark / disembark / carrier rearm (ext) ────────────────
+
+  /** Embarked formations currently riding a carrier (alive, mount still set). */
+  embarkedOn(carrierId: Id): Id[] {
+    return Object.values(this.truth.formations)
+      .filter(f => !f.destroyed && f.mounted?.carrierFormationId === carrierId)
+      .map(f => f.id);
+  }
+
+  /**
+   * Load a co-located formation into a carrier's bay (ext). Both must be on the ground in
+   * the same hex; the carrier must have a free bay. Once embarked the payload rides along
+   * (carrierPass) and cannot move, fly, or burn on its own until it disembarks or drops.
+   */
+  embark(carrierId: Id, payloadId: Id): { ok: true } | { ok: false; reason: string } {
+    const carrier = this.truth.formations[carrierId];
+    const payload = this.truth.formations[payloadId];
+    if (!carrier || carrier.destroyed) return { ok: false, reason: 'no such carrier' };
+    if (!carrier.carrier) return { ok: false, reason: `${carrier.name} is not a carrier` };
+    if (!payload || payload.destroyed) return { ok: false, reason: 'no such formation' };
+    if (payload.sideId !== carrier.sideId) return { ok: false, reason: 'not the same side' };
+    if (payload.id === carrier.id) return { ok: false, reason: 'a carrier cannot embark itself' };
+    if (payload.mounted) return { ok: false, reason: `${payload.name} is already embarked` };
+    if (carrier.pos.kind !== 'ground' || payload.pos.kind !== 'ground') {
+      return { ok: false, reason: 'both must be on the ground to load' };
+    }
+    if (carrier.pos.theaterId !== payload.pos.theaterId ||
+        hexDistance(carrier.pos, payload.pos) !== 0) {
+      return { ok: false, reason: 'must be in the carrier\'s hex to load' };
+    }
+    if (this.embarkedOn(carrierId).length >= carrier.carrier.bays) {
+      return { ok: false, reason: `all ${carrier.carrier.bays} bays are full` };
+    }
+    this.inject({ type: 'MOUNT_CHANGED', formationId: payloadId, carrierFormationId: carrierId });
+    this.inject({ type: 'GM_NOTE', tick: this.truth.tick,
+      text: `${payload.name} embarked aboard ${carrier.name}` });
+    return { ok: true };
+  }
+
+  /**
+   * Unload an embarked formation onto the ground (ext). The carrier must be landed; the
+   * payload steps off into the carrier's hex or an adjacent one. (Releasing over a hostile
+   * hex from the air is a combat drop, not a disembark.)
+   */
+  disembark(payloadId: Id, target?: GroundPos): { ok: true; at: GroundPos } | { ok: false; reason: string } {
+    const payload = this.truth.formations[payloadId];
+    if (!payload || payload.destroyed) return { ok: false, reason: 'no such formation' };
+    if (!payload.mounted) return { ok: false, reason: `${payload.name} is not embarked` };
+    const carrier = this.truth.formations[payload.mounted.carrierFormationId];
+    if (!carrier || carrier.destroyed) return { ok: false, reason: 'carrier is gone' };
+    if (carrier.pos.kind !== 'ground') return { ok: false, reason: 'carrier must land to unload' };
+    const at = target ?? { ...carrier.pos };
+    if (at.theaterId !== carrier.pos.theaterId) return { ok: false, reason: 'off the carrier\'s theater' };
+    const theater = this.truth.theaters[at.theaterId];
+    if (!theater?.hexes[`${at.q},${at.r}`]) return { ok: false, reason: 'target hex off-map' };
+    if (hexDistance(carrier.pos, at) > 1) return { ok: false, reason: 'can only step off into an adjacent hex' };
+    this.inject({ type: 'MOUNT_CHANGED', formationId: payloadId, carrierFormationId: null });
+    this.inject({ type: 'FORMATION_MOVED', formationId: payloadId, to: at,
+                  movedKind: 'NORMAL', onRoad: false, headingDeg: 0, tick: this.truth.tick });
+    this.inject({ type: 'GM_NOTE', tick: this.truth.tick,
+      text: `${payload.name} disembarked from ${carrier.name} at ${at.q},${at.r}` });
+    return { ok: true, at };
+  }
+
+  /**
+   * Launch an embarked flight off its carrier into the air (ext). Works whether the carrier
+   * is landed (the flight climbs to the theater's HIGH band) or already airborne (a mid-air
+   * launch into the carrier's air hex). The flight's home becomes the carrier, so its RTB
+   * and joker/bingo track the DropShip as it moves (see air.ts homeCarrierId).
+   */
+  launchFromCarrier(carrierId: Id, flightId: Id):
+      { ok: true; pos: AirPos } | { ok: false; reason: string } {
+    const carrier = this.truth.formations[carrierId];
+    const flight = this.truth.formations[flightId];
+    if (!carrier || carrier.destroyed) return { ok: false, reason: 'no such carrier' };
+    if (!flight || flight.destroyed) return { ok: false, reason: 'no such flight' };
+    if (flight.mounted?.carrierFormationId !== carrierId) {
+      return { ok: false, reason: `${flight.name} is not aboard ${carrier.name}` };
+    }
+    if (!isFlight(this.truth, flight)) return { ok: false, reason: `${flight.name} cannot fly` };
+
+    let hex: { q: number; r: number };
+    let altLevel: number;
+    if (carrier.pos.kind === 'air') {
+      hex = airQR(carrier.pos);
+      altLevel = carrier.pos.altLevel;
+    } else if (carrier.pos.kind === 'ground') {
+      hex = theaterAirHex(this.truth, carrier.pos.theaterId);
+      altLevel = SKYWATCH.CRUISE_ALT_LEVEL;
+    } else {
+      return { ok: false, reason: 'carrier is in space — launch there is a DEEP SKY sortie' };
+    }
+    const pos: AirPos = {
+      kind: 'air', gridQ: hex.q, gridR: hex.r, band: 'HIGH', altLevel,
+      velocity: SKYWATCH.ENTRY_VELOCITY_CRUISE, vectorDeg: 0,
+    };
+    // launched from a carrier already aloft: no runway climb, just the takeoff burn
+    const fpPaid = carrier.pos.kind === 'ground'
+      ? takeoffFp(false) + climbFp(SKYWATCH.CRUISE_ALT_LEVEL)
+      : takeoffFp(false);
+    this.inject({ type: 'MOUNT_CHANGED', formationId: flightId, carrierFormationId: null });
+    this.inject({ type: 'FORMATION_BOOKKEEPING', formationId: flightId,
+                  patch: { air: { homeCarrierId: carrierId } } });
+    this.inject({ type: 'AIR_LAUNCHED', formationId: flightId, pos, fpPaid, tick: this.truth.tick });
+    this.inject({ type: 'GM_NOTE', tick: this.truth.tick,
+      text: `${flight.name} launched from ${carrier.name}` });
+    return { ok: true, pos };
+  }
+
+  /**
+   * Recover an airborne carrier-based flight back into its carrier's bay (ext). The flight
+   * must be co-located with the carrier (same air hex if the carrier is aloft, over the
+   * carrier's theater if it has landed) and a bay must be free. It pays the landing burn,
+   * stows, and can then be rearmed via carrierRearm.
+   */
+  recoverToCarrier(carrierId: Id, flightId: Id):
+      { ok: true } | { ok: false; reason: string } {
+    const carrier = this.truth.formations[carrierId];
+    const flight = this.truth.formations[flightId];
+    if (!carrier || carrier.destroyed) return { ok: false, reason: 'no such carrier' };
+    if (!carrier.carrier) return { ok: false, reason: `${carrier.name} is not a carrier` };
+    if (!flight || flight.destroyed) return { ok: false, reason: 'no such flight' };
+    if (flight.sideId !== carrier.sideId) return { ok: false, reason: 'not the same side' };
+    if (flight.pos.kind !== 'air') return { ok: false, reason: `${flight.name} is not airborne` };
+    if (flight.mounted) return { ok: false, reason: `${flight.name} is already stowed` };
+    if (this.embarkedOn(carrierId).length >= carrier.carrier.bays) {
+      return { ok: false, reason: `all ${carrier.carrier.bays} bays are full` };
+    }
+    const flightHex = airQR(flight.pos);
+    const carrierHex = carrier.pos.kind === 'air' ? airQR(carrier.pos)
+      : carrier.pos.kind === 'ground' ? theaterAirHex(this.truth, carrier.pos.theaterId)
+      : null;
+    if (!carrierHex) return { ok: false, reason: 'carrier is in space' };
+    if (hexDistance(flightHex, carrierHex) !== 0) {
+      return { ok: false, reason: 'flight must be in the carrier\'s hex to recover' };
+    }
+    this.inject({ type: 'FUEL_SPENT', formationId: flightId, fpPaid: landingFp(false),
+                  reason: 'carrier recovery', tick: this.truth.tick });
+    this.inject({ type: 'AIR_PHASE', formationId: flightId, phase: 'GROUNDED', tick: this.truth.tick });
+    this.inject({ type: 'MOUNT_CHANGED', formationId: flightId, carrierFormationId: carrierId });
+    this.inject({ type: 'MOUNT_MOVED', formationId: flightId,
+                  pos: structuredClone(carrier.pos), tick: this.truth.tick });
+    this.inject({ type: 'GM_NOTE', tick: this.truth.tick,
+      text: `${flight.name} recovered aboard ${carrier.name}` });
+    return { ok: true };
+  }
+
+  /**
+   * Rearm & refuel a recovered flight from the carrier itself (ext) — the turnaround story
+   * without a ground facility. Draws aviation fuel from the carrier's `avFuelTons` and ties
+   * up one of its `crews` for the standard turnaround; the flight's fuel and ammo top off
+   * when the crew finishes at `readyTick`.
+   */
+  carrierRearm(carrierId: Id, flightId: Id):
+      { ok: true; readyTick: number; tonsDrawn: number } | { ok: false; reason: string } {
+    const carrier = this.truth.formations[carrierId];
+    const flight = this.truth.formations[flightId];
+    if (!carrier || carrier.destroyed || !carrier.carrier) return { ok: false, reason: 'no such carrier' };
+    if (!flight || flight.destroyed) return { ok: false, reason: 'no such flight' };
+    if (flight.mounted?.carrierFormationId !== carrierId) {
+      return { ok: false, reason: `${flight.name} must be recovered aboard ${carrier.name}` };
+    }
+    if (flight.unitIds.length > SKYWATCH.CREW_FLIGHT_MAX_AIRCRAFT) {
+      return { ok: false, reason: `a crew handles at most ${SKYWATCH.CREW_FLIGHT_MAX_AIRCRAFT} aircraft` };
+    }
+    const busy = (carrier.carrier.crewBusyUntil ?? []).filter(t => t > this.truth.tick).length;
+    if (busy >= carrier.carrier.crews) return { ok: false, reason: 'all carrier crews busy' };
+
+    const fpNeeded = flight.unitIds.reduce((sum, uid) => {
+      const fuel = this.truth.units[uid]?.fuel;
+      return fuel ? sum + Math.max(0, fuel.tons * fuel.fpPerTon - fuel.fp) : sum;
+    }, 0);
+    const tonsDrawn = fpNeeded / SKYWATCH.FP_PER_TON;
+    if (tonsDrawn > carrier.carrier.avFuelTons + 1e-9) {
+      return { ok: false, reason: `carrier holds ${carrier.carrier.avFuelTons.toFixed(2)} t av fuel, need ${tonsDrawn.toFixed(2)} t` };
+    }
+    const readyTick = this.truth.tick + SKYWATCH.TURNAROUND_PULSES * CLOCK.TICKS_PER_PULSE;
+    this.inject({ type: 'CARRIER_TURNAROUND_STARTED', carrierId, formationId: flightId,
+                  readyTick, tonsDrawn, tick: this.truth.tick });
+    this.inject({ type: 'GM_NOTE', tick: this.truth.tick,
+      text: `${carrier.name} rearming ${flight.name} (${tonsDrawn.toFixed(2)} t, ready @ ${readyTick})` });
+    return { ok: true, readyTick, tonsDrawn };
   }
 
   // ── M8: combat drops & the false-flag game ──────────────────────────────

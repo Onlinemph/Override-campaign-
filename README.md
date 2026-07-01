@@ -90,6 +90,18 @@ home as `fpRemaining`, updating the unit's campaign fuel ledger. Flights can be 
 based**: point a flight's home at a DropShip (`homeCarrierId`) and its RTB distance and
 joker/bingo track the carrier's position as it moves.
 
+**Carriers are physical.** Give a formation a `carrier: { bays, crews, avFuelTons }` and it
+becomes a DropShip that actually hauls units. A formation with `mountedOn` (or embarked in
+play) rides in a bay — it moves exactly where the carrier moves and can't march, fly, or
+burn on its own until it steps off. The GM screen's **Carrier ops** panel drives the whole
+cycle: **load/unload** ground units in the carrier's hex, **launch** an embarked flight
+into the air (climbing from a landed DropShip or launching mid-air from one already aloft,
+homed on the carrier), **recover** a co-located flight back into a bay, and **rearm** it
+from the ship itself — a turnaround that ties up a carrier crew and draws aviation fuel from
+`avFuelTons`, no ground fuel farm required. A carrier board shows each DropShip's bays,
+free crews, fuel, and who's aboard; lose the carrier and its embarked units are stranded at
+its last position rather than vanishing with it.
+
 `npm run setup` builds the tracker; `npm run dev` (and `start.cmd`) build it on first launch
 if it's missing. Needs only Node — the build unpacks the library with a pure-Node fallback,
 so no `unzip`/WSL on Windows.

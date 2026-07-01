@@ -539,6 +539,45 @@ const server = createServer(async (req, res) => {
       return json(res, r.ok ? 200 : 400, r);
     }
 
+    // ── carrier ops: embark / disembark / launch / recover / rearm (ext) ──
+    if (path === '/api/gm/embark' && req.method === 'POST') {
+      const b = await readBody(req);
+      const r = campaign.embark(b.carrierId, b.payloadId);
+      broadcast();
+      return json(res, r.ok ? 200 : 400, r);
+    }
+    if (path === '/api/gm/disembark' && req.method === 'POST') {
+      const b = await readBody(req);
+      const target = (b.q != null && b.r != null)
+        ? { kind: 'ground' as const, theaterId: b.theaterId ??
+              (campaign.truth.formations[b.payloadId]?.pos.kind === 'ground'
+                ? (campaign.truth.formations[b.payloadId]!.pos as GroundPos).theaterId
+                : Object.keys(campaign.truth.theaters)[0]),
+            q: Number(b.q), r: Number(b.r) }
+        : undefined;
+      const r = campaign.disembark(b.payloadId, target);
+      broadcast();
+      return json(res, r.ok ? 200 : 400, r);
+    }
+    if (path === '/api/gm/launch' && req.method === 'POST') {
+      const b = await readBody(req);
+      const r = campaign.launchFromCarrier(b.carrierId, b.flightId);
+      broadcast();
+      return json(res, r.ok ? 200 : 400, r);
+    }
+    if (path === '/api/gm/recover' && req.method === 'POST') {
+      const b = await readBody(req);
+      const r = campaign.recoverToCarrier(b.carrierId, b.flightId);
+      broadcast();
+      return json(res, r.ok ? 200 : 400, r);
+    }
+    if (path === '/api/gm/carrier-rearm' && req.method === 'POST') {
+      const b = await readBody(req);
+      const r = campaign.carrierRearm(b.carrierId, b.flightId);
+      broadcast();
+      return json(res, r.ok ? 200 : 400, r);
+    }
+
     // player API — gated by the per-side token (?t=<token>)
     const sideView = path.match(/^\/api\/side\/([^/]+)\/view$/);
     if (sideView) {
