@@ -82,6 +82,14 @@ result to campaign** folds the marked-up cards into a `BattleResult` — damage 
 (DESTROYED vs recoverable SALVAGE), ejected crews, victor — and posts it back, where it
 ingests and unfreezes the campaign (double-ingest is refused).
 
+**Aerospace merges** are first-class: a fighter / aerospace / DropShip gets a **✈ Flight
+panel** in play mode — fuel points with live **joker/bingo** thresholds (a `BINGO —
+disengage` warning when it runs low), velocity vs safe/max thrust, altitude, and thrust
+used — seeded from the air/space handoff's entry state. Fuel that survives the merge comes
+home as `fpRemaining`, updating the unit's campaign fuel ledger. Flights can be **carrier-
+based**: point a flight's home at a DropShip (`homeCarrierId`) and its RTB distance and
+joker/bingo track the carrier's position as it moves.
+
 `npm run setup` builds the tracker; `npm run dev` (and `start.cmd`) build it on first launch
 if it's missing. Needs only Node — the build unpacks the library with a pure-Node fallback,
 so no `unzip`/WSL on Windows.

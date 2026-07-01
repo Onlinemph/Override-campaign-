@@ -501,3 +501,20 @@ codebase imports the other's internals beyond a couple of narrow contracts.
 *(Originally built on the Milestone-5 branch, then ported onto this M6 base — the additive
 core compiled against M6's types unchanged; only the server routes, GM button, campaign-load
 hook, and the double-ingest guard were re-wired.)*
+
+## D-018 ✅ Aerospace: flight panel, fuel loop, and carrier ops
+The tracker's play mode was ground/'Mech-centric; aerospace is now first-class end to end.
+1. **Flight panel in the tracker.** Fighters/aerospace/DropShips get a ✈ panel tracking the
+   state a merge actually turns on — fuel points with live joker/bingo (the handoff's
+   thresholds ride onto `ForceUnit.entry`), velocity vs safe/max thrust, altitude, thrust
+   used. Reuses the existing click→`u.damage`→`saveForce`/`syncTrackedDamage` pattern; heat/
+   crits/condition were already handled by the generic handlers. Manual (non-handoff) forces
+   seed fuel from the fighter card's own value.
+2. **The fuel loop closes.** `battleResultFromForces` reports `fpRemaining` from the panel;
+   the campaign's existing `UNIT_STATE_CHANGED` reducer writes it to `unit.fuel.fp` (and
+   recomputes tons), so fuel that survives the merge comes home on the record sheet.
+3. **Carrier ops (engine deepening).** A flight's home can be a DropShip
+   (`Formation.air.homeCarrierId`), not just a fixed base: `homeAirHexOf` returns the
+   carrier's current air hex (or the air hex over its theater on the ground), so RTB
+   distance and joker/bingo track the carrier as it moves, and fall back when it's killed.
+   Bounded on purpose — carrier rearm/turnaround (crews live on facilities) is left for later.

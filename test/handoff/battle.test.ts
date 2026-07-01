@@ -95,6 +95,22 @@ describe('card-builder bridge — buildBattleRoster', () => {
   });
 });
 
+describe('BattleResult ingest — aero fuel comes home', () => {
+  it('applies fpRemaining from the tracker to the unit fuel ledger', () => {
+    const c = frozenCampaign();
+    const pkg = c.exportHandoff()!;
+    const uid = pkg.perSide[0].units[0].unitId;
+    c.truth.units[uid].fuel = { fp: 400, fpPerTon: 80, tons: 5 };
+    const result: BattleResult = {
+      handoffId: pkg.id,
+      unitOutcomes: [{ unitId: uid, damage: 'OK', ammoState: 'PARTIAL', fpRemaining: 120, pilotOutcomes: [] }],
+      ejections: [], turnsElapsed: 4, notes: '',
+    };
+    expect(c.ingestBattleResult(result).ok).toBe(true);
+    expect(c.truth.units[uid].fuel!.fp).toBe(120);
+  });
+});
+
 describe('BattleResult ingest — ejection without a board position', () => {
   it('drops the downed crew at the battle hex when the tracker omits pos', () => {
     const c = frozenCampaign();

@@ -815,9 +815,49 @@ function renderForceEdit(): void {
   editHasTC = /targeting\s*computer/i.test(u.text); // Targeting Computer → −1 to-hit
   output.classList.add("force-play"); // enables pip cursors / damage tracking
   output.innerHTML =
-    forceEditBar(u) + skillsEditorHtml(u) + card + tabletopPanel(u, r.result) + ammoTrackerHtml(u, r.result) + ticEditorHtml;
+    forceEditBar(u) + skillsEditorHtml(u) + card + renderAeroPanel(u, r.result) + tabletopPanel(u, r.result) + ammoTrackerHtml(u, r.result) + ticEditorHtml;
   applyDamageMarks();
   updateTabletop();
+}
+
+/**
+ * Aerospace flight panel: fuel (with live joker/bingo), velocity, altitude, and thrust
+ * used — the state a fighter / aerospace unit / DropShip tracks in an air or space merge.
+ * Fed by the OVERRIDE handoff entry state (u.entry); for a manually-built force it seeds
+ * fuel from the fighter card's own value. Ground units get nothing.
+ */
+function renderAeroPanel(u: ForceUnit, result: { kind: string; card: { fuel?: number; safeThrust?: number; maxThrust?: number } }): string {
+  if (result.kind !== "fighter" && result.kind !== "dropship") return "";
+  const card = result.card;
+  if (card.fuel !== undefined) { u.entry ??= {}; if (u.entry.fp === undefined) u.entry.fp = card.fuel; }
+  const dmg = u.damage ?? {};
+  const entryFp = u.entry?.fp;
+  const fuel = dmg.fuel ?? entryFp;
+  const vel = dmg.velocity ?? u.entry?.velocity;
+  const alt = dmg.altitude ?? u.entry?.altLevel;
+  const rows: string[] = [];
+  const btn = (k: string, d: number, label: string) => `<button class="aero-btn" data-aero="${k}" data-d="${d}">${label}</button>`;
+
+  if (entryFp !== undefined && fuel !== undefined) {
+    const j = u.entry?.joker, b = u.entry?.bingo;
+    const status = (b !== undefined && fuel <= b) ? `<span class="aero-bingo">BINGO — disengage</span>`
+      : (j !== undefined && fuel <= j) ? `<span class="aero-joker">JOKER</span>` : "";
+    const thresh = [j !== undefined ? `joker ${Math.round(j)}` : "", b !== undefined ? `bingo ${Math.round(b)}` : ""]
+      .filter(Boolean).join(" · ");
+    rows.push(`<div class="aero-row"><span class="aero-k">Fuel</span> <b>${Math.round(fuel)}</b> / ${Math.round(entryFp)} FP ${status}
+      ${btn("fuel", -10, "−10")}${btn("fuel", -5, "−5")}${btn("fuel", -1, "−1")}${btn("fuel", 1, "+1")}
+      ${thresh ? `<span class="aero-thresh">${thresh}</span>` : ""}</div>`);
+  }
+  const step = (k: string, label: string, val: number | undefined, extra = "") =>
+    `<div class="aero-row"><span class="aero-k">${label}</span> <b>${val ?? 0}</b>${extra} ${btn(k, -1, "−1")}${btn(k, 1, "+1")}</div>`;
+  if (vel !== undefined || result.kind === "fighter") {
+    const t = card.safeThrust !== undefined ? ` <span class="muted">(safe ${card.safeThrust}${card.maxThrust ? " / max " + card.maxThrust : ""})</span>` : "";
+    rows.push(step("velocity", "Velocity", vel, t));
+  }
+  if (alt !== undefined) rows.push(step("altitude", "Altitude", alt));
+  rows.push(step("thrust", "Thrust used", dmg.thrust ?? 0, card.maxThrust !== undefined ? ` <span class="muted">/ ${card.maxThrust}</span>` : ""));
+
+  return `<div class="aero-panel"><div class="aero-title">✈ Flight</div>${rows.join("")}</div>`;
 }
 
 // ---- Damage tracking (Tier 1): clickable armor/structure/condition pips -----
@@ -1124,6 +1164,22 @@ output.addEventListener("click", (e) => {
     syncTrackedDamage(); // heat now syncs to the opponent in battle
     return;
   }
+  const aero = t.closest<HTMLElement>(".aero-btn");
+  if (aero?.dataset.aero) {
+    u.damage ??= {};
+    const k = aero.dataset.aero as "fuel" | "velocity" | "altitude" | "thrust";
+    const entryDefault = k === "fuel" ? u.entry?.fp
+      : k === "velocity" ? u.entry?.velocity
+      : k === "altitude" ? u.entry?.altLevel : 0;
+    const cur = u.damage[k] ?? entryDefault ?? 0;
+    let next = Math.max(0, cur + Number(aero.dataset.d));
+    if (k === "fuel" && u.entry?.fp !== undefined) next = Math.min(u.entry.fp, next);
+    u.damage[k] = next;
+    saveForce();
+    renderForceEdit();      // refresh — joker/bingo status may have flipped
+    syncTrackedDamage();
+    return;
+  }
   const ab = t.closest<HTMLElement>(".ammo-btn");
   if (ab?.dataset.ammoD) {
     const row = ab.closest<HTMLElement>(".ammo-row");
@@ -1282,6 +1338,11 @@ interface ForceUnit {
    * carried untouched so the played-out result can be posted back to the campaign. */
   campaignUnitId?: string;
   campaignPilotIds?: string[];
+  /** Aerospace entry state from an OVERRIDE GM Tool handoff (SKYWATCH/DEEP SKY):
+   * fuel on the table, joker/bingo thresholds, entry velocity & altitude. Drives the
+   * aero flight panel; absent for ground units and manually-built forces (which fall
+   * back to the card's own fuel). */
+  entry?: { fp?: number; joker?: number; bingo?: number; velocity?: number; altLevel?: number };
   /** Live damage state (Tier-1 tracking): hit-pip counts per pip group, crew
    * condition, engine/gyro hits, and manually-disabled weapon-row ordinals. */
   damage?: {
@@ -1299,6 +1360,12 @@ interface ForceUnit {
     heat?: number;
     /** Rounds expended per ammo line (key = "label@location"); remaining = total − this. */
     ammo?: Record<string, number>;
+    /** Aero flight state (fighters / aerospace / DropShips): current fuel points,
+     * velocity, altitude, and thrust used this turn. Undefined until first tracked. */
+    fuel?: number;
+    velocity?: number;
+    altitude?: number;
+    thrust?: number;
     /** Battle tracker: marked out of action (destroyed / withdrawn). */
     out?: boolean;
   };
@@ -2029,6 +2096,15 @@ async function importHandoffFromHash(): Promise<void> {
           ...(ru.piloting !== undefined ? { piloting: ru.piloting } : {}),
           ...(ru.unitId ? { campaignUnitId: ru.unitId } : {}),
           ...(ru.pilotIds ? { campaignPilotIds: ru.pilotIds } : {}),
+          ...((ru.fpOnTable !== undefined || ru.velocity !== undefined || ru.altLevel !== undefined)
+            ? { entry: {
+                ...(ru.fpOnTable !== undefined ? { fp: ru.fpOnTable } : {}),
+                ...(ru.jokerFp !== undefined ? { joker: ru.jokerFp } : {}),
+                ...(ru.bingoFp !== undefined ? { bingo: ru.bingoFp } : {}),
+                ...(ru.velocity !== undefined ? { velocity: ru.velocity } : {}),
+                ...(ru.altLevel !== undefined ? { altLevel: ru.altLevel } : {}),
+              } }
+            : {}),
         });
       } catch (err) {
         warnings.push(

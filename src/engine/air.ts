@@ -91,6 +91,15 @@ function homeFacility(s: TruthState, f: Formation) {
 }
 
 function homeAirHexOf(s: TruthState, f: Formation): { q: number; r: number } | null {
+  // Carrier ops (SKYWATCH): a DropShip carrier is a mobile home — RTB tracks it as it
+  // moves. Airborne carrier → its air grid hex; on the ground → the air hex over its
+  // theater (one high-altitude hex covers a theater map).
+  const carrierId = f.air?.homeCarrierId;
+  const carrier = carrierId ? s.formations[carrierId] : undefined;
+  if (carrier && !carrier.destroyed) {
+    if (carrier.pos.kind === 'air') return airQR(carrier.pos);
+    if (carrier.pos.kind === 'ground') return theaterAirHex(s, carrier.pos.theaterId);
+  }
   const fac = homeFacility(s, f);
   if (!fac || fac.pos.kind !== 'ground') return null;
   return theaterAirHex(s, fac.pos.theaterId);

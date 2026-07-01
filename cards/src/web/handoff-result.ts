@@ -22,6 +22,7 @@ export interface TrackedDamage {
   legHits?: number;
   heat?: number;
   ammo?: Record<string, number>;
+  fuel?: number; // aero: fuel points remaining (comes home on the record sheet)
   out?: boolean;
 }
 
@@ -89,6 +90,7 @@ export interface BattleResultPayload {
     unitId: string;
     damage: DamageState;
     ammoState: AmmoState;
+    fpRemaining?: number; // aero fuel that survived the merge (updates the campaign ledger)
     pilotOutcomes: Array<{ pilotId: string; status: PilotStatus }>;
   }>;
   /** Crews that punched out; the campaign fills the board position on ingest. */
@@ -123,6 +125,7 @@ export function battleResultFromForces(opts: {
         unitId: u.campaignUnitId,
         damage,
         ammoState: mapAmmoState(u.damage),
+        ...(u.damage?.fuel !== undefined ? { fpRemaining: u.damage.fuel } : {}),
         pilotOutcomes: (u.campaignPilotIds ?? []).map(pilotId => ({ pilotId, status: pilotStatus })),
       });
       // a downed unit whose crew is still conscious got out — flag SAR

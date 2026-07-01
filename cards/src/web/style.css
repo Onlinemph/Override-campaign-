@@ -1808,3 +1808,24 @@ body.previewing #print-area > .sheet-head { max-width: 210mm; margin: 0 auto; co
 .bt-brief-side h4 { margin: 0 0 0.3rem; color: #cfe0f5; }
 .bt-brief-notes { margin: 0; padding-left: 1.1rem; font-size: 0.86rem; }
 .bt-brief-air { margin-top: 0.3rem; font-size: 0.8rem; color: #8ab0d0; }
+
+/* Aerospace flight panel: fuel (joker/bingo), velocity, altitude, thrust — shown in
+   play mode for fighters / aerospace / DropShips. */
+.aero-panel {
+  margin: 0.6rem 0;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #2c4a5e;
+  border-radius: 6px;
+  background: #131b22;
+}
+.aero-title { font-weight: 600; color: #9fd0e6; margin-bottom: 0.3rem; }
+.aero-row { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; margin: 0.2rem 0; font-size: 0.9rem; }
+.aero-k { display: inline-block; min-width: 5.5rem; color: #8aa0bb; }
+.aero-thresh { color: #7f93a8; font-size: 0.8rem; }
+.aero-btn {
+  min-width: 2.2rem; padding: 0.05rem 0.4rem; border: 1px solid #3a4b5e;
+  border-radius: 4px; background: #1c2732; color: #cfe0f5; cursor: pointer;
+}
+.aero-btn:hover { background: #26364a; }
+.aero-joker { padding: 0.05rem 0.4rem; border-radius: 4px; background: #4a3a12; color: #f0d68a; font-weight: 600; }
+.aero-bingo { padding: 0.05rem 0.4rem; border-radius: 4px; background: #5a1e1e; color: #ffb0b0; font-weight: 600; }

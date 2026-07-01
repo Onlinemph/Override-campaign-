@@ -147,6 +147,10 @@ export interface Formation {
   // ext (M3): flight state (SKYWATCH) — present on air-capable formations
   air?: {
     homeFacilityId?: Id;
+    /** Carrier ops: home is a friendly DropShip formation, not a fixed base. RTB /
+     * joker / bingo track the carrier's current position as it moves. Takes precedence
+     * over homeFacilityId when set and the carrier is alive. */
+    homeCarrierId?: Id;
     phase: 'GROUNDED' | 'ENROUTE' | 'ON_STATION' | 'RTB';
     speed: 'CRUISE' | 'DASH';
     lean?: boolean;                  // lean loiter (1 FP/min, −1 to own search)

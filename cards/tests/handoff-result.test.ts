@@ -119,4 +119,14 @@ describe("battleResultFromForces", () => {
     const r = battleResultFromForces(withManual);
     expect(r.unitOutcomes.filter((o) => o.unitId.startsWith("u-blue")).length).toBe(1);
   });
+
+  it("reports aero fuel remaining so the campaign ledger updates", () => {
+    const r = battleResultFromForces({
+      handoffId: "h", turnsElapsed: 5,
+      you: { sideId: "blue", units: [{ campaignUnitId: "f1", damage: { fuel: 72, heat: 3 } }] },
+      foe: { sideId: "red", units: [{ campaignUnitId: "f2", damage: {} }] },
+    });
+    expect(r.unitOutcomes.find((o) => o.unitId === "f1")!.fpRemaining).toBe(72);
+    expect(r.unitOutcomes.find((o) => o.unitId === "f2")!.fpRemaining).toBeUndefined();
+  });
 });

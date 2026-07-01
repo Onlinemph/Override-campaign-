@@ -100,7 +100,8 @@ export function buildFormationEntities(f: any):
   });
   if (f.flight || f.airPos) {
     formation.air = { phase: f.airPos ? 'ENROUTE' : 'GROUNDED', speed: 'CRUISE',
-                      homeFacilityId: f.flight?.homeFacilityId };
+                      homeFacilityId: f.flight?.homeFacilityId,
+                      ...(f.flight?.homeCarrierId ? { homeCarrierId: f.flight.homeCarrierId } : {}) };
   }
   formation.unitIds = units.map((u: Unit) => u.id);
   return { formation, units, pilots, jumpDrives };

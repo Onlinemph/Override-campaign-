@@ -4,7 +4,7 @@ import { Campaign } from '../../src/core/truth.js';
 import { rollDice } from '../../src/core/rng.js';
 import {
   computeAirSig, cruiseHexesPerTick, dashHexesPerTick, jokerBingo, minFp,
-  transitFpPerHex,
+  rtbDistance, transitFpPerHex,
 } from '../../src/engine/air.js';
 import { CLOCK } from '../../src/rules.js';
 import { addFlight, addMechFormation, baseTruth, gp, mkFacility, moveOrder, T } from '../helpers.js';
@@ -52,6 +52,24 @@ describe('M3 — ledger math (pure helpers)', () => {
     const { joker, bingo } = jokerBingo(truth, f, 36);
     expect(joker).toBe(90);
     expect(bingo).toBeCloseTo(39.6);
+  });
+
+  it('carrier ops: RTB tracks a moving DropShip carrier', () => {
+    const truth = baseTruth('CARRIER');
+    const carrier = addFlight(truth, { id: 'carrier', sideId: 'blue', airPos: { q: 0, r: 0 } });
+    const flight = addFlight(truth, { id: 'flt', sideId: 'blue', airPos: { q: 10, r: 0 } });
+    flight.air!.homeCarrierId = 'carrier';
+
+    expect(rtbDistance(truth, flight)).toBe(10);         // RTB to the carrier's hex
+    const far = jokerBingo(truth, flight);
+
+    carrier.pos = { ...carrier.pos, gridQ: 4 } as typeof carrier.pos; // carrier closes in
+    expect(rtbDistance(truth, flight)).toBe(6);
+    const near = jokerBingo(truth, flight);
+    expect(near.joker).toBeLessThan(far.joker);          // shorter RTB ⇒ smaller joker
+
+    carrier.destroyed = true;                            // carrier lost — no mobile home
+    expect(rtbDistance(truth, flight)).toBe(0);          // falls back (no facility)
   });
 });
 
