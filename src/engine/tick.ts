@@ -17,6 +17,7 @@ import { maintenancePass } from './logistics.js';
 import { airDetectionPass, airPass } from './air.js';
 import { spacePass } from './space.js';
 import { carrierPass } from './carrier.js';
+import { careerPass } from './career.js';
 import { scoringPass } from './scoring.js';
 import { firesPass } from './fires.js';
 import { engineeringPass } from './engineering.js';
@@ -84,6 +85,7 @@ export function step(truth: TruthState, forceMode?: ClockMode): StepResult {
   deliverReportsPass(work, emit);
   scoutPass(work, emit);
   maintenancePass(work, dt, emit);
+  careerPass(work, emit);       // pilots heal, repairs finish, refits deliver (ext)
   scoringPass(work, emit);      // objective control, daily VP, endings (M6)
   triggerPass(work, emit);      // conditionals react to this step's contacts/positions
   engagementPass(work, emit);   // may freeze the campaign (sets pendingEngagementId)

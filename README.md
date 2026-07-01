@@ -112,6 +112,30 @@ sensor reach show in the own-forces panels and map tooltips. The **`/editor`** u
 have a **library search** — type a chassis, pick a real unit, and its model/class are set
 (the rest derives on load).
 
+## The career loop — pilots that live, wrecks that come home
+
+Between battles the campaign now runs a light MekHQ-style persistence layer:
+
+**Pilots have careers.** Every named crew that survives a battle earns XP (+1 surviving,
++1 more when their side wins, +2 per kill credited in the result); every 8 XP the weaker
+of gunnery/piloting improves (floors G1/P2), and the fifth kill turns on the **★ ace**
+flag. Wounds heal on the clock — a `WOUNDED` pilot is fit for duty 3 days later. The GM
+screen's **Company roster** lists everyone: skills, XP, kills, status, and who's riding
+what.
+
+**Damage heals in the shop.** A `DAMAGED` or `CRIPPLED` unit whose formation sits on a
+friendly **depot / factory / spaceport** hex (or rides embarked in a carrier with a free
+turnaround crew) can be repaired — SP and days scale with how bad it is (1 SP / 1 day
+damaged, 2 SP / 3 days crippled). One click in the roster panel; the engine delivers the
+fix on schedule.
+
+**Salvage joins your roster.** Resolving a salvage token (2d6 ≥ 8, as before) now queues a
+**refit project** on a UNIT result — spend 3 SP at a repair-capable facility and 4 days
+later the rebuilt mech is delivered to a formation you pick, crewed by the first pilot
+waiting in your **POOL** (SAR pickups feed the pool). A PARTS result credits 2 SP to the
+depot in the wreck's hex. Your company's story — the mechs you took, the pilots who
+earned their skills — persists across the whole campaign, byte-exact on replay.
+
 ## Build your own campaign
 
 Campaigns are plain JSON — copy `demo/campaign.json` and edit it, or write one from

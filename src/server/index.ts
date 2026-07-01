@@ -578,6 +578,20 @@ const server = createServer(async (req, res) => {
       return json(res, r.ok ? 200 : 400, r);
     }
 
+    // ── the career loop: repairs & refits (ext) ──
+    if (path === '/api/gm/repair' && req.method === 'POST') {
+      const b = await readBody(req);
+      const r = campaign.repairUnit(b.unitId);
+      broadcast();
+      return json(res, r.ok ? 200 : 400, r);
+    }
+    if (path === '/api/gm/refit' && req.method === 'POST') {
+      const b = await readBody(req);
+      const r = campaign.startRefit(b.refitId, b.facilityId, b.formationId);
+      broadcast();
+      return json(res, r.ok ? 200 : 400, r);
+    }
+
     // player API — gated by the per-side token (?t=<token>)
     const sideView = path.match(/^\/api\/side\/([^/]+)\/view$/);
     if (sideView) {

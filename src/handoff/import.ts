@@ -6,7 +6,8 @@
  * salvage for the hex-controller, formation destruction, withdrawal displacement, and
  * rout for broken formations. The final BATTLE_RESULT_INGESTED unfreezes the campaign.
  */
-import { CLOCK, DEEPSKY, ENGAGEMENT, LADDER, RDY } from '../rules.js';
+import { CAREER, CLOCK, DEEPSKY, ENGAGEMENT, LADDER, RDY } from '../rules.js';
+import { battleXp } from '../engine/career.js';
 import type {
   BattleResult, Contact, ContactSnapshot, Engagement, GroundPos, Id, LadderLevel,
   Marker, TruthState,
@@ -57,12 +58,22 @@ export function ingestBattleResult(
                   damage: o.damage, ammoState: o.ammoState,
                   ...(o.fpRemaining !== undefined ? { fpRemaining: o.fpRemaining } : {}) });
   }
-  // 2. pilots
+  // 2. pilots: status (wounds schedule their recovery), then career XP for the living
   for (const o of result.unitOutcomes) {
     for (const p of o.pilotOutcomes) {
-      if (s.pilots[p.pilotId]) {
-        events.push({ type: 'PILOT_STATE_CHANGED', pilotId: p.pilotId, status: p.status });
-      }
+      if (!s.pilots[p.pilotId]) continue;
+      events.push({ type: 'PILOT_STATE_CHANGED', pilotId: p.pilotId, status: p.status,
+        ...(p.status === 'WOUNDED'
+          ? { recoverAtTick: s.tick + CAREER.WOUND_RECOVERY_DAYS * CLOCK.TICKS_PER_DAY }
+          : {}) });
+      // XP: surviving crews learn — KIA/captured crews' stories end here
+      if (p.status === 'KIA' || p.status === 'CAPTURED') continue;
+      const won = result.victorSideId !== undefined &&
+        s.units[o.unitId]?.sideId === result.victorSideId;
+      const kills = p.kills ?? 0;
+      events.push({ type: 'PILOT_XP', pilotId: p.pilotId,
+                    xpDelta: battleXp(won, kills), kills,
+                    reason: won ? 'battle won' : 'battle survived', tick: s.tick });
     }
   }
   // 3. ejections → DOWNED_CREW markers (SKYWATCH §8.4 / core §10.4).

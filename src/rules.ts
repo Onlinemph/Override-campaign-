@@ -251,6 +251,26 @@ export const SUPPLY = {
   FACTORY_SP_PER_DAY: 2,
 } as const;
 
+// ── The career loop (ext): pilots that live, wrecks that come home ──────────
+export const CAREER = {
+  // pilot XP: awarded on battle ingest to surviving crews
+  XP_SURVIVE: 1,                    // walked (or flew) away from the battle
+  XP_WIN: 1,                        // extra when their side held the field
+  XP_PER_KILL: 2,                   // per kill credited in the result
+  XP_PER_IMPROVEMENT: 8,            // every N XP the weaker of gunnery/piloting improves
+  GUNNERY_FLOOR: 1,                 // regular 4/5 grows toward elite; nobody goes below
+  PILOTING_FLOOR: 2,
+  ACE_KILLS: 5,                     // kills at which the ace flag turns on (SKYWATCH 11)
+  WOUND_RECOVERY_DAYS: 3,           // WOUNDED → OK after bed rest
+  // the repair economy: fix a unit at a repair-capable facility (or a carrier's bay)
+  REPAIR: {
+    DAMAGED:  { DAYS: 1, SP: 1 },
+    CRIPPLED: { DAYS: 3, SP: 2 },
+  },
+  REFIT: { DAYS: 4, SP: 3 },        // a recovered wreck → a serviceable unit
+  REPAIR_FACILITY_TAGS: ['DEPOT', 'FACTORY', 'SPACEPORT'],
+} as const;
+
 // ── Satellites (core §8.6) ──────────────────────────────────────────────────
 export const SATELLITE = {
   PASS_EVERY_PULSES: 4,

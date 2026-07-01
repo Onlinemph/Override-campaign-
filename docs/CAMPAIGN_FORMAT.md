@@ -161,7 +161,7 @@ A formation lives in exactly **one** place — pick one position style:
 | tags | | `[]` | `ECM ANGEL_ECM BEAGLE AA C3M MASH HQ ENGINEER DECOY SKYEYE LF_BATTERY STEALTH RECON WHEELED` … |
 | damage | | OK | `OK DAMAGED CRIPPLED DESTROYED SALVAGE` |
 | ammoState | | FULL | `FULL PARTIAL DRY` |
-| pilot | | — | `"Name"` (regular 4/5) **or** `{ name, gunnery, piloting, ace, kills, status }` (skills 0–8) |
+| pilot | | — | `"Name"` (regular 4/5) **or** `{ name, gunnery, piloting, ace, kills, status }` (skills 0–8). Named pilots have **careers**: XP from battles improves skills, kills earn the ace flag, wounds heal on the clock (README → career loop) |
 | bv / pv / walkOrCruise / run / jump | | sensible | TO&E derivations, usually fine to omit |
 | fuelFp / safeThrust | | — | aerospace tactical fuel (80 FP/ton) |
 | fuelTons / tonsPerBurnDay / maxThrust | | — | strategic burn-day fuel (DropShips/WarShips, 30 FP/ton tactical) |

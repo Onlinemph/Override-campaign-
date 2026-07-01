@@ -6,9 +6,10 @@
 import type {
   AirPos, ClockMode, Contact, ContactReport, DamageState, DieRoll, Emcon, Emission,
   Engagement, Formation, GroundPos, HandoffPackage, Id, JumpDrive, LanePos, Marker,
-  NodePos, Order, Pilot, Position, Posture, SalvageToken, TruthState, Tick, Unit,
+  NodePos, Order, Pilot, Position, Posture, RefitProject, SalvageToken, TruthState,
+  Tick, Unit,
 } from './types.js';
-import { SKYWATCH } from '../rules.js';
+import { CAREER, SKYWATCH } from '../rules.js';
 import { hexKey as hexKeyOf } from './types.js';
 
 export type GameEvent =
@@ -48,7 +49,19 @@ export type GameEvent =
   | { type: 'BATTLE_RESULT_INGESTED'; engagementId: Id; handoffId: Id; tick: Tick }
   | { type: 'UNIT_STATE_CHANGED'; unitId: Id; damage: DamageState; ammoState: string;
       fpRemaining?: number /* M3: tabletop fuel comes home on the record sheet */ }
-  | { type: 'PILOT_STATE_CHANGED'; pilotId: Id; status: Pilot['status'] }
+  | { type: 'PILOT_STATE_CHANGED'; pilotId: Id; status: Pilot['status'];
+      recoverAtTick?: Tick /* ext: WOUNDED heals to OK at this tick (careerPass) */ }
+  // ── ext: the career loop — XP, repairs, refits ──
+  | { type: 'PILOT_XP'; pilotId: Id; xpDelta: number; kills: number;
+      reason: string; tick: Tick }
+  | { type: 'REPAIR_STARTED'; unitId: Id; readyTick: Tick;
+      facilityId?: Id; carrierId?: Id; tick: Tick }
+  | { type: 'REPAIR_COMPLETED'; unitId: Id; tick: Tick }
+  | { type: 'REFIT_QUEUED'; refit: RefitProject; tick: Tick }
+  | { type: 'REFIT_STARTED'; refitId: Id; facilityId: Id; formationId: Id;
+      readyTick: Tick; tick: Tick }
+  | { type: 'REFIT_COMPLETED'; refitId: Id; unit: Unit; formationId: Id;
+      pilot?: Pilot; tick: Tick }
   | { type: 'MARKER_ADDED'; marker: Marker }
   | { type: 'MARKER_REMOVED'; markerId: Id }
   | { type: 'FORMATION_FIRED'; formationId: Id; tick: Tick }      // M7: fired this turn (SIG −3)
@@ -341,7 +354,77 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
 
     case 'PILOT_STATE_CHANGED': {
       const p = s.pilots[e.pilotId];
-      if (p) p.status = e.status;
+      if (p) {
+        p.status = e.status;
+        if (e.recoverAtTick !== undefined) p.recoverAtTick = e.recoverAtTick;
+        else if (e.status === 'OK') delete p.recoverAtTick; // healed / released
+      }
+      break;
+    }
+
+    case 'PILOT_XP': {
+      const p = s.pilots[e.pilotId];
+      if (!p) break;
+      const before = p.xp ?? 0;
+      p.xp = before + e.xpDelta;
+      p.kills += e.kills;
+      if (p.kills >= CAREER.ACE_KILLS) p.ace = true;
+      // skill growth: each XP_PER_IMPROVEMENT crossed improves the weaker skill
+      // (gunnery on a tie), respecting the floors — deterministic, so replay-safe
+      const crossings = Math.floor(p.xp / CAREER.XP_PER_IMPROVEMENT)
+                      - Math.floor(before / CAREER.XP_PER_IMPROVEMENT);
+      for (let i = 0; i < crossings; i++) {
+        const canGun = p.gunnery > CAREER.GUNNERY_FLOOR;
+        const canPil = p.piloting > CAREER.PILOTING_FLOOR;
+        if (canGun && (p.gunnery >= p.piloting || !canPil)) p.gunnery -= 1;
+        else if (canPil) p.piloting -= 1;
+      }
+      break;
+    }
+
+    case 'REPAIR_STARTED': {
+      const u = s.units[e.unitId];
+      if (u) u.repairReadyTick = e.readyTick;
+      if (e.carrierId) {
+        const c = s.formations[e.carrierId];
+        if (c?.carrier) (c.carrier.crewBusyUntil ??= []).push(e.readyTick);
+      }
+      break;
+    }
+
+    case 'REPAIR_COMPLETED': {
+      const u = s.units[e.unitId];
+      if (u) {
+        u.damage = 'OK';
+        delete u.repairReadyTick;
+      }
+      break;
+    }
+
+    case 'REFIT_QUEUED':
+      (s.refits ??= {})[e.refit.id] = e.refit;
+      break;
+
+    case 'REFIT_STARTED': {
+      const r = s.refits?.[e.refitId];
+      if (r) {
+        r.status = 'IN_PROGRESS';
+        r.facilityId = e.facilityId;
+        r.formationId = e.formationId;
+        r.readyTick = e.readyTick;
+      }
+      break;
+    }
+
+    case 'REFIT_COMPLETED': {
+      const f = s.formations[e.formationId];
+      s.units[e.unit.id] = structuredClone(e.unit);
+      if (e.pilot) {
+        s.pilots[e.pilot.id] = structuredClone(e.pilot);
+        s.units[e.unit.id].pilotIds = [e.pilot.id];
+      }
+      if (f && !f.unitIds.includes(e.unit.id)) f.unitIds.push(e.unit.id);
+      if (s.refits) delete s.refits[e.refitId];
       break;
     }
 
@@ -693,6 +776,8 @@ export function isInterestingEvent(e: GameEvent): boolean {
     case 'CAMPAIGN_ENDED':
     case 'UNIT_STATE_CHANGED':   // M7: arty/minefield damage is worth a look
     case 'TRANSPONDER_REVEALED': // M8: a false flag blown
+    case 'REPAIR_COMPLETED':     // ext: a mech walks out of the shop
+    case 'REFIT_COMPLETED':      // ext: a salvaged wreck joins the roster
       return true;
     default:
       return false;

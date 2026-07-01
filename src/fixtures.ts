@@ -105,7 +105,7 @@ export function emptyTruth(seed: string, config?: Partial<CampaignConfig>): Trut
     seed, tick: 0, clockMode: 'WATCH', seedCursor: 0,
     config: { name: 'Test Campaign', dawnTick: 60, duskTick: 180, weather: 'CLEAR', ...config },
     sides: {}, theaters: {}, units: {}, pilots: {}, formations: {},
-    facilities: {}, satellites: {}, markers: {}, salvage: {},
+    facilities: {}, satellites: {}, markers: {}, salvage: {}, refits: {},
     contacts: {}, reports: {}, orders: {}, scoutedHexes: {},
     engagements: {}, pendingEngagementId: null, handoffs: {},
     system: { nodes: {}, lanes: {}, lastSweepTick: 0 },

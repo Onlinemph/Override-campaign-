@@ -15,7 +15,7 @@ import { isFormationOnNet, netPass, scoutPass } from '../engine/net.js';
 import { buildHandoff } from '../handoff/export.js';
 import { ingestBattleResult } from '../handoff/import.js';
 import { rollDice } from './rng.js';
-import { CLOCK, DEEPSKY, ENGAGEMENT, LADDER, SKYWATCH, SUPPLY } from '../rules.js';
+import { CAREER, CLOCK, DEEPSKY, ENGAGEMENT, LADDER, SKYWATCH, SUPPLY } from '../rules.js';
 import { classifyEncounter, emitJumpFlash, type Classification } from '../engine/space.js';
 import { COMBAT_DROP } from '../rules.js';
 import { AXIAL_DIRECTIONS, hexDistance } from '../hex/axial.js';
@@ -766,14 +766,123 @@ export class Campaign {
     return { ok: true, fpDelivered: fp };
   }
 
-  /** Resolve one hauled salvage token at a depot: 2d6 ≥8 ⇒ unit, else parts (core §10.4). */
-  resolveSalvage(tokenId: Id): { outcome: 'UNIT' | 'PARTS' } | { error: string } {
+  /**
+   * Resolve one hauled salvage token at a depot: 2d6 ≥8 ⇒ unit, else parts (core §10.4).
+   * The career loop closes both ends (ext): a UNIT outcome queues a refit project — the
+   * wreck can be rebuilt into the recoverer's roster via startRefit — and a PARTS outcome
+   * credits SALVAGE_FAIL_SP to a friendly depot in the wreck's hex (if any).
+   */
+  resolveSalvage(tokenId: Id): { outcome: 'UNIT' | 'PARTS'; refitId?: Id } | { error: string } {
     const token = this.truth.salvage[tokenId];
     if (!token) return { error: 'no such salvage token' };
     const roll = this.rollLogged('2d6', `salvage recovery ${tokenId}`);
     const outcome = roll >= SUPPLY.SALVAGE_RECOVER_TN ? 'UNIT' : 'PARTS';
+    const src = this.truth.units[token.sourceUnitId];
+    const sideId = token.heldBy;
     this.inject({ type: 'SALVAGE_RESOLVED', tokenId, outcome, tick: this.truth.tick });
+
+    if (outcome === 'UNIT' && src && sideId) {
+      const refitId = `refit:${tokenId}`;
+      this.inject({ type: 'REFIT_QUEUED', refit: {
+        id: refitId, sideId, sourceUnitId: token.sourceUnitId,
+        model: src.model, name: src.name, hex: { ...token.hex }, status: 'AWAITING',
+      }, tick: this.truth.tick });
+      this.inject({ type: 'GM_NOTE', tick: this.truth.tick,
+        text: `${src.name} (${src.model}) recovered intact — awaiting refit` });
+      return { outcome, refitId };
+    }
+    if (outcome === 'PARTS' && sideId) {
+      const depot = Object.values(this.truth.facilities).find(fac =>
+        fac.sideId === sideId && fac.pos.kind === 'ground' &&
+        fac.pos.theaterId === token.hex.theaterId &&
+        fac.pos.q === token.hex.q && fac.pos.r === token.hex.r &&
+        CAREER.REPAIR_FACILITY_TAGS.some(t => (fac.tags as string[]).includes(t)));
+      if (depot) {
+        this.inject({ type: 'SP_CHANGED', facilityId: depot.id, delta: SUPPLY.SALVAGE_FAIL_SP,
+                      reason: `stripped ${src?.name ?? token.sourceUnitId} for parts` });
+      }
+    }
     return { outcome };
+  }
+
+  /**
+   * Start rebuilding a recovered wreck (ext): a repair-capable facility of the refit's side
+   * spends REFIT.SP and REFIT.DAYS; on completion careerPass delivers the unit — crewed by
+   * a POOL pilot when one is waiting — into the chosen formation.
+   */
+  startRefit(refitId: Id, facilityId: Id, formationId: Id):
+      { ok: true; readyTick: number } | { ok: false; reason: string } {
+    const refit = this.truth.refits?.[refitId];
+    if (!refit) return { ok: false, reason: 'no such refit project' };
+    if (refit.status !== 'AWAITING') return { ok: false, reason: 'refit already under way' };
+    const fac = this.truth.facilities[facilityId];
+    if (!fac || fac.sideId !== refit.sideId) return { ok: false, reason: 'no such friendly facility' };
+    if (!CAREER.REPAIR_FACILITY_TAGS.some(t => (fac.tags as string[]).includes(t))) {
+      return { ok: false, reason: `${fac.name} cannot rebuild units (needs ${CAREER.REPAIR_FACILITY_TAGS.join('/')})` };
+    }
+    if (fac.supplyPoints < CAREER.REFIT.SP) {
+      return { ok: false, reason: `refit needs ${CAREER.REFIT.SP} SP, ${fac.name} holds ${fac.supplyPoints}` };
+    }
+    const formation = this.truth.formations[formationId];
+    if (!formation || formation.destroyed || formation.sideId !== refit.sideId) {
+      return { ok: false, reason: 'no such friendly formation to deliver to' };
+    }
+    const readyTick = this.truth.tick + CAREER.REFIT.DAYS * CLOCK.TICKS_PER_DAY;
+    this.inject({ type: 'SP_CHANGED', facilityId, delta: -CAREER.REFIT.SP,
+                  reason: `refitting ${refit.name}` });
+    this.inject({ type: 'REFIT_STARTED', refitId, facilityId, formationId, readyTick,
+                  tick: this.truth.tick });
+    return { ok: true, readyTick };
+  }
+
+  /**
+   * Put a DAMAGED/CRIPPLED unit in the shop (ext). Needs its formation co-located with a
+   * friendly repair-capable facility (draws the repair SP), or embarked in a carrier with
+   * a free crew (the crew is tied up for the duration). careerPass completes it.
+   */
+  repairUnit(unitId: Id): { ok: true; readyTick: number } | { ok: false; reason: string } {
+    const u = this.truth.units[unitId];
+    if (!u) return { ok: false, reason: 'no such unit' };
+    if (u.damage !== 'DAMAGED' && u.damage !== 'CRIPPLED') {
+      return { ok: false, reason: `${u.name} is ${u.damage} — nothing a shop can fix` };
+    }
+    if (u.repairReadyTick != null) return { ok: false, reason: `${u.name} is already in the shop` };
+    const formation = Object.values(this.truth.formations).find(f =>
+      !f.destroyed && f.unitIds.includes(unitId));
+    if (!formation) return { ok: false, reason: 'unit is not in a live formation' };
+    const cost = CAREER.REPAIR[u.damage];
+    const readyTick = this.truth.tick + cost.DAYS * CLOCK.TICKS_PER_DAY;
+
+    // option 1: a repair-capable friendly facility in the formation's hex
+    if (formation.pos.kind === 'ground') {
+      const here = formation.pos;
+      const fac = Object.values(this.truth.facilities).find(x =>
+        x.sideId === formation.sideId && x.pos.kind === 'ground' &&
+        x.pos.theaterId === here.theaterId && x.pos.q === here.q && x.pos.r === here.r &&
+        CAREER.REPAIR_FACILITY_TAGS.some(t => (x.tags as string[]).includes(t)));
+      if (fac) {
+        if (fac.supplyPoints < cost.SP) {
+          return { ok: false, reason: `repair needs ${cost.SP} SP, ${fac.name} holds ${fac.supplyPoints}` };
+        }
+        this.inject({ type: 'SP_CHANGED', facilityId: fac.id, delta: -cost.SP,
+                      reason: `repairing ${u.name}` });
+        this.inject({ type: 'REPAIR_STARTED', unitId, readyTick, facilityId: fac.id,
+                      tick: this.truth.tick });
+        return { ok: true, readyTick };
+      }
+    }
+    // option 2: embarked in a carrier with a free turnaround crew
+    if (formation.mounted) {
+      const carrier = this.truth.formations[formation.mounted.carrierFormationId];
+      if (carrier && !carrier.destroyed && carrier.carrier) {
+        const busy = (carrier.carrier.crewBusyUntil ?? []).filter(t => t > this.truth.tick).length;
+        if (busy >= carrier.carrier.crews) return { ok: false, reason: 'all carrier crews busy' };
+        this.inject({ type: 'REPAIR_STARTED', unitId, readyTick, carrierId: carrier.id,
+                      tick: this.truth.tick });
+        return { ok: true, readyTick };
+      }
+    }
+    return { ok: false, reason: 'needs a friendly depot/factory/spaceport in the hex, or a carrier bay' };
   }
 
   // ── helpers ───────────────────────────────────────────────────────────────

@@ -145,6 +145,15 @@
         <button onclick="doCarrierRearm()">Rearm</button></div>
       <div id="carrier-board" style="margin-top:6px"></div>
       <div id="carrier-msg" class="kv"></div></div>
+    <div class="panel"><h2>Company roster <small>— pilots, the shop, the refit yard</small></h2>
+      <div id="pilot-roster" style="max-height:20vh;overflow:auto"></div>
+      <h2 style="margin-top:10px">The shop <small>— repair at a depot/factory/spaceport hex or a carrier bay</small></h2>
+      <div id="repair-board"></div>
+      <h2 style="margin-top:10px">Refit yard <small>— recovered wrecks → your roster</small></h2>
+      <div class="kv">rebuild at: facility <input id="rft-fac" size="10" placeholder="facility id">
+        deliver to <input id="rft-form" size="10" placeholder="formation id"></div>
+      <div id="refit-board"></div>
+      <div id="career-msg" class="kv"></div></div>
     <div class="panel"><h2>Reinforcements <small>— drop a new formation into the running game</small></h2>
       <div class="kv">name <input id="rf-name" size="16" placeholder="Relief Company">
         side <select id="rf-side"></select></div>
@@ -289,6 +298,44 @@ async function refresh() {
       (aboard.length ? `<br><small>aboard: ${aboard.map(x => x.name).join(', ')}</small>` : '') +
       '</div>';
   }).join('') : '<small>(no carriers)</small>';
+
+  // company roster: pilots with careers
+  const unitOf = {};
+  for (const u of Object.values(t.units)) for (const pid of u.pilotIds || []) unitOf[pid] = u;
+  const pilots = Object.values(t.pilots || {});
+  const prEl = document.getElementById('pilot-roster');
+  if (prEl) prEl.innerHTML = pilots.length ? pilots.map(p => {
+    const ride = unitOf[p.id];
+    const rec = p.status === 'WOUNDED' && p.recoverAtTick != null
+      ? ` · fit for duty ${clock(p.recoverAtTick)}` : '';
+    return `<div class="report">${p.ace ? '★ ' : ''}${p.name} <small>G${p.gunnery}/P${p.piloting}</small>
+      · XP ${p.xp || 0} · kills ${p.kills}
+      · ${p.status}${rec}${ride ? ` <small>— ${ride.name}${ride.sideId ? ` [${ride.sideId}]` : ''}</small>` : ' <small>— unassigned</small>'}</div>`;
+  }).join('') : '<small>(no named pilots)</small>';
+
+  // the shop: damaged/crippled units and repairs in progress
+  const fmOf = {};
+  for (const f of Object.values(t.formations)) if (!f.destroyed) for (const uid of f.unitIds) fmOf[uid] = f;
+  const hurt = Object.values(t.units).filter(u =>
+    (u.damage === 'DAMAGED' || u.damage === 'CRIPPLED') && fmOf[u.id]);
+  const rbEl = document.getElementById('repair-board');
+  if (rbEl) rbEl.innerHTML = hurt.length ? hurt.map(u => {
+    const busy = u.repairReadyTick != null && t.tick < u.repairReadyTick;
+    return `<div class="report">${u.name} <small>(${u.model}) — ${fmOf[u.id].name} [${u.sideId}]</small>
+      · <b>${u.damage}</b>` +
+      (busy ? ` · in the shop, done ${clock(u.repairReadyTick)}`
+            : ` <button onclick="doRepair('${u.id}')">🔧 Repair</button>`) + '</div>';
+  }).join('') : '<small>(everything runs)</small>';
+
+  // the refit yard
+  const refits = Object.values(t.refits || {});
+  const rfEl = document.getElementById('refit-board');
+  if (rfEl) rfEl.innerHTML = refits.length ? refits.map(r =>
+    `<div class="report">${r.name} <small>(${r.model}) [${r.sideId}]</small>` +
+    (r.status === 'IN_PROGRESS'
+      ? ` · rebuilding, delivered ${clock(r.readyTick)}`
+      : ` <button onclick="doRefit('${r.id}')">🔨 Rebuild</button>`) + '</div>'
+  ).join('') : '<small>(no recovered wrecks)</small>';
 
   // salvage
   document.getElementById('salvage-panel').style.display = (s.salvage || []).length ? '' : 'none';
@@ -614,6 +661,21 @@ async function doRecover() {
 async function doCarrierRearm() {
   carrierMsg(await post('/api/gm/carrier-rearm', { carrierId: document.getElementById('c-fcarrier').value,
     flightId: document.getElementById('c-flight').value }));
+}
+function careerMsg(r) {
+  document.getElementById('career-msg').textContent =
+    r.ok === false ? '✗ ' + r.reason
+    : r.readyTick != null ? `✓ under way — done ${clock(r.readyTick)}`
+    : '✓ done';
+  refresh();
+}
+async function doRepair(unitId) {
+  careerMsg(await post('/api/gm/repair', { unitId }));
+}
+async function doRefit(refitId) {
+  careerMsg(await post('/api/gm/refit', { refitId,
+    facilityId: document.getElementById('rft-fac').value.trim(),
+    formationId: document.getElementById('rft-form').value.trim() }));
 }
 async function doSpawn() {
   // units textarea: one per line "Name | Model | CLASS"

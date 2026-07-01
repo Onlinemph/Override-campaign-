@@ -78,6 +78,8 @@ export interface Pilot {
   id: Id; name: string; gunnery: number; piloting: number;
   kills: number; ace: boolean; fatigue: number; // SKYWATCH 11
   status: 'OK' | 'WOUNDED' | 'DOWNED' | 'CAPTURED' | 'KIA' | 'POOL';
+  xp?: number;             // ext: career XP — skills improve at CAREER.XP_PER_IMPROVEMENT
+  recoverAtTick?: Tick;    // ext: WOUNDED heals to OK when the clock reaches this
 }
 
 export type UnitClass =
@@ -101,6 +103,7 @@ export interface Unit {
   safeThrust?: number; maxThrust?: number;
   fuel?: FuelLedger;
   damage: DamageState;
+  repairReadyTick?: Tick;  // ext: under repair — heals to OK when the clock reaches this
   pilotIds: Id[]; ammoState: 'FULL' | 'PARTIAL' | 'DRY';
   tags: string[]; // 'ECM','ANGEL_ECM','BEAGLE','AA','C3M','MASH','HQ','ENGINEER',
                   // 'DECOY','SKYEYE','LF_BATTERY','SAIL','STEALTH','RECON','WHEELED'...
@@ -179,6 +182,16 @@ export interface Facility {
   activeSweep?: boolean; // ext: station running its active set (GM toggle)
 }
 export interface SalvageToken { id: Id; hex: GroundPos; sourceUnitId: Id; heldBy?: Id }
+
+/** ext: a recovered wreck being rebuilt into a serviceable unit (the career loop). */
+export interface RefitProject {
+  id: Id; sideId: Id;               // who recovered it (salvage heldBy)
+  sourceUnitId: Id;                 // the wreck — model/stats copied at completion
+  model: string; name: string;      // display snapshot (source unit may be enemy-owned)
+  hex: GroundPos;                   // where the wreck was recovered
+  status: 'AWAITING' | 'IN_PROGRESS';
+  facilityId?: Id; formationId?: Id; readyTick?: Tick; // set when the refit starts
+}
 export interface Marker {
   id: Id;
   kind: 'DOWNED_CREW' | 'MINEFIELD' | 'SENTINEL_DRONE' | 'FUEL_CACHE' | 'WRECK';
@@ -290,7 +303,8 @@ export interface BattleResult {
   handoffId: Id; victorSideId?: Id; hexControlSideId?: Id;
   unitOutcomes: Array<{ unitId: Id; damage: DamageState; fpRemaining?: number;
                         ammoState: string;
-                        pilotOutcomes: Array<{ pilotId: Id; status: Pilot['status'] }> }>;
+                        pilotOutcomes: Array<{ pilotId: Id; status: Pilot['status'];
+                                               kills?: number }> }>;
   ejections: Array<{ pilotId: Id; pos?: Position }>; // pos filled from the battle hex if omitted
   withdrewVia?: Record<Id, 'N' | 'NE' | 'SE' | 'S' | 'SW' | 'NW'>;
   turnsElapsed: number; notes: string;
@@ -376,6 +390,8 @@ export interface TruthState {
             lastSweepTick: Tick };           // watch-cadence anchor for space detection
   emissions: Record<Id, Emission>;           // jump flashes & drive burns in flight
   jumpDrives: Record<Id, JumpDrive>;         // keyed by vessel unit id
+  // ext: the career loop — recovered wrecks awaiting / undergoing refit
+  refits?: Record<Id, RefitProject>;         // optional: absent in pre-career logs
   // M6: VP scoring & endings
   lastScoredTick: Tick;                      // daily-accrual anchor (core §12.1)
   ended?: { winnerSideId: Id | null; reason: string; tick: Tick }; // campaign over (§12.2)

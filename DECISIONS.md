@@ -564,6 +564,38 @@ units, closing the "units in storage" story.
    a GM "Carrier ops" panel with a live carrier board (bays, free crews, av fuel, who's
    aboard); authorable via `carrier` / `mountedOn` / `flight.homeCarrierId` in the campaign
    file. All actions go through the log — replay stays byte-exact.
+
+## D-021 ✅ The career loop: pilot XP, the repair economy, salvage → roster
+The engine tracked pilots, wounds, and salvage but they were dead ends; this closes them
+into a light MekHQ-style persistence layer. All numbers in `rules.ts` CAREER.
+1. **Pilot XP on ingest** (`PILOT_XP`): surviving crews in a BattleResult earn
+   XP_SURVIVE (+XP_WIN when their side won, +XP_PER_KILL per kill in the optional
+   `pilotOutcomes[].kills`); KIA/CAPTURED earn nothing. Every XP_PER_IMPROVEMENT (8) the
+   *weaker* skill improves (the numerically higher of gunnery/piloting; gunnery on ties),
+   floored at G1/P2 — computed in the reducer from the xp crossing, so replay is exact.
+   ACE_KILLS (5) flips the existing `ace` flag.
+2. **Wounds heal on the clock**: a WOUNDED outcome schedules `recoverAtTick`
+   (WOUND_RECOVERY_DAYS), and the new `careerPass` (in tick, after maintenance) discharges
+   the pilot to OK when it arrives.
+3. **The repair economy** (`repairUnit` → `REPAIR_STARTED`/`REPAIR_COMPLETED`): a
+   DAMAGED/CRIPPLED unit repairs when its formation shares a hex with a friendly
+   REPAIR_FACILITY_TAGS facility (SP drawn immediately) or is embarked in a carrier with a
+   free turnaround crew (the crew slot is tied up, mirroring carrier rearm). One step to
+   OK; cost/time scale by state. Completion is anchored on `repairReadyTick`.
+4. **Salvage closes both ways** (extending core §10.4): a UNIT recovery queues a
+   `RefitProject` (`s.refits`, optional collection — old logs replay with `??=` guards);
+   `startRefit` spends REFIT.SP at a repair-capable friendly facility and picks the
+   delivery formation; careerPass completes it (`REFIT_COMPLETED`) — a **new unit id**
+   (`unit:refit:*`) cloned from the wreck's stats under the recoverer's flag, crewed by
+   the first POOL pilot of that side (deterministic id sort; SAR pickups feed the pool),
+   named "<name> (salvage)". A PARTS result finally uses SALVAGE_FAIL_SP: credited to a
+   friendly depot in the wreck's hex. The wreck's original unit record is never mutated —
+   the enemy's dead stay dead; you field a rebuilt copy.
+5. **Surfaces**: `/api/gm/repair`, `/api/gm/refit`; the GM "Company roster" panel (pilot
+   careers with ★ aces and recovery timers, the shop with one-click repairs, the refit
+   yard). Kills aren't auto-counted by the tracker yet — the result schema carries them
+   optionally; the GM can also award via the log. Deliberately deferred: XP spend choices
+   (players picking which skill), pilot death permanence options, refit customization.
 6. **The hull masks the cargo** (follow-up ruling). An embarked formation is *inside* the
    carrier: it is not an independent sensor return (ground detection, same-hex auto-LOCK,
    satellite passes, air detection all skip `mounted` targets), it contributes no sensor
