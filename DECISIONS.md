@@ -669,3 +669,26 @@ not enter the planet's air layer. Two orders bridge the seam (constants in `rule
    rolls, and per-node descent restrictions. The acceptance test plays the whole story on
    plotted orders alone: DESCEND → LAND → DISEMBARK → fighter CAP off the deck →
    auto-recover → ASCEND, byte-exact on replay.
+
+## D-024 ✅ Flak: the AA gauntlet at the interface points
+The 'AA' unit tag (documented since M1, read by nothing) becomes the counterplay to air
+mobility. Design constraint: the air layer is one hex per theater, so ground AA cannot
+plausibly engage HIGH-band transit — and shouldn't (that's what makes the band safe).
+Instead it bites where aircraft come LOW over a specific ground hex. Constants in FLAK.
+1. **The umbrella**: any enemy formation with a live AA-tagged unit within RANGE_HEXES (2)
+   of the interface hex fires once — one logged 2d6 per battery, TN 8. Mounted (bay-stowed)
+   batteries are silent; friendly ones obviously don't fire.
+2. **A hit degrades one damage step** (OK→DAMAGED→CRIPPLED, deterministic first-live-unit
+   pick). Flak batters; it never destroys outright — killing a DropShip full of troops with
+   one campaign-layer roll would bypass the "battles happen on the table" law.
+3. **Shoot and be seen** (the counter-battery bargain, core §9.2): every shot reveals the
+   battery at CONTACT (`setLevel`) to the aircraft's side, sourced from the aircrew so
+   report delivery follows their net status. An AA umbrella is a sprung trap, not a wall.
+4. **Interface points wired**: climb-out (facility launches and deck scrambles off a
+   grounded carrier), final approach (LAND on any hex, RTB facility landings, carrier
+   recovery when the ship is on the ground), and the combat-drop pass — which also adds
+   DROP_SCATTER_EXTRA (+2) hexes of scatter, rolled after the drop dice so the penalty is
+   dice-stable. Air-side interfaces (mid-air deck launches/recoveries, DESCEND/ASCEND
+   arrivals at HIGH) are deliberately out of reach.
+5. Own AA gear shows in the player's gear line ('anti-air (flak umbrella)'); enemy
+   umbrellas stay invisible until they fire — double-blind holds.

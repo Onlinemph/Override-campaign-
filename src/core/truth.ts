@@ -17,7 +17,8 @@ import { ingestBattleResult } from '../handoff/import.js';
 import { rollDice } from './rng.js';
 import { CAREER, CLOCK, DEEPSKY, ENGAGEMENT, LADDER, SKYWATCH, SUPPLY } from '../rules.js';
 import { classifyEncounter, emitJumpFlash, type Classification } from '../engine/space.js';
-import { COMBAT_DROP } from '../rules.js';
+import { flakBatteriesNear, flakGauntlet } from '../engine/flak.js';
+import { COMBAT_DROP, FLAK } from '../rules.js';
 import { AXIAL_DIRECTIONS, hexDistance } from '../hex/axial.js';
 
 /** Rebuild truth purely from the log: truth = fold(applyEvent, genesis, events). */
@@ -674,11 +675,16 @@ export class Campaign {
     let scatter = Math.max(0, dist - margin);
     if (this.truth.config.weather === 'STORM') scatter += COMBAT_DROP.STORM_OR_ECM_SCATTER;
 
+    // dropping into an AA umbrella (ext): worse scatter, and the batteries get their shots
+    const flakUp = flakBatteriesNear(this.truth, payload.sideId, target).length > 0;
+    if (flakUp) scatter += FLAK.DROP_SCATTER_EXTRA;
+
     const dir = AXIAL_DIRECTIONS[(dirRoll - 1) % 6];
     let landing: GroundPos = { ...target, q: target.q + dir.q * scatter, r: target.r + dir.r * scatter };
     if (!theater.hexes[`${landing.q},${landing.r}`]) landing = { ...target }; // off-map ⇒ on target
 
     if (payload.mounted) this.inject({ type: 'MOUNT_CHANGED', formationId: payloadId, carrierFormationId: null });
+    if (flakUp) flakGauntlet(this.truth, e => this.inject(e), payload, { ...target }, 'drop pass');
     this.inject({ type: 'FORMATION_MOVED', formationId: payloadId, to: landing,
                   movedKind: 'NORMAL', onRoad: false, headingDeg: 0, tick: this.truth.tick });
     // "dropping troops arrive at LOCK-level visibility to anyone watching the sky"

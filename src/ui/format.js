@@ -91,7 +91,8 @@
     // Notable gear derived from the record sheets (ECM raises enemy detection TN; a
     // probe or mobile HQ is what lifts the sensor reach shown above).
     const GEAR = { ECM: 'ECM', ANGEL_ECM: 'Angel ECM', BEAGLE: 'active probe',
-                   STEALTH: 'stealth armor', C3M: 'C3 master', HQ: 'mobile HQ', RECON: 'recon' };
+                   STEALTH: 'stealth armor', C3M: 'C3 master', HQ: 'mobile HQ', RECON: 'recon',
+                   AA: 'anti-air (flak umbrella)' };
     const gear = [...new Set((f.units || []).flatMap(u =>
       (u.tags || []).filter(t => GEAR[t])))];
     if (gear.length) line += `\n   ⚙ gear: ${gear.map(t => GEAR[t]).join(', ')}`;

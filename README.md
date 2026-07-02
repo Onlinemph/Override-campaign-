@@ -115,6 +115,16 @@ group means a wave-off, holding over the ship until one opens. A player can plot
 from a pirate point to a dirt landing with its fighters cycling overhead, no GM fiat at any
 step: `DESCEND → LAND → DISEMBARK`, fight the campaign, `EMBARK → ASCEND` back out.
 
+**And the ground shoots back.** A formation with an `AA`-tagged unit throws a **flak
+umbrella** over its hex and two around it. Tactical AA can't reach HIGH-band transit — it
+bites at the *interface points*, where aircraft come low over a specific hex: climb-out on
+launch, final approach on any landing (open-field, airbase, or carrier recovery), and the
+drop pass of a combat drop (which also scatters +2 through flak). Each battery in range
+gets one logged 2d6; a hit degrades the aircraft one damage step — flak batters, it never
+one-shots. The bargain cuts both ways, same as counter-battery: **firing reveals the
+battery at CONTACT** to the aircraft's side, so an AA umbrella is a trap you spring, not a
+passive wall. Route your landings around what you've scouted — or eat the gauntlet.
+
 **Players fly their own DropShips.** Carrier ops are plotted orders through the double-blind
 command net, not GM table-talk: **EMBARK** marches a formation to its ship and loads it
 (waiting at the ramp if the bays are full or the ship is aloft), **DISEMBARK** steps off a

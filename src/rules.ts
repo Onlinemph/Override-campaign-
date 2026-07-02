@@ -251,6 +251,16 @@ export const SUPPLY = {
   FACTORY_SP_PER_DAY: 2,
 } as const;
 
+// ── Flak (ext): AA bites at the interface points ─────────────────────────────
+// The air layer is one hex per theater, so tactical AA cannot reach HIGH-band transit —
+// it engages aircraft coming LOW over a specific ground hex: launches, landings, drops.
+export const FLAK = {
+  RANGE_HEXES: 2,          // an AA formation's umbrella: its hex + 2
+  TN: 8,                   // one logged 2d6 per battery; ≥ TN ⇒ a hit
+  DROP_SCATTER_EXTRA: 2,   // dropping through flak scatters worse (like a storm)
+  REVEAL_LEVEL: 3,         // firing reveals the battery at CONTACT (counter-battery rule)
+} as const;
+
 // ── Atmospheric interface (ext): the orbit ↔ air seam ───────────────────────
 export const ATMO = {
   DESCENT_TICKS: 3,   // re-entry: ~18 min from orbit to the HIGH band (aerobraking)
