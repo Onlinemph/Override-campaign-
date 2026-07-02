@@ -26,6 +26,8 @@ export interface BattleRosterUnit {
   /** Coarse strategic state, so the GM can pre-mark the card before play. */
   damage: string;
   ammoState: string;
+  /** ext: last battle's exact marked boxes — the tracker seeds the card with these. */
+  sheetDamage?: Record<string, unknown>;
   // Air / space entry state (SKYWATCH / DEEP SKY) — present only off the ground.
   velocity?: number;
   altLevel?: number;
@@ -101,6 +103,7 @@ export function buildBattleRoster(s: TruthState, pkg: HandoffPackage): BattleRos
         piloting,
         damage: u.damage,
         ammoState: u.ammoState,
+        ...(u.sheetDamage ? { sheetDamage: structuredClone(u.sheetDamage) } : {}),
         ...airState(u),
       };
     });

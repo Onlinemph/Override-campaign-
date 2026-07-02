@@ -91,7 +91,10 @@ export interface BattleResultPayload {
     damage: DamageState;
     ammoState: AmmoState;
     fpRemaining?: number; // aero fuel that survived the merge (updates the campaign ledger)
-    pilotOutcomes: Array<{ pilotId: string; status: PilotStatus }>;
+    /** The marked-up card, verbatim — the campaign persists it between battles. */
+    sheetDamage?: TrackedDamage;
+    pilotOutcomes: Array<{ pilotId: string; status: PilotStatus;
+                           hits?: number /* consciousness track: recovery scales per hit */ }>;
   }>;
   /** Crews that punched out; the campaign fills the board position on ingest. */
   ejections: Array<{ pilotId: string }>;
@@ -121,12 +124,23 @@ export function battleResultFromForces(opts: {
       const damage = mapDamageState(u.damage);
       if (!isDead(damage)) survivors[key]++;
       const pilotStatus = mapPilotStatus(u.damage);
+      const hits = u.damage?.condition ?? 0;
+      // the exact marked boxes ride home (fuel is dropped — it has its own ledger)
+      const sheet: TrackedDamage | undefined = u.damage ? { ...u.damage } : undefined;
+      if (sheet) delete sheet.fuel;
+      const sheetHasMarks = sheet && Object.values(sheet).some(v =>
+        typeof v === 'number' ? v > 0
+        : typeof v === 'boolean' ? v
+        : v && typeof v === 'object' ? Object.values(v).some(n => (n as number) > 0)
+        : false);
       outcomes.push({
         unitId: u.campaignUnitId,
         damage,
         ammoState: mapAmmoState(u.damage),
         ...(u.damage?.fuel !== undefined ? { fpRemaining: u.damage.fuel } : {}),
-        pilotOutcomes: (u.campaignPilotIds ?? []).map(pilotId => ({ pilotId, status: pilotStatus })),
+        ...(sheetHasMarks ? { sheetDamage: sheet } : {}),
+        pilotOutcomes: (u.campaignPilotIds ?? []).map(pilotId => ({ pilotId, status: pilotStatus,
+          ...(hits > 0 ? { hits } : {}) })),
       });
       // a downed unit whose crew is still conscious got out — flag SAR
       if (isDead(damage) && pilotStatus !== 'DOWNED') {

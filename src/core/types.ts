@@ -104,6 +104,10 @@ export interface Unit {
   fuel?: FuelLedger;
   damage: DamageState;
   repairReadyTick?: Tick;  // ext: under repair — heals to OK when the clock reaches this
+  /** ext: the marked-up record sheet from the last battle (the tracker's damage blob,
+   * opaque to the engine). Reseeded into the next handoff so the same boxes reappear
+   * unless repaired. Cleared by repair (all), rearm (ammo), and pilot recovery (hits). */
+  sheetDamage?: Record<string, unknown>;
   pilotIds: Id[]; ammoState: 'FULL' | 'PARTIAL' | 'DRY';
   tags: string[]; // 'ECM','ANGEL_ECM','BEAGLE','AA','C3M','MASH','HQ','ENGINEER',
                   // 'DECOY','SKYEYE','LF_BATTERY','SAIL','STEALTH','RECON','WHEELED'...
@@ -301,7 +305,8 @@ export interface HandoffPackage {
     hiddenSetup: boolean; fortified: boolean; rdyTnPenalty: 0 | 1 | 2;
     units: Array<{ unitId: Id; velocity?: number; altLevel?: number;
                    fpOnTable?: number; jokerFp?: number; bingoFp?: number;
-                   ammoState: string; damage: string; pilotSkills: [number, number] }>;
+                   ammoState: string; damage: string; pilotSkills: [number, number];
+                   sheetDamage?: Record<string, unknown> /* last battle's marked boxes */ }>;
     offboard: {
       artillery: Array<{ unitId: Id; rangeHexesRemaining: number }>;
       airOnStation: Array<{ formationId: Id; arrivesTurn: number; fpOnStation: number }>;
@@ -314,8 +319,10 @@ export interface BattleResult {
   handoffId: Id; victorSideId?: Id; hexControlSideId?: Id;
   unitOutcomes: Array<{ unitId: Id; damage: DamageState; fpRemaining?: number;
                         ammoState: string;
+                        sheetDamage?: Record<string, unknown>; // the marked-up card, verbatim
                         pilotOutcomes: Array<{ pilotId: Id; status: Pilot['status'];
-                                               kills?: number }> }>;
+                                               kills?: number;
+                                               hits?: number /* recovery scales per hit */ }> }>;
   ejections: Array<{ pilotId: Id; pos?: Position }>; // pos filled from the battle hex if omitted
   withdrewVia?: Record<Id, 'N' | 'NE' | 'SE' | 'S' | 'SW' | 'NW'>;
   turnsElapsed: number; notes: string;

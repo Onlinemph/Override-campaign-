@@ -286,8 +286,8 @@ export const CAREER = {
   GUNNERY_FLOOR: 1,                 // regular 4/5 grows toward elite; nobody goes below
   PILOTING_FLOOR: 2,
   ACE_KILLS: 5,                     // kills at which the ace flag turns on (SKYWATCH 11)
-  WOUND_RECOVERY_DAYS: 3,           // WOUNDED → OK after bed rest
-  WOUND_RECOVERY_DAYS_MASH: 1,      // …or one day when the side fields a live MASH unit
+  WOUND_RECOVERY_DAYS: 3,           // bed rest PER HIT taken (2 hits ⇒ 6 days)
+  WOUND_RECOVERY_DAYS_MASH: 1,      // …per hit when the side fields a live MASH unit
   // the repair economy: fix a unit at a repair-capable facility (or a carrier's bay)
   REPAIR: {
     DAMAGED:  { DAYS: 1, SP: 1 },

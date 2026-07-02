@@ -68,6 +68,8 @@ function sideBlock(
     return {
       unitId: uid, ammoState: u.ammoState, damage: u.damage,
       pilotSkills: pilotSkills(s, uid),
+      // ext: last battle's marked boxes ride to the next table unless repaired
+      ...(u.sheetDamage ? { sheetDamage: structuredClone(u.sheetDamage) } : {}),
     };
   }));
 

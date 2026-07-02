@@ -2096,6 +2096,8 @@ async function importHandoffFromHash(): Promise<void> {
           ...(ru.piloting !== undefined ? { piloting: ru.piloting } : {}),
           ...(ru.unitId ? { campaignUnitId: ru.unitId } : {}),
           ...(ru.pilotIds ? { campaignPilotIds: ru.pilotIds } : {}),
+          // unrepaired damage from the last battle: the same boxes reappear on the card
+          ...(ru.sheetDamage ? { damage: JSON.parse(JSON.stringify(ru.sheetDamage)) } : {}),
           ...((ru.fpOnTable !== undefined || ru.velocity !== undefined || ru.altLevel !== undefined)
             ? { entry: {
                 ...(ru.fpOnTable !== undefined ? { fp: ru.fpOnTable } : {}),

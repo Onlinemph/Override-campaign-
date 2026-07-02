@@ -27,6 +27,8 @@ export interface HandoffRosterUnit {
   /** Opaque campaign ids, echoed back in the BattleResult so outcomes map home. */
   unitId?: string;
   pilotIds?: string[];
+  /** Unrepaired damage from the last battle — seeds the card's marked boxes. */
+  sheetDamage?: Record<string, unknown>;
   // Air / space entry state (SKYWATCH / DEEP SKY), surfaced in the briefing.
   velocity?: number;
   altLevel?: number;

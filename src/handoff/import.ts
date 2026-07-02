@@ -53,12 +53,22 @@ export function ingestBattleResult(
   const events: GameEvent[] = [];
   const allFormationIds = [...eng.attackerFormationIds, ...eng.defenderFormationIds];
 
-  // 1. unit damage / ammo / remaining fuel (M3: the record sheet's FP comes home)
+  // 1. unit damage / ammo / remaining fuel (M3: the record sheet's FP comes home) —
+  //    and the marked-up card itself persists (ext): the same boxes reappear in the
+  //    next battle unless the unit visits the shop. Fuel is dropped from the blob
+  //    (it rides the exact fpRemaining ledger instead).
   for (const o of result.unitOutcomes) {
     if (!s.units[o.unitId]) continue;
+    let sheet: Record<string, unknown> | undefined;
+    if (o.sheetDamage && typeof o.sheetDamage === 'object') {
+      sheet = { ...o.sheetDamage };
+      delete sheet.fuel;
+      if (Object.keys(sheet).length === 0) sheet = undefined;
+    }
     events.push({ type: 'UNIT_STATE_CHANGED', unitId: o.unitId,
                   damage: o.damage, ammoState: o.ammoState,
-                  ...(o.fpRemaining !== undefined ? { fpRemaining: o.fpRemaining } : {}) });
+                  ...(o.fpRemaining !== undefined ? { fpRemaining: o.fpRemaining } : {}),
+                  ...(sheet ? { sheetDamage: sheet } : {}) });
   }
   // 2. pilots: status (wounds schedule their recovery), then career XP for the living.
   //    A live MASH unit on the pilot's side shortens the bed rest (ext).
@@ -68,11 +78,13 @@ export function ingestBattleResult(
   for (const o of result.unitOutcomes) {
     for (const p of o.pilotOutcomes) {
       if (!s.pilots[p.pilotId]) continue;
-      const recoveryDays = s.units[o.unitId] && hasMash(s.units[o.unitId].sideId)
+      // recovery scales per hit taken: 3 days each, 1 with a MASH on the side
+      const perHit = s.units[o.unitId] && hasMash(s.units[o.unitId].sideId)
         ? CAREER.WOUND_RECOVERY_DAYS_MASH : CAREER.WOUND_RECOVERY_DAYS;
+      const hits = Math.max(1, p.hits ?? 1);
       events.push({ type: 'PILOT_STATE_CHANGED', pilotId: p.pilotId, status: p.status,
         ...(p.status === 'WOUNDED'
-          ? { recoverAtTick: s.tick + recoveryDays * CLOCK.TICKS_PER_DAY }
+          ? { recoverAtTick: s.tick + hits * perHit * CLOCK.TICKS_PER_DAY }
           : {}) });
       // XP: surviving crews learn — KIA/captured crews' stories end here
       if (p.status === 'KIA' || p.status === 'CAPTURED') continue;

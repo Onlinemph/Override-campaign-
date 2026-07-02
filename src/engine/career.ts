@@ -39,6 +39,7 @@ export function refitUnit(s: TruthState, refit: RefitProject): Unit | null {
     pilotIds: [],
   };
   delete u.repairReadyTick;
+  delete u.sheetDamage; // rebuilt from the frame up: a clean sheet
   return u;
 }
 

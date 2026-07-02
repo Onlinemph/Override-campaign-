@@ -48,7 +48,8 @@ export type GameEvent =
   | { type: 'HANDOFF_EXPORTED'; engagementId: Id; pkg: HandoffPackage; tick: Tick }
   | { type: 'BATTLE_RESULT_INGESTED'; engagementId: Id; handoffId: Id; tick: Tick }
   | { type: 'UNIT_STATE_CHANGED'; unitId: Id; damage: DamageState; ammoState: string;
-      fpRemaining?: number /* M3: tabletop fuel comes home on the record sheet */ }
+      fpRemaining?: number /* M3: tabletop fuel comes home on the record sheet */;
+      sheetDamage?: Record<string, unknown> /* ext: the marked-up card persists */ }
   | { type: 'PILOT_STATE_CHANGED'; pilotId: Id; status: Pilot['status'];
       recoverAtTick?: Tick /* ext: WOUNDED heals to OK at this tick (careerPass) */ }
   // ── ext: the career loop — XP, repairs, refits ──
@@ -133,6 +134,15 @@ export type GameEvent =
 export interface LoggedEvent { index: number; event: GameEvent }
 
 /** Mutates `s` in place. Callers own the state object (replay folds into a fresh clone). */
+/** Ammo topped to FULL: the persisted sheet's ammo boxes clear with it (ext). */
+function topAmmo(u: Unit): void {
+  u.ammoState = 'FULL';
+  if (u.sheetDamage) {
+    delete u.sheetDamage.ammo;
+    if (Object.keys(u.sheetDamage).length === 0) delete u.sheetDamage;
+  }
+}
+
 export function applyEvent(s: TruthState, e: GameEvent): void {
   switch (e.type) {
     case 'CAMPAIGN_INIT':
@@ -357,6 +367,13 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
             u.fuel.tons = e.fpRemaining / u.fuel.fpPerTon;
           }
         }
+        // the marked-up card persists between battles (ext): store what the table sent,
+        // clear the ammo boxes when the unit tops back to FULL, clear the whole sheet
+        // when it heals to OK — repaired means repaired.
+        if (e.sheetDamage !== undefined) u.sheetDamage = structuredClone(e.sheetDamage);
+        if (e.ammoState === 'FULL' && u.sheetDamage) delete u.sheetDamage.ammo;
+        if (e.damage === 'OK') delete u.sheetDamage;
+        if (u.sheetDamage && Object.keys(u.sheetDamage).length === 0) delete u.sheetDamage;
       }
       break;
     }
@@ -367,6 +384,14 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
         p.status = e.status;
         if (e.recoverAtTick !== undefined) p.recoverAtTick = e.recoverAtTick;
         else if (e.status === 'OK') delete p.recoverAtTick; // healed / released
+        if (e.status === 'OK') {
+          // a healed pilot's hits come off the persisted sheet (ext)
+          for (const u of Object.values(s.units)) {
+            if (!u.pilotIds.includes(e.pilotId) || !u.sheetDamage) continue;
+            delete u.sheetDamage.condition;
+            if (Object.keys(u.sheetDamage).length === 0) delete u.sheetDamage;
+          }
+        }
       }
       break;
     }
@@ -406,6 +431,7 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
       if (u) {
         u.damage = 'OK';
         delete u.repairReadyTick;
+        delete u.sheetDamage; // out of the shop with a clean sheet
       }
       break;
     }
@@ -599,7 +625,7 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
       for (const uid of f.unitIds) {
         const u = s.units[uid];
         if (u?.fuel) u.fuel.fp = Math.round(u.fuel.tons * u.fuel.fpPerTon);
-        if (u) u.ammoState = 'FULL';
+        if (u) topAmmo(u);
       }
       break;
     }
@@ -616,7 +642,7 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
         for (const uid of f.unitIds) {
           const u = s.units[uid];
           if (u?.fuel) u.fuel.fp = Math.round(u.fuel.tons * u.fuel.fpPerTon);
-          if (u) u.ammoState = 'FULL';
+          if (u) topAmmo(u);
         }
       }
       break;

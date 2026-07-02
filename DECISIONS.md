@@ -757,3 +757,24 @@ The last dead tags and orders come alive (constants in RECON_TRICKS).
    refit loop, so shot-down fighters become airframes in the yard.
 Still deliberately inert: SKYEYE, the `neutral` flag, LOSTECH_REPAIR_TN, CONVOY_* spawn
 defaults, DECK-band flight profiles, and `ace` as an honorific.
+
+## D-028 ✅ The record sheet persists: exact damage between battles, per-hit recovery
+Until now the campaign compressed battle outcomes to bands (DAMAGED/PARTIAL/WOUNDED); the
+exact boxes lived only at the table. Now the marked-up card itself round-trips.
+1. **`Unit.sheetDamage`** holds the tracker's damage blob verbatim (locations, crits,
+   weapon-group hits, heat, per-bin ammo, pilot hits) — opaque to the engine, which still
+   plays entirely off the coarse DamageState bands. The blob rides `UNIT_STATE_CHANGED`
+   at ingest (fuel stripped — it has its own exact fpRemaining ledger), out through the
+   handoff's perSide units, through the battle-roster bridge, and the tracker seeds the
+   next card with it: the same left-arm 4 reappears unless the unit visited the shop.
+2. **Healing clears exactly what healed**: the repair shop wipes the whole sheet
+   (REPAIR_COMPLETED, and any transition to damage OK); topping ammo to FULL (REARM,
+   facility/carrier turnarounds) wipes only the ammo boxes; a pilot recovering to OK
+   takes their `condition` hits off their unit's sheet; a refit delivers a clean sheet.
+   Empty blobs are pruned so replay equality stays exact.
+3. **Recovery scales per hit** (user ruling): WOUND_RECOVERY_DAYS (3) is now *per pilot
+   hit* — the tracker reports the consciousness track as `pilotOutcomes[].hits`, so 2
+   hits = 6 days of bed rest, or 2 days with a live MASH on the side
+   (WOUND_RECOVERY_DAYS_MASH = 1/hit). No hits reported defaults to 1.
+4. Tracker side: `battleResultFromForces` ships the blob only when something is actually
+   marked; `importHandoffFromHash` seeds `ForceUnit.damage` from the incoming sheet.

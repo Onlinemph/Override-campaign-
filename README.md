@@ -93,6 +93,12 @@ shows up in the handoff as **off-board air support** — the briefing lists each
 flights with arrival timing ("overhead now" vs "first ~turn 2") and fuel state, so the
 tabletop knows exactly what's circling above the fight.
 
+**The record sheet persists.** The marked-up card comes home with the result — armor by
+location, crits, heat, ammo bins, pilot hits — and the *same boxes reappear* in the next
+battle unless dealt with: the repair shop returns a clean sheet, a rearm clears just the
+ammo boxes, and a recovered pilot takes their hits off the card. Pilot recovery scales
+with the beating taken: **3 days per hit, 1 per hit with a MASH** on your side.
+
 **Aerospace merges** are first-class: a fighter / aerospace / DropShip gets a **✈ Flight
 panel** in play mode — fuel points with live **joker/bingo** thresholds (a `BINGO —
 disengage` warning when it runs low), velocity vs safe/max thrust, altitude, and thrust
