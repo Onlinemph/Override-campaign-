@@ -77,6 +77,15 @@ with stealth mechs, minefields, artillery, decoys, and a fighter wing. The walkt
 doc is a complete first game night. And every player screen carries a **📖 War diary** —
 the campaign as that side lived it, day by day, fog intact.
 
+**The UI explains itself.** The order form only offers what the selected formation can
+actually do (a "show all" box lifts the filter), each order kind carries a one-line
+description, and any order that's *waiting* on something says why in words — "no stocked
+depot, factory, spaceport, or convoy here", "waiting for Nagumo to land", "bays are
+full" — right on the formation card and in the needs-attention panel. A **📘 field
+manual** is served at `/manual` on every running server: ten
+plain-language pages whose every number is read live from the server's rulebook, so
+house-ruled constants document themselves.
+
 The demo is a 25-VP campaign: a satellite (watch its passes catch GHOST returns), an
 airbase, a supply convoy, hidden and contested objectives, a system layer with a gas-giant
 picket, and a red probe force already moving. Click **Run until event** a few times.

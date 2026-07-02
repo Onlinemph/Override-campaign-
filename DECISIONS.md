@@ -844,3 +844,23 @@ Async play: the hosted campaign runs continuously; players drop in whenever, plo
    as the live screens — delivered reports, its battles and losses, atmosphere
    crossings, ship landings, shop/refit work, blockade transitions (deduped to actual
    changes), endings. Day-grouped, capped at the most recent 800 entries.
+
+## D-033 ✅ The self-explaining UI (stall reasons, a context-aware picker, a live manual)
+1. **Stall reasons** (`engine/stall.ts`): `stallReason(truth, formation)` re-derives — at
+   projection time, read-only, zero events — why a standing order isn't progressing
+   ("no stocked depot, factory, spaceport, or convoy here", "the depot holds 0 SP, needs
+   4", "waiting for Nagumo to land", "bays are full", "holding — no usable fix",
+   "impassable terrain ahead", launch gates). Projected onto `currentOrder.stall`, shown
+   as a ⏳ line under the order and folded into the needs-attention panel. Observational
+   only by design: the engine's behavior is untouched, so a stall string can never drift
+   from what the passes actually do without a test catching the *words*.
+2. **Context-aware order picker**: `ORDER_META` (all 24 kinds, one-line descriptions,
+   domain tags) + `formationDomains()` filter the kind dropdown to what the selected
+   formation can actually do — embarked units see DISEMBARK, a landed DropShip sees
+   LIFT_OFF/EMBARK, ground sees the ground family. A "show all" checkbox keeps every
+   kind reachable (nothing is hidden, only de-emphasized), and picking a kind shows its
+   description under the form. The preview verb map covers all kinds.
+3. **The field manual** (`/manual`, public): ten plain-language sections players read on
+   a phone. Every number is a `<b data-rule="CAREER.REFIT.SP">` span filled live from
+   `/api/rules` (a curated slice of rules.ts) — house-rule a constant and the manual
+   updates itself; there is no second copy of the rulebook to fall out of date.

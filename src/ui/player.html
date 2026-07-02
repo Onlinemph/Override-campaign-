@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="/ui/style.css">
 </head>
 <body>
-<h1 id="title">OVERRIDE
+<h1 id="title"><a href="/manual" target="_blank" title="Field Manual — plain-language rules" style="text-decoration:none;float:right;font-size:14px">📘 Manual</a>OVERRIDE
   <small style="float:right;font-weight:normal">
     <label title="Sound + desktop alert on new intel"><input type="checkbox" id="alerts-on" onchange="toggleAlerts()"> 🔔 alerts</label>
   </small></h1>
@@ -50,16 +50,10 @@
     </details></div>
     <div class="panel">
       <h2>Order entry</h2>
-      <div class="kv">formation <select id="o-formation"></select>
-        kind <select id="o-kind" onchange="syncCarrierRow()">
-          <option>MOVE</option><option>FORCED_MARCH</option><option>MOVE_CAUTIOUS</option>
-          <option>HIDE</option><option>DIG_IN</option><option>PATROL</option>
-          <option>SCREEN</option><option>STRIKE</option><option>SHADOW</option><option>REST</option><option>REARM</option><option>REPAIR</option>
-          <option>CAP</option><option>SWEEP</option><option>RECON</option><option>FERRY</option>
-          <option>LIFT_OFF</option><option>LAND</option>
-          <option>EMBARK</option><option>DISEMBARK</option>
-          <option>ASCEND</option><option>DESCEND</option>
-        </select></div>
+      <div class="kv">formation <select id="o-formation" onchange="syncKindPicker()"></select>
+        kind <select id="o-kind" onchange="syncCarrierRow();syncKindHelp()"></select>
+        <label class="kv"><input type="checkbox" id="o-allkinds" onchange="syncKindPicker()"> show all</label></div>
+      <div class="kv" id="kind-help" style="opacity:.75"></div>
       <div class="kv" id="carrier-row" style="display:none">carrier
         <select id="o-carrier"><option value="">—</option></select>
         <span style="opacity:.7">EMBARK marches to it &amp; loads · LAND/DISEMBARK use the last map click as the hex</span></div>
@@ -236,6 +230,7 @@ async function refresh() {
     if (!f.onNet) why.push('off-net — can\'t be ordered');
     if (f.routed) why.push('routed — uncommandable');
     if (f.inSupply === false) why.push('out of supply');
+    if (f.currentOrder && f.currentOrder.stall) why.push(f.currentOrder.stall);
     if (f.rdy <= 3) why.push('readiness ' + f.rdy + '/10');
     if (f.flight && f.flight.fpMin <= f.flight.bingoFp) why.push('fuel at/below bingo');
     if (f.vessel && f.vessel.burnDaysRemaining <= 1.5) why.push('low fuel');
@@ -280,6 +275,8 @@ async function refresh() {
   const cur = sel.value;
   sel.innerHTML = v.ownFormations.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
   if (cur) sel.value = cur;
+  lastView = v;
+  syncKindPicker(); // the order picker tracks what the selected formation IS
   // own carriers for EMBARK (and the row only shows for the carrier-ops kinds)
   const csel = document.getElementById('o-carrier');
   const curC = csel.value;
@@ -311,9 +308,15 @@ function previewOrder() {
   const tgt = tSel.value ? tSel.options[tSel.selectedIndex].text : '';
   const verb = {
     MOVE: 'move', FORCED_MARCH: 'force-march', MOVE_CAUTIOUS: 'move cautiously',
-    HIDE: 'hide (EMCON dark)', DIG_IN: 'dig in', PATROL: 'patrol', SCREEN: 'hold a screen line',
-    STRIKE: 'strike', REST: 'rest & refit', CAP: 'fly combat air patrol', SWEEP: 'fly a sweep',
-    RECON: 'fly recon', FERRY: 'ferry',
+    HIDE: 'hide (go still and dark)', DIG_IN: 'dig in', PATROL: 'patrol', SCREEN: 'hold a screen line',
+    STRIKE: 'strike', SHADOW: 'shadow the contact at a safe distance',
+    REST: 'rest & refit', REARM: 'draw ammo here', REPAIR: 'queue repairs here',
+    CAP: 'fly combat air patrol', SWEEP: 'fly a sweep',
+    RECON: 'fly recon', FERRY: 'ferry', CAS: 'stand by for close air support',
+    STRIKE_AIR: 'fly an air strike', LIFT_OFF: 'lift off and hold at altitude',
+    LAND: 'land at the marked hex', EMBARK: 'load into the DropShip',
+    DISEMBARK: 'step off the DropShip', ASCEND: 'climb to orbit',
+    DESCEND: 're-enter the atmosphere',
   }[kind] || (kind || '').toLowerCase();
   let s = `<b>${who}</b> will ${verb}`;
   if (path && ['MOVE', 'FORCED_MARCH', 'MOVE_CAUTIOUS', 'PATROL', 'SCREEN'].includes(kind)) {
@@ -362,6 +365,69 @@ async function loadDiary() {
 function clearPath() { plotted = []; document.getElementById('o-path').value = ''; refresh(); }
 const parsePath = s => s.trim() ? s.trim().split(';').map(p =>
   ({ q: +p.split(',')[0], r: +p.split(',')[1] })) : [];
+
+// ── the order picker explains itself (ext): filtered by what the formation IS ──
+// domains: ground | flight | carrier | vessel | embarked
+const ORDER_META = [
+  ['MOVE',          'march along the plotted path', ['ground']],
+  ['MOVE_CAUTIOUS', 'march slowly and quietly — harder to spot', ['ground']],
+  ['FORCED_MARCH',  'push hard — faster, louder, costs readiness', ['ground']],
+  ['STRIKE',        'attack a contact — re-plots toward the latest fix', ['ground']],
+  ['SCREEN',        'hold a line; intercept anything that crosses it', ['ground']],
+  ['SHADOW',        'trail a contact at a safe distance without attacking', ['ground']],
+  ['PATROL',        'walk a loop with sharpened sensors', ['ground']],
+  ['HIDE',          'go still and dark — much harder to detect', ['ground']],
+  ['DIG_IN',        'entrench (takes time; moving undoes it)', ['ground']],
+  ['REST',          'recover readiness in place', ['ground']],
+  ['REARM',         'draw ammo from a depot/factory/convoy in this hex', ['ground']],
+  ['REPAIR',        'queue damaged units into the shop here (or the carrier bay)', ['ground', 'embarked']],
+  ['EMBARK',        'march to a friendly DropShip and load into a bay', ['ground']],
+  ['DISEMBARK',     'step off the landed DropShip', ['embarked']],
+  ['CAP',           'fly combat air patrol on a station', ['flight', 'embarked-flight']],
+  ['SWEEP',         'hunt enemy aircraft', ['flight', 'embarked-flight']],
+  ['RECON',         'fly a reconnaissance route', ['flight', 'embarked-flight']],
+  ['STRIKE_AIR',    'air strike tasking — shows up as support in ground battles', ['flight', 'embarked-flight']],
+  ['CAS',           'close air support on call for ground battles', ['flight', 'embarked-flight']],
+  ['FERRY',         'fly a transit route and land', ['flight', 'carrier']],
+  ['LIFT_OFF',      'launch and hold at altitude until the next order', ['flight', 'carrier']],
+  ['LAND',          'put down on the last map click (any open ground)', ['flight', 'carrier']],
+  ['ASCEND',        'climb from the air (or ground) to the orbit node — the long burn', ['flight', 'carrier']],
+  ['DESCEND',       're-enter from orbit into this planet’s sky', ['vessel']],
+];
+
+function formationDomains(f) {
+  const d = [];
+  if (f.mountedOn) d.push('embarked');
+  if (f.mountedOn && f.flight) d.push('embarked-flight');
+  if (!f.mountedOn) {
+    if (f.vessel) d.push('vessel');
+    else if (f.carrier) d.push('carrier');
+    else if (f.flight) d.push('flight');
+    else d.push('ground');
+  }
+  return d;
+}
+
+let lastView = null;
+function syncKindPicker() {
+  const sel = document.getElementById('o-kind');
+  const all = document.getElementById('o-allkinds').checked;
+  const fid = document.getElementById('o-formation').value;
+  const f = lastView && lastView.ownFormations.find(x => x.id === fid);
+  const domains = f ? formationDomains(f) : ['ground'];
+  const prev = sel.value;
+  const rows = ORDER_META.filter(([, , doms]) =>
+    all || doms.some(dm => domains.includes(dm)));
+  sel.innerHTML = rows.map(([k, desc]) =>
+    `<option value="${k}" title="${desc}">${k}</option>`).join('');
+  if (rows.some(([k]) => k === prev)) sel.value = prev;
+  syncCarrierRow(); syncKindHelp();
+}
+function syncKindHelp() {
+  const k = document.getElementById('o-kind').value;
+  const meta = ORDER_META.find(([kind]) => kind === k);
+  document.getElementById('kind-help').textContent = meta ? `${meta[1]}` : '';
+}
 
 function syncCarrierRow() {
   const kind = document.getElementById('o-kind').value;

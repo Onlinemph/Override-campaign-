@@ -29,6 +29,9 @@ import { enrichUnit } from '../roster/apply.js';
 import { searchLibrary } from '../roster/library.js';
 import { hashPick } from '../core/rng.js';
 import {
+  ATMO, CAREER, CLOCK, COMBAT_DROP, FLAK, LADDER, RDY, RECON_TRICKS, SKYWATCH, SUPPLY,
+} from '../rules.js';
+import {
   validateCampaign, TERRAINS, INFRA, NODE_TYPES, UNIT_CLASSES, EMCONS, POSTURES,
   ALERTS, DAMAGE_STATES, AMMO_STATES, WEATHERS, MARKER_KINDS, GROUND_ORDERS,
   AIR_ORDERS, SPACE_ORDERS, TRIGGER_WHENS,
@@ -259,6 +262,18 @@ const server = createServer(async (req, res) => {
 
     // pages & static assets
     if (path === '/' || path === '/gm') return page(res, 'gm.html');
+    if (path === '/manual') return page(res, 'manual.html'); // the field manual: public
+    if (path === '/api/rules') {
+      // read-only game constants for the manual (numbers stay true to rules.ts)
+      return json(res, 200, {
+        CLOCK, LADDER, RDY, SUPPLY, CAREER, FLAK, ATMO, RECON_TRICKS, COMBAT_DROP,
+        SKYWATCH: { TURNAROUND_PULSES: SKYWATCH.TURNAROUND_PULSES,
+                    HOT_PIT_PULSES: SKYWATCH.HOT_PIT_PULSES,
+                    SPHEROID_ATMO_HEX_PER_TICK: SKYWATCH.SPHEROID_ATMO_HEX_PER_TICK,
+                    CAS_ON_CALL: SKYWATCH.CAS_ON_CALL,
+                    FATIGUE_GROUNDED_AT: SKYWATCH.FATIGUE_GROUNDED_AT },
+      });
+    }
     if (path === '/audit') return page(res, 'audit.html');
     if (path === '/editor') return page(res, 'editor.html');
     // player page: /player/:sideId/:token (token validated client-side calls below)

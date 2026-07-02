@@ -1,0 +1,135 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>OVERRIDE — Field Manual</title>
+<style>
+  :root { --bg:#0e1116; --panel:#161b22; --ink:#e6edf3; --dim:#9aa7b3; --line:#2d333b;
+          --accent:#58a6ff; --good:#3fb950; --warn:#d29922; }
+  body { background:var(--bg); color:var(--ink); font:15px/1.55 system-ui, sans-serif;
+         max-width: 880px; margin: 0 auto; padding: 24px 16px 80px; }
+  h1 { font-size: 22px; } h2 { font-size: 17px; margin: 28px 0 6px; color: var(--accent);
+       border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  p { margin: 6px 0; } b[data-rule] { color: var(--warn); }
+  .ladder td { padding: 2px 10px 2px 0; } .dim { color: var(--dim); }
+  table { border-collapse: collapse; } code { background: var(--panel); padding: 1px 5px;
+       border-radius: 4px; }
+  nav a { color: var(--accent); margin-right: 10px; text-decoration: none; font-size: 13px; }
+</style>
+<h1>📘 Field Manual</h1>
+<p class="dim">Plain-language rules for players. Every number on this page is read live
+from the running server's rulebook — house-rule a constant and the manual updates itself.</p>
+<nav>
+  <a href="#clock">Clock</a><a href="#seeing">Seeing</a><a href="#net">The net</a>
+  <a href="#ground">Ground</a><a href="#supply">Supply</a><a href="#battle">Battles</a>
+  <a href="#career">Careers</a><a href="#sky">The sky</a><a href="#space">Space</a>
+  <a href="#victory">Victory</a>
+</nav>
+
+<h2 id="clock">The clock</h2>
+<p>Time moves in ticks of <b data-rule="CLOCK.TICK_MINUTES">6</b> minutes. When nothing is
+happening the engine fast-forwards (an hour or a watch at a time); the moment forces are
+near contact it drops to single turns. You plot orders whenever you like — they take
+effect on the next tick. Orders <i>stand</i>: a unit keeps doing the last thing you told
+it until you tell it something else.</p>
+
+<h2 id="seeing">Seeing &amp; being seen</h2>
+<p>You never see enemy units — you see <i>contacts</i>, which climb a ladder as sensors
+confirm them:</p>
+<table class="ladder">
+<tr><td><b>GHOST</b></td><td class="dim">something's out there — position ±1 hex, nothing else</td></tr>
+<tr><td><b>SHADOW</b></td><td class="dim">a track: heading and rough size (enough to plot a STRIKE or intercept)</td></tr>
+<tr><td><b>CONTACT</b></td><td class="dim">composition — what kinds of units</td></tr>
+<tr><td><b>LOCK</b></td><td class="dim">full picture, down to the unit list</td></tr>
+</table>
+<p>Contacts fade one level per hour without re-detection. Moving, firing, roads, and
+ACTIVE sensors make you louder; woods, night, rain, HIDE, and going EMCON DARK make you
+quieter. ECM raises the enemy's difficulty; probes and Mobile HQs see further; DECOY
+units read one size <i>bigger</i> than they are (close recon at LOCK sees the truth).
+Sharing a hex with the enemy is an automatic mutual LOCK.</p>
+
+<h2 id="net">The command net</h2>
+<p>Orders only reach formations <b>on the net</b> — within reach of a command node (your
+HQ, key facilities). Off-net units run on their standing orders and conditionals until
+someone physically reaches them; their reports come home when <i>they</i> do. Losing the
+HQ hurts more than losing a lance.</p>
+
+<h2 id="ground">Ground operations</h2>
+<p>March speed is set by your slowest machine, from its real record sheet. Roads are
+fast; woods and rough are slow; FORCED_MARCH trades readiness for speed and CAUTIOUS
+trades speed for stealth. <b>Moving breaks HIDE and DIG_IN.</b> Minefields bite movers
+until engineers BREACH them; artillery FIREs at spotted hexes but reveals its own firing
+position to counter-battery. Readiness (0–10) drops when you fight, march hard, or
+starve — REST recovers it (<b data-rule="RDY.REST_RECOVERY_PER_PULSE">2</b>/pulse in
+supply).</p>
+
+<h2 id="supply">Supply &amp; the economy</h2>
+<p>Every formation eats <b data-rule="SUPPLY.SP_PER_FORMATION_PER_DAY">1</b> SP/day
+(double after fighting), drawn along a road-favoring line from a depot or convoy. Cut
+off ⇒ readiness bleeds daily. Factories mint
+<b data-rule="SUPPLY.FACTORY_SP_PER_DAY">2</b> SP/day while you hold them; convoys haul
+stock forward; off-world imports flow until the enemy holds <i>both</i> jump points
+(blockade). <b>REARM</b> refills ammo (<b data-rule="SUPPLY.REARM_SP_PER_UNIT">1</b>
+SP/unit) at a depot, factory, spaceport, or convoy in your hex. <b>REPAIR</b> queues
+damaged units into the shop there — DAMAGED costs
+<b data-rule="CAREER.REPAIR.DAMAGED.SP">1</b> SP and
+<b data-rule="CAREER.REPAIR.DAMAGED.DAYS">1</b> day, CRIPPLED
+<b data-rule="CAREER.REPAIR.CRIPPLED.SP">2</b> SP and
+<b data-rule="CAREER.REPAIR.CRIPPLED.DAYS">3</b> days — and returns them with a clean
+record sheet.</p>
+
+<h2 id="battle">Battles</h2>
+<p>The engine never rolls a battle. When forces collide the campaign <b>freezes</b> and
+hands the GM a briefing: entry edges, who deploys first, initiative (better intel = more;
+a C3 master adds <b data-rule="RECON_TRICKS.C3_INITIATIVE_BONUS">1</b>), artillery in
+range, CAS overhead, reinforcement timing — and each unit's <i>persisted</i> record-sheet
+damage from earlier fights. You play it on the table; the marked-up cards come back as
+the result. Damage, ammo, pilots, salvage, and fuel all flow home; the clock resumes.</p>
+
+<h2 id="career">Careers, wounds &amp; salvage</h2>
+<p>Named pilots earn XP for surviving (<b data-rule="CAREER.XP_SURVIVE">1</b>), winning
+(+<b data-rule="CAREER.XP_WIN">1</b>), and kills
+(+<b data-rule="CAREER.XP_PER_KILL">2</b> each); every
+<b data-rule="CAREER.XP_PER_IMPROVEMENT">8</b> XP the weaker skill improves, and
+<b data-rule="CAREER.ACE_KILLS">5</b> kills makes an ace. Wounds heal at
+<b data-rule="CAREER.WOUND_RECOVERY_DAYS">3</b> days <i>per hit</i> — or
+<b data-rule="CAREER.WOUND_RECOVERY_DAYS_MASH">1</b> with a MASH on your side. Wrecks
+you hold the field over become salvage: recover one intact (2d6 ≥
+<b data-rule="SUPPLY.SALVAGE_RECOVER_TN">8</b>) and a refit
+(<b data-rule="CAREER.REFIT.SP">3</b> SP,
+<b data-rule="CAREER.REFIT.DAYS">4</b> days) delivers it to your roster with a pool
+pilot in the seat. Air kills rain down onto the map below.</p>
+
+<h2 id="sky">The sky</h2>
+<p><b>Fuel is the game.</b> Every airborne tick pays the ledger; JOKER is the warning,
+BINGO forces the flight home. Flights launch from bases or straight off a carrier's
+deck, fly their mission, and recover themselves into a free bay. DropShips are physical:
+they carry formations in bays (cargo rides along, invisible and fed by the ship),
+LIFT_OFF / LAND anywhere passable, and rearm their flights from ship stores.
+<b>Spheroids crawl</b> — <b data-rule="SKYWATCH.SPHEROID_ATMO_HEX_PER_TICK">1</b> air hex
+per turn in atmosphere; their fast lane is ASCEND → cross in space → DESCEND. Aerodynes
+fly full speed. <b>Flak:</b> AA units umbrella their hex +
+<b data-rule="FLAK.RANGE_HEXES">2</b>; every launch, landing, or drop pass inside it
+takes one shot per battery (2d6 ≥ <b data-rule="FLAK.TN">8</b> = one damage step) — and
+firing reveals the battery. Combat drops scatter 1d6 (piloting reduces it), worse in
+storms or through flak.</p>
+
+<h2 id="space">Space</h2>
+<p>The system map is nodes and lanes. Burns follow real physics — accelerate, flip,
+brake — and your drive plume is visible to everyone <i>at the speed of light</i>: they
+learn your tonnage and vector, delayed by the distance. Cold-coasting is quiet but slow.
+JumpShips recharge sails for days and are taboo to kill. Pirate points are secret,
+surveyed shortcuts. A false transponder squawk holds until someone inspects it — or
+until you maneuver like a warship.</p>
+
+<h2 id="victory">Victory</h2>
+<p>Objectives accrue VP per day to whoever holds them (some are hidden; some are
+<i>fake</i>). First side to the campaign's threshold — or best total at the deadline —
+wins. Watch the war diary (📖 on your screen): it is your side's story so far.</p>
+
+<script>
+  fetch('/api/rules').then(r => r.json()).then(rules => {
+    for (const el of document.querySelectorAll('[data-rule]')) {
+      const v = el.dataset.rule.split('.').reduce((o, k) => o?.[k], rules);
+      if (v !== undefined) el.textContent = String(v);
+    }
+  }).catch(() => { /* offline: the baked-in defaults stand */ });
+</script>

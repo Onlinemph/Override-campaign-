@@ -88,6 +88,8 @@
       head.push(`ordered to ${orderWords(f.currentOrder.kind)}` + (eta != null ? `, ETA ~${clock(eta)}` : ''));
     }
     let line = head.join(' · ');
+    // why the order is waiting, straight from the engine (ext)
+    if (f.currentOrder && f.currentOrder.stall) line += `\n   ⏳ ${f.currentOrder.stall}`;
     // Notable gear derived from the record sheets (ECM raises enemy detection TN; a
     // probe or mobile HQ is what lifts the sensor reach shown above).
     const GEAR = { ECM: 'ECM', ANGEL_ECM: 'Angel ECM', BEAGLE: 'active probe',
