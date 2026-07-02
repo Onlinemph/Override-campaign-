@@ -204,9 +204,11 @@ map. `secret: true` (pirate points) hides the node from players until surveyed.
 
 `kind` is any ground (`MOVE FORCED_MARCH MOVE_CAUTIOUS HIDE DIG_IN PATROL SCREEN STRIKE
 SHADOW RESUPPLY REST REPAIR EMBARK DISEMBARK`), air (`CAP SWEEP RECON STRIKE_AIR CAS
-ESCORT INTERDICTION FERRY TANKER SAR ORBITAL_STANDBY LIFT_OFF LAND`) or space (`TRANSIT
-COLD_COAST STATION_KEEP INTERCEPT SKIM_FUEL RECHARGE_SAIL QUICK_CHARGE JUMP INSPECT
-BLOCKADE BOARD`) order.
+ESCORT INTERDICTION FERRY TANKER SAR ORBITAL_STANDBY LIFT_OFF LAND ASCEND`) or space
+(`TRANSIT COLD_COAST STATION_KEEP INTERCEPT SKIM_FUEL RECHARGE_SAIL QUICK_CHARGE JUMP
+INSPECT BLOCKADE BOARD DESCEND`) order. `DESCEND` needs the vessel at a node with a
+`theaterId` (a planet/moon); `ASCEND` climbs to `destinationNodeId` (defaults to the node
+embedding the theater it flies over).
 
 Extras: `airStation: {q,r}` + `airPath: true` (treat `path` as air hexes) + `airSpeed`
 + `loiterTicks` for air missions; `laneId`/`burnProfile` for space transits;

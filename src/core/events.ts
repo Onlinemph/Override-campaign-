@@ -123,6 +123,9 @@ export type GameEvent =
   // ── M8: combined-arms kit ──
   | { type: 'MOUNT_CHANGED'; formationId: Id; carrierFormationId: Id | null }
   | { type: 'MOUNT_MOVED'; formationId: Id; pos: Position; tick: Tick } // embarked unit rides its carrier
+  // ext: the orbit ↔ air seam — a vessel crosses the atmospheric interface
+  | { type: 'ATMO_TRANSIT'; formationId: Id; direction: 'DESCENT' | 'ASCENT';
+      pos: AirPos | NodePos; fpPaid: number; tick: Tick }
   | { type: 'TRANSPONDER_REVEALED'; formationId: Id; tick: Tick }   // false flag blown
   | { type: 'BLOCKADE_STATE'; sideId: Id; blockaded: boolean; tick: Tick }
   | { type: 'CLOCK_ADVANCED'; dt: number; tick: Tick }; // tick = NEW absolute tick
@@ -736,6 +739,21 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
       break;
     }
 
+    case 'ATMO_TRANSIT': {
+      const f = s.formations[e.formationId];
+      if (!f) break;
+      f.pos = structuredClone(e.pos);
+      if (f.space) f.space.atmoEndTick = null;
+      // down: it's a flight now, en route in the HIGH band. Up: air state goes dormant.
+      f.air = { speed: 'CRUISE', ...f.air,
+                phase: e.direction === 'DESCENT' ? 'ENROUTE' : 'GROUNDED' };
+      for (const uid of f.unitIds) {
+        const u = s.units[uid];
+        if (u?.fuel) u.fuel.fp = Math.max(0, u.fuel.fp - e.fpPaid);
+      }
+      break;
+    }
+
     case 'TRANSPONDER_REVEALED': {
       const f = s.formations[e.formationId];
       if (f) f.squawk = undefined; // the lie is dropped once it's seen through
@@ -778,6 +796,7 @@ export function isInterestingEvent(e: GameEvent): boolean {
     case 'TRANSPONDER_REVEALED': // M8: a false flag blown
     case 'REPAIR_COMPLETED':     // ext: a mech walks out of the shop
     case 'REFIT_COMPLETED':      // ext: a salvaged wreck joins the roster
+    case 'ATMO_TRANSIT':         // ext: a DropShip hits (or leaves) the atmosphere
       return true;
     default:
       return false;

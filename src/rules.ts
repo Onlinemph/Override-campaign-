@@ -251,6 +251,14 @@ export const SUPPLY = {
   FACTORY_SP_PER_DAY: 2,
 } as const;
 
+// ── Atmospheric interface (ext): the orbit ↔ air seam ───────────────────────
+export const ATMO = {
+  DESCENT_TICKS: 3,   // re-entry: ~18 min from orbit to the HIGH band (aerobraking)
+  DESCENT_FP: 20,     // the braking burn — the atmosphere does most of the work
+  ASCENT_TICKS: 6,    // climbing the well: ~36 min of hard burn to orbit
+  ASCENT_FP: 80,      // and it costs — the expensive direction
+} as const;
+
 // ── The career loop (ext): pilots that live, wrecks that come home ──────────
 export const CAREER = {
   // pilot XP: awarded on battle ingest to surviving crews

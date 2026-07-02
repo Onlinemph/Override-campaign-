@@ -7,7 +7,7 @@
  * Air combat is never simulated — interception produces an AIR engagement that freezes
  * the campaign for the tabletop merge (export in handoff/export.ts).
  */
-import { CLOCK, LADDER, SKYWATCH, TERRAIN } from '../rules.js';
+import { ATMO, CLOCK, LADDER, SKYWATCH, TERRAIN } from '../rules.js';
 import type {
   AirPos, Formation, GroundPos, Id, Order, TruthState,
 } from '../core/types.js';
@@ -22,6 +22,7 @@ export const AIR_MISSIONS = new Set([
   'CAP', 'ORBITAL_STANDBY', 'STRIKE_AIR', 'CAS', 'SWEEP', 'ESCORT', 'RECON',
   'INTERDICTION', 'FERRY', 'TANKER', 'SAR',
   'LIFT_OFF', 'LAND', // ext: player carrier ops — lift & hold / put down on a hex
+  'ASCEND',           // ext: climb the well to the planet's orbit node
 ]);
 
 // ── Geometry & ledger helpers (pure; unit-tested against the §2 worked baseline) ──
@@ -294,6 +295,23 @@ function destAirHex(s: TruthState, f: Formation, order: Order | undefined, dt: n
   return null;
 }
 
+/** Which orbit node does an ascending ship arrive at? (See the ASCEND branch above.) */
+function ascentNodeFor(s: TruthState, f: Formation, order: Order): Id | null {
+  if (order.destinationNodeId && s.system.nodes[order.destinationNodeId]) {
+    return order.destinationNodeId;
+  }
+  const here = f.pos.kind === 'air' ? airQR(f.pos) : null;
+  const withTheater = Object.values(s.system.nodes)
+    .filter(n => n.theaterId && s.theaters[n.theaterId])
+    .sort((a, b) => a.id.localeCompare(b.id));
+  if (here) {
+    const over = withTheater.find(n =>
+      hexDistance(theaterAirHex(s, n.theaterId!), here) === 0);
+    if (over) return over.id;
+  }
+  return withTheater[0]?.id ?? null;
+}
+
 function flyStep(
   s: TruthState, f: Formation, order: Order | undefined, dt: number,
   emit: (e: GameEvent) => void,
@@ -314,6 +332,29 @@ function flyStep(
     emit({ type: 'AIR_PHASE', formationId: f.id, phase: 'ON_STATION', tick: s.tick });
     emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id,
            patch: { air: { loiterTicksRemaining: -1 } } });
+    return;
+  }
+
+  // ASCEND (ext): climb the well to the planet's orbit node. The burn is anchored on
+  // space.atmoEndTick (step size never matters); arrival swaps the ship onto the system
+  // map. Destination: an explicit destinationNodeId, else the node embedding the theater
+  // this air hex covers, else the first node with a theater — no node ⇒ the order fizzles.
+  if (order?.kind === 'ASCEND') {
+    const nodeId = ascentNodeFor(s, f, order);
+    if (!nodeId) {
+      emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
+      return;
+    }
+    const end = f.space?.atmoEndTick;
+    if (end == null) {
+      emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id,
+             patch: { space: { atmoEndTick: s.tick + ATMO.ASCENT_TICKS } } });
+      return;
+    }
+    if (s.tick < end) return;
+    emit({ type: 'ATMO_TRANSIT', formationId: f.id, direction: 'ASCENT',
+           pos: { kind: 'node', nodeId }, fpPaid: ATMO.ASCENT_FP, tick: s.tick });
+    emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
     return;
   }
 
@@ -394,6 +435,22 @@ function flyStep(
       return;
     }
     if (f.air?.phase === 'RTB' || !order) {
+      // carrier-based (ext): recover straight into the bay — land, stow, done. A full
+      // bay group means a wave-off: the flight holds over the ship until one opens.
+      const carrier = f.air?.homeCarrierId ? s.formations[f.air.homeCarrierId] : undefined;
+      if (carrier && !carrier.destroyed && carrier.carrier) {
+        const aboard = Object.values(s.formations).filter(x =>
+          !x.destroyed && x.mounted?.carrierFormationId === carrier.id).length;
+        if (aboard < carrier.carrier.bays) {
+          emit({ type: 'FUEL_SPENT', formationId: f.id, fpPaid: landingFp(false),
+                 reason: 'carrier recovery', tick: s.tick });
+          emit({ type: 'AIR_PHASE', formationId: f.id, phase: 'GROUNDED', tick: s.tick });
+          emit({ type: 'MOUNT_CHANGED', formationId: f.id, carrierFormationId: carrier.id });
+          emit({ type: 'MOUNT_MOVED', formationId: f.id,
+                 pos: structuredClone(carrier.pos), tick: s.tick });
+        }
+        return;
+      }
       // descend (free in atmosphere) and land at the home facility
       const fac = homeFacility(s, f);
       if (fac && fac.pos.kind === 'ground') {

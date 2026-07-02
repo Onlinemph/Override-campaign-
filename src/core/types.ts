@@ -151,6 +151,7 @@ export interface Formation {
   space?: {
     burnStartTick?: Tick | null;    // emitting since (1G+ drives are automatic after lag)
     rdyDayAcc?: number;             // crew G-limit fatigue accumulator (days at high G)
+    atmoEndTick?: Tick | null;      // ext: mid re-entry/ascent — transition lands at this tick
   };
   // ext (M3): flight state (SKYWATCH) — present on air-capable formations
   air?: {
@@ -254,10 +255,14 @@ export type AirMission =
   'CAP' | 'ORBITAL_STANDBY' | 'STRIKE_AIR' | 'CAS' | 'SWEEP' | 'ESCORT'
   | 'RECON' | 'INTERDICTION' | 'FERRY' | 'TANKER' | 'SAR'
   // ext: player carrier ops — a DropShip lifts and holds, or puts down on any open hex
-  | 'LIFT_OFF' | 'LAND';
+  | 'LIFT_OFF' | 'LAND'
+  // ext: climb the well from air (or ground) to the planet's orbit node
+  | 'ASCEND';
 export type SpaceOrderKind =
   'TRANSIT' | 'COLD_COAST' | 'STATION_KEEP' | 'INTERCEPT' | 'SKIM_FUEL'
-  | 'RECHARGE_SAIL' | 'QUICK_CHARGE' | 'JUMP' | 'INSPECT' | 'BLOCKADE' | 'BOARD';
+  | 'RECHARGE_SAIL' | 'QUICK_CHARGE' | 'JUMP' | 'INSPECT' | 'BLOCKADE' | 'BOARD'
+  // ext: re-enter from a planet/moon node into its theater's air layer
+  | 'DESCEND';
 
 export interface Trigger {
   when: 'CONTACT_WITHIN' | 'DETECTED_SELF' | 'TICK_REACHED' | 'HEX_REACHED'

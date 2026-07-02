@@ -105,6 +105,16 @@ too — tick **carrier** on a formation (bays / crews / av fuel) and pick **emba
 another to start it stowed in a bay (it snaps to the ship's hex); live validation catches
 overloaded bays, cross-side loading, and nested carriers as you build.
 
+**The sky is one continuous system.** Two orders bridge DEEP SKY and SKYWATCH: **DESCEND**
+re-enters from a planet/moon node into its theater's air layer (~18 min, a modest braking
+burn — the atmosphere does the work), and **ASCEND** climbs the well from the air (or
+straight off the ground: lift, then burn) to the orbit node — the expensive direction.
+Cargo rides through both. And carrier-based fighters now **recover themselves**: a flight
+that goes RTB flies home to its DropShip and lands straight into a free bay — a full bay
+group means a wave-off, holding over the ship until one opens. A player can plot a DropShip
+from a pirate point to a dirt landing with its fighters cycling overhead, no GM fiat at any
+step: `DESCEND → LAND → DISEMBARK`, fight the campaign, `EMBARK → ASCEND` back out.
+
 **Players fly their own DropShips.** Carrier ops are plotted orders through the double-blind
 command net, not GM table-talk: **EMBARK** marches a formation to its ship and loads it
 (waiting at the ramp if the bays are full or the ship is aloft), **DISEMBARK** steps off a

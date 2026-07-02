@@ -643,3 +643,29 @@ Carrier ops become plotted orders through the double-blind loop (players were GM
    crews, av fuel, who's aboard) and `mountedOn` on OwnFormationView; the side-order API
    forwards `targetFormationId`/`targetHex`; schema ORDER_KINDS extended. Net rules apply
    unchanged — an off-net DropShip can only be reached by standing orders/conditionals.
+
+## D-023 ✅ Closing the sky: DESCEND / ASCEND and carrier auto-recovery
+DEEP SKY and SKYWATCH were complete but disconnected — a DropShip at a planet node could
+not enter the planet's air layer. Two orders bridge the seam (constants in `rules.ts` ATMO).
+1. **DESCEND** (space kind): at a node whose `SysNode.theaterId` embeds a theater (the field
+   existed since M4 for exactly this), the re-entry takes DESCENT_TICKS anchored on a new
+   `space.atmoEndTick` (step-size-proof) and a modest DESCENT_FP braking burn — the
+   atmosphere does the work. Arrival (`ATMO_TRANSIT`, an interesting event) puts the vessel
+   in the theater's air hex, HIGH band, phase ENROUTE — a thrusting DropShip, bright on
+   every radar screen. A node with no theater fizzles the order. Handled in a `descentPass`
+   inside spacePass; mounted cargo rides through via the carry pass unchanged.
+2. **ASCEND** (air kind, so tryLaunch lifts a grounded ship first): climbs ASCENT_TICKS and
+   pays ASCENT_FP — deliberately the expensive direction. Destination:
+   `order.destinationNodeId`, else the node embedding the theater whose air hex the ship
+   occupies, else the first theater-bearing node (deterministic sort); no candidate ⇒
+   fizzle. Arrival swaps the ship onto the system map (air phase parks at GROUNDED).
+3. **Carrier auto-recovery**: an RTB (or orderless) carrier-based flight arriving at its
+   home carrier now lands and stows itself — landing burn, phase GROUNDED, mount set,
+   position snapped — when a bay is free; bays full ⇒ wave-off, holding over the ship.
+   Checked before the home-facility fallback in flyStep's arrival branch. Launch was
+   already player-plottable (D-022.5); recovery no longer needs the GM at all.
+4. **Deliberately deferred**: the orbit-climb gauntlet (interception during ascent — the
+   ascending ship is simply visible in the air layer for the duration), aerobrake piloting
+   rolls, and per-node descent restrictions. The acceptance test plays the whole story on
+   plotted orders alone: DESCEND → LAND → DISEMBARK → fighter CAP off the deck →
+   auto-recover → ASCEND, byte-exact on replay.

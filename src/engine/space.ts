@@ -7,9 +7,9 @@
  * Battles are never simulated: the classifier feeds a SPACE engagement and the
  * capital handoff; Strategic Operations takes it from there.
  */
-import { CLOCK, DEEPSKY, LADDER } from '../rules.js';
+import { ATMO, CLOCK, DEEPSKY, LADDER, SKYWATCH } from '../rules.js';
 import type {
-  Emission, Formation, Id, JumpDrive, LanePos, NodePos, Order, Position, SysLane,
+  AirPos, Emission, Formation, Id, JumpDrive, LanePos, NodePos, Order, Position, SysLane,
   TruthState,
 } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
@@ -19,6 +19,7 @@ import { registerDetection } from './detection.js';
 export const SPACE_ORDERS = new Set([
   'TRANSIT', 'COLD_COAST', 'STATION_KEEP', 'INTERCEPT', 'SKIM_FUEL',
   'RECHARGE_SAIL', 'QUICK_CHARGE', 'JUMP', 'INSPECT', 'BLOCKADE', 'BOARD',
+  'DESCEND', // ext: re-enter from a planet/moon node into its theater's air layer
 ]);
 
 const daysOf = (ticks: number) => ticks / CLOCK.TICKS_PER_DAY;
@@ -520,8 +521,50 @@ export function skimPass(s: TruthState, dt: number, emit: (e: GameEvent) => void
   }
 }
 
+/**
+ * DESCEND (ext): re-entry from a planet/moon node into its embedded theater's air layer.
+ * The transition takes ATMO.DESCENT_TICKS (anchored on space.atmoEndTick so step size
+ * never matters) and delivers the vessel to the theater's air hex in the HIGH band —
+ * a thrusting DropShip, bright on every radar screen from the moment it arrives.
+ */
+export function descentPass(s: TruthState, emit: (e: GameEvent) => void): void {
+  for (const f of Object.values(s.formations)) {
+    if (f.destroyed || f.mounted || f.pos.kind !== 'node') continue;
+    const order = activeSpaceOrder(s, f);
+    if (!order || order.kind !== 'DESCEND' || s.tick < order.effectiveTick) continue;
+    const node = s.system.nodes[f.pos.nodeId];
+    const theaterId = node?.theaterId;
+    if (!theaterId || !s.theaters[theaterId]) {
+      // nothing down there to descend into: the order fizzles
+      emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
+      continue;
+    }
+    const end = f.space?.atmoEndTick;
+    if (end == null) {
+      emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id,
+             patch: { space: { atmoEndTick: s.tick + ATMO.DESCENT_TICKS } } });
+      continue;
+    }
+    if (s.tick < end) continue;
+    const hex = theaterAirHexById(s, theaterId);
+    const pos: AirPos = {
+      kind: 'air', gridQ: hex.q, gridR: hex.r, band: 'HIGH',
+      altLevel: SKYWATCH.CRUISE_ALT_LEVEL,
+      velocity: SKYWATCH.ENTRY_VELOCITY_CRUISE, vectorDeg: 0,
+    };
+    emit({ type: 'ATMO_TRANSIT', formationId: f.id, direction: 'DESCENT', pos,
+           fpPaid: ATMO.DESCENT_FP, tick: s.tick });
+    emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
+  }
+}
+
+function theaterAirHexById(s: TruthState, theaterId: string): { q: number; r: number } {
+  return s.config.airHexByTheater?.[theaterId] ?? { q: 0, r: 0 };
+}
+
 export function spacePass(s: TruthState, dt: number, emit: (e: GameEvent) => void): void {
   spaceMovementPass(s, dt, emit);
+  descentPass(s, emit); // ext: the orbit → air seam
   lightLagPass(s, emit);
   spaceDetectionPass(s, emit);
   jumpBoardPass(s, dt, emit);
