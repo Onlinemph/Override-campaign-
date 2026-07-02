@@ -197,6 +197,12 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
         moved: e.movedKind, onRoad: e.onRoad,
         fired: f.transient?.fired ?? false,
       };
+      // moving breaks a held posture (core §4.1): you cannot march dug-in or hidden.
+      // FORTIFIED is infrastructure, not a stance — it stays with the hex garrison.
+      if (f.posture === 'HIDE' || f.posture === 'DUG_IN' || f.posture === 'DIGGING') {
+        f.posture = 'NONE';
+        f.digInPulseAcc = 0;
+      }
       break;
     }
 

@@ -49,7 +49,7 @@
         kind <select id="o-kind" onchange="syncCarrierRow()">
           <option>MOVE</option><option>FORCED_MARCH</option><option>MOVE_CAUTIOUS</option>
           <option>HIDE</option><option>DIG_IN</option><option>PATROL</option>
-          <option>SCREEN</option><option>STRIKE</option><option>REST</option>
+          <option>SCREEN</option><option>STRIKE</option><option>REST</option><option>REARM</option>
           <option>CAP</option><option>SWEEP</option><option>RECON</option><option>FERRY</option>
           <option>LIFT_OFF</option><option>LAND</option>
           <option>EMBARK</option><option>DISEMBARK</option>
@@ -87,6 +87,7 @@
       <div class="kv" style="margin-top:6px">quick orders:
         <button onclick="quickOrder('HIDE')" title="Hold position, go silent">Hold</button>
         <button onclick="quickOrder('REST')" title="Rest &amp; refit in place">Rest</button>
+        <button onclick="quickOrder('REARM')" title="Draw ammo from a depot/factory/convoy in this hex">Rearm</button>
         <button onclick="fallBack()" title="Move to the nearest command node">Fall back</button></div>
     </div>
     <details class="panel">

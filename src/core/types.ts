@@ -246,7 +246,8 @@ export interface ContactReport {
 export type GroundOrderKind =
   'MOVE' | 'FORCED_MARCH' | 'MOVE_CAUTIOUS' /* ext: D-006 GM ruling */
   | 'HIDE' | 'DIG_IN' | 'PATROL' | 'SCREEN'
-  | 'STRIKE' | 'SHADOW' | 'RESUPPLY' | 'REST' | 'REPAIR'
+  | 'STRIKE' | 'SHADOW' | 'RESUPPLY' | 'REST'
+  | 'REARM' // ext: draw ammo (REARM_SP_PER_UNIT) from a co-located depot/factory/convoy
   // ext (M7, core §9): a standing fire mission, and the engineer toolkit
   | 'FIRE' | 'LAY_MINES' | 'BREACH' | 'DEMOLISH' | 'BUILD_BRIDGE'
   // ext: player carrier ops — march to a carrier and load / step off a landed one

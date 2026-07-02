@@ -692,3 +692,30 @@ Instead it bites where aircraft come LOW over a specific ground hex. Constants i
    arrivals at HIGH) are deliberately out of reach.
 5. Own AA gear shows in the player's gear line ('anti-air (flak umbrella)'); enemy
    umbrellas stay invisible until they fire — double-blind holds.
+
+## D-025 ✅ The fix pack: closing orphaned loops found by audit
+A systematic sweep for defined-but-unread rules, orders, and tags found two silent
+player-facing bugs and several dead constants. Closed in one push:
+1. **HIDE order was a placebo.** The HIDE *posture* always worked in detection, but no
+   pass consumed the HIDE *order* — the player screen's "Hold" quick-button did nothing.
+   maintenancePass now flips posture immediately (camouflage, not entrenchment) and
+   completes the order.
+2. **Movement now breaks posture** (core §4.1): FORMATION_MOVED clears HIDE/DUG_IN/DIGGING
+   (and the dig-in accumulator) — previously a dug-in formation kept its −2 SIG and
+   fortified handoff status while marching. FORTIFIED stays: it's infrastructure, not a
+   stance.
+3. **Ground units can finally rearm.** Nothing restored ground `ammoState` after a battle —
+   a lance that shot dry stayed dry forever, while `REARM_SP_PER_UNIT` sat unread since M7.
+   New REARM ground order (replacing the dead REPAIR kind, superseded by the D-021 shop):
+   draws REARM_SP_PER_UNIT per non-FULL unit from a co-located friendly
+   depot/factory/spaceport, or a convoy in the hex; no source or short stock ⇒ the column
+   waits at the dump with the order open. Player UI gains a Rearm quick-button.
+4. **Factories produce**: FACTORY_SP_PER_DAY (unread since M7) now mints SP at each daily
+   scoring boundary — the economy's only domestic production, making the factory district
+   worth taking and worth cutting off.
+5. **MASH earns its keep**: a live MASH-tagged unit on the side shortens wound recovery
+   (WOUND_RECOVERY_DAYS_MASH = 1 vs 3), decided at ingest. Side-level on purpose — wounded
+   crews are evacuated abstractly; per-hex hospital logistics is table detail.
+Still deliberately inert after this pass: DECOY/SKYEYE/C3M tags, SHADOW orders,
+LOSTECH_REPAIR_TN, the CONVOY_* spawn defaults, the `neutral` flag, and `ace` as a
+display-only honorific — candidates for a flavor pass, not bugs.

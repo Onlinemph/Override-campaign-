@@ -58,13 +58,19 @@ export function ingestBattleResult(
                   damage: o.damage, ammoState: o.ammoState,
                   ...(o.fpRemaining !== undefined ? { fpRemaining: o.fpRemaining } : {}) });
   }
-  // 2. pilots: status (wounds schedule their recovery), then career XP for the living
+  // 2. pilots: status (wounds schedule their recovery), then career XP for the living.
+  //    A live MASH unit on the pilot's side shortens the bed rest (ext).
+  const hasMash = (sideId: Id) => Object.values(s.units).some(u =>
+    u.sideId === sideId && u.tags.includes('MASH') &&
+    u.damage !== 'DESTROYED' && u.damage !== 'SALVAGE');
   for (const o of result.unitOutcomes) {
     for (const p of o.pilotOutcomes) {
       if (!s.pilots[p.pilotId]) continue;
+      const recoveryDays = s.units[o.unitId] && hasMash(s.units[o.unitId].sideId)
+        ? CAREER.WOUND_RECOVERY_DAYS_MASH : CAREER.WOUND_RECOVERY_DAYS;
       events.push({ type: 'PILOT_STATE_CHANGED', pilotId: p.pilotId, status: p.status,
         ...(p.status === 'WOUNDED'
-          ? { recoverAtTick: s.tick + CAREER.WOUND_RECOVERY_DAYS * CLOCK.TICKS_PER_DAY }
+          ? { recoverAtTick: s.tick + recoveryDays * CLOCK.TICKS_PER_DAY }
           : {}) });
       // XP: surviving crews learn — KIA/captured crews' stories end here
       if (p.status === 'KIA' || p.status === 'CAPTURED') continue;

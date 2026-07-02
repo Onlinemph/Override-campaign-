@@ -170,6 +170,13 @@ turnaround crew) can be repaired — SP and days scale with how bad it is (1 SP 
 damaged, 2 SP / 3 days crippled). One click in the roster panel; the engine delivers the
 fix on schedule.
 
+**Ammo is a resource.** Units come home from battle PARTIAL or DRY, and staying dry is now
+a choice: the **REARM** order draws 1 SP per unit from a depot, factory, or spaceport in
+the hex — or from a convoy that drove the shells forward — and waits at the dump if the
+stock isn't there yet. Factories mint SP daily while you hold them, hiding (**Hold**) and
+digging in actually work as plotted orders, moving breaks both postures, and a **MASH**
+unit on your side cuts wound recovery from three days to one.
+
 **Salvage joins your roster.** Resolving a salvage token (2d6 ≥ 8, as before) now queues a
 **refit project** on a UNIT result — spend 3 SP at a repair-capable facility and 4 days
 later the rebuilt mech is delivered to a formation you pick, crewed by the first pilot

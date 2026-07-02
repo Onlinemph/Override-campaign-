@@ -140,6 +140,54 @@ export function maintenancePass(s: TruthState, dt: number, emit: (e: GameEvent) 
 
     const order = f.currentOrderId ? s.orders[f.currentOrderId] : undefined;
 
+    // HIDE: go still and dark — immediate (camouflage, not entrenchment), then complete.
+    // (The posture was always honoured by detection; the ORDER never was — the player
+    // screen's "Hold" button was a placebo until this block.)
+    if (order && !order.completed && order.kind === 'HIDE') {
+      if (f.posture !== 'HIDE') {
+        emit({ type: 'POSTURE_CHANGED', formationId: f.id, posture: 'HIDE', tick: s.tick });
+      }
+      emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
+    }
+
+    // REARM (ext): draw REARM_SP_PER_UNIT per unit that isn't FULL from a co-located
+    // friendly depot/factory/spaceport — or a convoy in the hex. No source or short
+    // stock ⇒ the column waits at the dump until supply arrives (order stays open).
+    if (order && !order.completed && order.kind === 'REARM' && f.pos.kind === 'ground') {
+      const here = f.pos;
+      const dry = f.unitIds.filter(uid => {
+        const u = s.units[uid];
+        return u && u.damage !== 'DESTROYED' && u.damage !== 'SALVAGE' && u.ammoState !== 'FULL';
+      });
+      if (dry.length === 0) {
+        emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
+      } else {
+        const need = dry.length * SUPPLY.REARM_SP_PER_UNIT;
+        const fac = Object.values(s.facilities).find(x =>
+          x.sideId === f.sideId && x.pos.kind === 'ground' &&
+          x.pos.theaterId === here.theaterId && x.pos.q === here.q && x.pos.r === here.r &&
+          ['DEPOT', 'FACTORY', 'SPACEPORT'].some(t => (x.tags as string[]).includes(t)) &&
+          x.supplyPoints >= need);
+        const convoy = fac ? undefined : Object.values(s.formations).find(g =>
+          g.id !== f.id && !g.destroyed && g.sideId === f.sideId && g.pos.kind === 'ground' &&
+          g.pos.theaterId === here.theaterId && g.pos.q === here.q && g.pos.r === here.r &&
+          (g.carriedSp ?? 0) >= need);
+        if (fac) {
+          emit({ type: 'SP_CHANGED', facilityId: fac.id, delta: -need, reason: `rearms ${f.name}` });
+        } else if (convoy) {
+          emit({ type: 'FORMATION_BOOKKEEPING', formationId: convoy.id,
+                 patch: { carriedSp: (convoy.carriedSp ?? 0) - need } });
+        }
+        if (fac || convoy) {
+          for (const uid of dry) {
+            emit({ type: 'UNIT_STATE_CHANGED', unitId: uid,
+                   damage: s.units[uid].damage, ammoState: 'FULL' });
+          }
+          emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
+        }
+      }
+    }
+
     // Dig In → DUG_IN after N pulses (engineers halve), then the order completes (core §4.1)
     if (order && !order.completed && order.kind === 'DIG_IN' && f.posture !== 'DUG_IN') {
       const need = COMBAT.DIG_IN_PULSES * (isEngineer(s, f) ? COMBAT.ENGINEER_DIG_IN_FACTOR : 1);

@@ -6,7 +6,7 @@
  * side reaches the VP threshold, or at the wall-clock end tick (highest VP wins; ties
  * draw).
  */
-import { CLOCK } from '../rules.js';
+import { CLOCK, SUPPLY } from '../rules.js';
 import type { GroundPos, Id, NodePos, TruthState } from '../core/types.js';
 import { hexKey } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
@@ -90,6 +90,14 @@ export function scoringPass(s: TruthState, emit: (e: GameEvent) => void): void {
       if (obj && obj.ownerSideId && obj.vpPerDay) {
         emit({ type: 'VP_CHANGED', sideId: obj.ownerSideId, delta: obj.vpPerDay,
                reason: `holds ${node.name}` });
+      }
+    }
+    // factory output (core §10.1): a held FACTORY mints SP daily — the economy's only
+    // domestic production, so losing (or cutting off) the factory district really hurts
+    for (const fac of Object.values(s.facilities)) {
+      if ((fac.tags as string[]).includes('FACTORY')) {
+        emit({ type: 'SP_CHANGED', facilityId: fac.id, delta: SUPPLY.FACTORY_SP_PER_DAY,
+               reason: 'factory output' });
       }
     }
     // off-world imports (DEEP SKY §9): SP arrive daily unless the lane home is blockaded
