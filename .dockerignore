@@ -1,0 +1,6 @@
+node_modules
+cards/node_modules
+cards/dist-web
+.git
+*.jsonl
+test

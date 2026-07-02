@@ -48,6 +48,12 @@ npm run dev -- demo/campaign.json --gm-key sekret    # require a passphrase for 
 before exposing the server to the internet (e.g. through a tunnel), or any player who has
 their own link can open `/gm` and see the whole truth.
 
+**Playing online?** See **[docs/HOSTING.md](docs/HOSTING.md)** — a free 2-minute tunnel
+for game night, an always-on Railway deploy (~$5/mo), or the bundled `Dockerfile` for
+Fly.io / any VPS. `PORT`, `OVERRIDE_GM_KEY`, `OVERRIDE_LOG`, and `OVERRIDE_CAMPAIGN` env
+vars configure everything; the JSONL log is the whole campaign — copy it and you have a
+byte-exact backup.
+
 Then open `http://localhost:8420/gm` — the GM screen (truth map with belief overlays,
 event log, step / run-until-event, noise injection, VP & endings). The GM screen lists
 the **tokenized player links** to hand out; they also print to the console at boot

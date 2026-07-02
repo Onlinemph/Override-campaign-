@@ -58,7 +58,8 @@ const gmKey = flagVal('--gm-key') ?? process.env.OVERRIDE_GM_KEY;
 const positional = argv.filter((a, i) => !FLAGS.has(a) && !FLAGS.has(argv[i - 1]));
 
 const here = dirname(fileURLToPath(import.meta.url));
-const fixturePath = positional[0] ?? join(here, '../../demo/campaign.json');
+const fixturePath = positional[0] ?? process.env.OVERRIDE_CAMPAIGN
+  ?? join(here, '../../demo/campaign.json');
 
 const store = logPath ? new JsonlEventStore(logPath) : new MemoryEventStore();
 // `campaign`/`activeLogPath` are reassigned when the GM loads another campaign at runtime
