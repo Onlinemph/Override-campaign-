@@ -8,6 +8,8 @@
  */
 import { CAREER, CLOCK, DEEPSKY, ENGAGEMENT, LADDER, RDY } from '../rules.js';
 import { battleXp } from '../engine/career.js';
+import { theaterAirHex } from '../engine/air.js';
+import { hexDistance } from '../hex/axial.js';
 import type {
   BattleResult, Contact, ContactSnapshot, Engagement, GroundPos, Id, LadderLevel,
   Marker, TruthState,
@@ -128,13 +130,36 @@ export function ingestBattleResult(
   }
 
   // 6. salvage: destroyed units in the battle hex go to the hex-controller (core §7.5).
-  //    Air kills leave wrecks scattered under the merge — GM places markers by hand.
   if (result.hexControlSideId && eng.hex) {
     for (const o of result.unitOutcomes) {
       if (o.damage !== 'DESTROYED' && o.damage !== 'SALVAGE') continue;
       events.push({ type: 'SALVAGE_CREATED', token: {
         id: `salvage:${o.unitId}:${s.tick}`, hex: { ...eng.hex },
         sourceUnitId: o.unitId, heldBy: result.hexControlSideId } });
+    }
+  }
+  // 6b (ext): air kills rain down — wrecks fall on the ground under the merge and become
+  // salvage for whoever held the sky. No victor ⇒ the wrecks burn in, unclaimed.
+  if (eng.domain === 'AIR' && eng.airPos && result.victorSideId) {
+    const merge = { q: eng.airPos.gridQ, r: eng.airPos.gridR };
+    const under = Object.values(s.theaters)
+      .map(t => ({ t, d: hexDistance(theaterAirHex(s, t.id), merge) }))
+      .sort((a, b) => a.d - b.d || a.t.id.localeCompare(b.t.id))[0];
+    // the fall hex: the merge coordinates if they exist on the map, else the nearest hex
+    const fall = under && (under.t.hexes[`${merge.q},${merge.r}`]
+      ? merge
+      : Object.keys(under.t.hexes)
+          .map(k => { const [q, r] = k.split(',').map(Number); return { q, r }; })
+          .sort((a, b) => hexDistance(a, merge) - hexDistance(b, merge)
+                        || a.q - b.q || a.r - b.r)[0]);
+    if (under && fall) {
+      const hex: GroundPos = { kind: 'ground', theaterId: under.t.id, q: fall.q, r: fall.r };
+      for (const o of result.unitOutcomes) {
+        if (o.damage !== 'DESTROYED' && o.damage !== 'SALVAGE') continue;
+        events.push({ type: 'SALVAGE_CREATED', token: {
+          id: `salvage:${o.unitId}:${s.tick}`, hex,
+          sourceUnitId: o.unitId, heldBy: result.victorSideId } });
+      }
     }
   }
 

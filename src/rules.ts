@@ -251,6 +251,13 @@ export const SUPPLY = {
   FACTORY_SP_PER_DAY: 2,
 } as const;
 
+// ── Recon & deception (ext): the last dead tags come alive ──────────────────
+export const RECON_TRICKS = {
+  SHADOW_STANDOFF_HEXES: 2,   // a SHADOW order trails its contact, never closer than this
+  C3_INITIATIVE_BONUS: 1,     // a live C3 master network: +1 initiative in the handoff
+  DECOY_SIZE_CLASS_BUMP: 1,   // a DECOY unit makes the formation read one size bigger
+} as const;
+
 // ── Flak (ext): AA bites at the interface points ─────────────────────────────
 // The air layer is one hex per theater, so tactical AA cannot reach HIGH-band transit —
 // it engages aircraft coming LOW over a specific ground hex: launches, landings, drops.

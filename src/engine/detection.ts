@@ -3,8 +3,8 @@
  * All numbers come from rules.ts; the GM ruling D-006 governs cautious movement & night.
  */
 import {
-  BASE_SIG, CLOCK, LADDER, LADDER_NAMES, SATELLITE, SEARCHER_MODS, SENSOR_RANGES,
-  SIG_MODS, SIZE_CLASS_NAMES, TERRAIN,
+  BASE_SIG, CLOCK, LADDER, LADDER_NAMES, RECON_TRICKS, SATELLITE, SEARCHER_MODS,
+  SENSOR_RANGES, SIG_MODS, SIZE_CLASS_NAMES, TERRAIN,
 } from '../rules.js';
 import type {
   Contact, ContactReport, ContactSnapshot, Facility, Formation, GroundPos, Hex,
@@ -218,7 +218,16 @@ function buildSnapshot(
   };
   if (level >= 2) {
     snap.estVector = target.lastHeadingDeg;
-    snap.estSizeClass = sizeClassName(target.sigBase);
+    // DECOY (ext): inflatable mechs and thermal balloons — the formation reads one size
+    // class BIGGER on enemy sensors (lower sigBase = bigger force; floor at battalion)
+    const hasDecoy = target.unitIds.some(uid => {
+      const u = s.units[uid];
+      return u && u.tags.includes('DECOY') && u.damage !== 'DESTROYED' && u.damage !== 'SALVAGE';
+    });
+    const apparentSig = hasDecoy
+      ? Math.max(5, target.sigBase - RECON_TRICKS.DECOY_SIZE_CLASS_BUMP)
+      : target.sigBase;
+    snap.estSizeClass = sizeClassName(apparentSig);
   }
   if (level >= 3) snap.estComposition = composition(s, target);
   if (level >= 4) {

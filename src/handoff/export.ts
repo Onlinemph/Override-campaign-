@@ -5,7 +5,9 @@
  * approach vectors, intel→initiative, posture→hidden/fortified, RDY→TN penalty, plus
  * in-range off-board artillery and on-net reinforcements. No combat is computed here.
  */
-import { ARTILLERY_TAG_RANGE, COMBAT, DEEPSKY, ENGAGEMENT, RDY, SKYWATCH } from '../rules.js';
+import {
+  ARTILLERY_TAG_RANGE, COMBAT, DEEPSKY, ENGAGEMENT, RDY, RECON_TRICKS, SKYWATCH,
+} from '../rules.js';
 import type {
   AirPos, Engagement, Formation, GroundPos, HandoffPackage, Id, TruthState,
 } from '../core/types.js';
@@ -72,6 +74,12 @@ function sideBlock(
   const hidden = formations.some(f => f.posture === 'HIDE');
   const fortified = formations.some(f => f.posture === 'DUG_IN' || f.posture === 'FORTIFIED');
   const worstRdy = Math.min(10, ...formations.map(f => f.rdy));
+  // a live C3 master on the table: the network is worth initiative (ext)
+  const c3Bonus = formations.some(f => f.unitIds.some(uid => {
+    const u = s.units[uid];
+    return u && u.tags.includes('C3M') && u.damage !== 'DESTROYED' && u.damage !== 'SALVAGE';
+  })) ? RECON_TRICKS.C3_INITIATIVE_BONUS : 0;
+  initiativeBonus += c3Bonus;
 
   // off-board artillery: friendly arty units (any side formation) in range of the hex
   const artillery: Array<{ unitId: Id; rangeHexesRemaining: number }> = [];

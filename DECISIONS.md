@@ -735,3 +735,25 @@ reached a battle. Now (constants in SKYWATCH.CAS_ON_CALL):
    out — the flight's ledger resumes on unfreeze. Tabletop effects of the air support are
    the table's ruling (the engine never simulates battles); FP spent on strafing runs can
    come home via the normal fpRemaining path if the GM adds the flight to the board.
+
+## D-027 ✅ The flavor pass: SHADOW, C3M, DECOY, and wrecks that fall from the sky
+The last dead tags and orders come alive (constants in RECON_TRICKS).
+1. **SHADOW** (a GroundOrderKind since M1, never handled): trail a contact using the side's
+   *delivered* estimate (same intel rules as STRIKE), closing when the trail stretches and
+   holding at SHADOW_STANDOFF_HEXES (2) — the hop loop refuses to enter the ring, so a
+   shadow never triggers a same-hex engagement by accident. A standing order: it never
+   completes; a faded contact just makes the tail hold and watch.
+2. **C3M**: a live C3-master unit in the battle adds C3_INITIATIVE_BONUS (+1) to its side's
+   handoff initiative — the network sees first, shoots first. Stacks with intel initiative.
+3. **DECOY**: a live DECOY-tagged unit makes the formation read one size class *bigger* on
+   enemy SHADOW+ intel (sigBase −1 for the estimate only, floored at battalion). The truth
+   never changes — only what the enemy is told; LOCK-level TOE still lists actual units,
+   so close recon pierces the trick, as it should.
+4. **Air kills rain down** (closing D-014's "GM places markers by hand"): an AIR engagement
+   with a victor drops SALVAGE_CREATED tokens for each DESTROYED/SALVAGE outcome at the
+   ground hex under the merge — the theater nearest the merge's air position, at the merge
+   coordinates if they exist on that map, else the nearest hex (deterministic). The
+   sky-holder claims them; no victor ⇒ the wrecks burn in, unclaimed. Feeds the D-021
+   refit loop, so shot-down fighters become airframes in the yard.
+Still deliberately inert: SKYEYE, the `neutral` flag, LOSTECH_REPAIR_TN, CONVOY_* spawn
+defaults, DECK-band flight profiles, and `ace` as an honorific.

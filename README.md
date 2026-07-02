@@ -175,6 +175,13 @@ turnaround crew) can be repaired — SP and days scale with how bad it is (1 SP 
 damaged, 2 SP / 3 days crippled). One click in the roster panel; the engine delivers the
 fix on schedule.
 
+**The recon tricks work.** **SHADOW** trails a contact at a two-hex standoff — closing when
+the trail stretches, holding when near, never blundering into a battle — a standing order
+your scout keeps until told otherwise. A **C3 master** on the table is worth +1 initiative
+in the handoff. A **DECOY** unit makes its formation read one size class bigger to enemy
+sensors (close recon at LOCK still sees the truth). And air kills **rain down**: wrecks
+from a won merge land as salvage tokens on the map below, feeding the refit yard.
+
 **Ammo is a resource.** Units come home from battle PARTIAL or DRY, and staying dry is now
 a choice: the **REARM** order draws 1 SP per unit from a depot, factory, or spaceport in
 the hex — or from a convoy that drove the shells forward — and waits at the dump if the

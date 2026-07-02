@@ -8,7 +8,7 @@
  *    collapses to the road/off-road distinction (impassable hexes still block).
  * Fractional progress toward the next hex is carried on the formation between steps.
  */
-import { CLOCK, MOVEMENT, ROAD_MIN_COST, ROAD_COST_FACTOR, TERRAIN } from '../rules.js';
+import { CLOCK, MOVEMENT, RECON_TRICKS, ROAD_MIN_COST, ROAD_COST_FACTOR, TERRAIN } from '../rules.js';
 import type { Formation, GroundPos, Hex, Order, TruthState } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
 import { headingDeg, hexDistance, hexLine } from '../hex/axial.js';
@@ -90,7 +90,8 @@ export function movementPass(
     if (s.tick < order.effectiveTick) continue;
     const isStrike = order.kind === 'STRIKE';
     const isEmbark = order.kind === 'EMBARK';
-    if (!isStrike && !isEmbark && !MOVE_KINDS.has(order.kind)) continue;
+    const isShadow = order.kind === 'SHADOW';
+    if (!isStrike && !isEmbark && !isShadow && !MOVE_KINDS.has(order.kind)) continue;
 
     // EMBARK (ext): march to the carrier's live position; load when co-located with it
     // landed and holding a free bay. A bad target (not a carrier / wrong side / gone)
@@ -118,11 +119,23 @@ export function movementPass(
 
     // STRIKE re-paths toward the live contact estimate; everything else follows its plot.
     const cur0 = f.pos as GroundPos;
+    // SHADOW (ext): trail the contact at standoff distance — close when the trail
+    // stretches, hold when near, never enter the standoff ring (so no engagement fires).
+    // A standing order: it never completes; a faded contact just makes the tail hold.
+    const shadowTarget = isShadow ? strikeTargetHex(s, order) : null;
+    if (isShadow) {
+      if (!shadowTarget ||
+          hexDistance(cur0, shadowTarget) <= RECON_TRICKS.SHADOW_STANDOFF_HEXES) {
+        continue; // blind or close enough: hold and watch
+      }
+    }
     let wps: GroundPos[];
     if (isStrike) {
       const target = strikeTargetHex(s, order);
       if (!target || hexDistance(cur0, target) === 0) continue; // arrived or blind: hold
       wps = [target];
+    } else if (isShadow) {
+      wps = [shadowTarget!];
     } else if (isEmbark) {
       // re-path toward the carrier's current hex every step (own force: always known)
       const carrier = s.formations[order.targetFormationId!];
@@ -131,7 +144,7 @@ export function movementPass(
       if (!order.path) continue;
       wps = order.path.filter((p): p is GroundPos => p.kind === 'ground');
     }
-    let pathIndex = (isStrike || isEmbark) ? 0 : (f.pathIndex ?? 0);
+    let pathIndex = (isStrike || isEmbark || isShadow) ? 0 : (f.pathIndex ?? 0);
     // skip any leading waypoint we're already standing on
     while (pathIndex < wps.length && hexDistance(cur0, wps[pathIndex]) === 0) pathIndex++;
 
@@ -169,6 +182,10 @@ export function movementPass(
     while (hi < hops.length && avail > 1e-9) {
       const cur = f.pos as GroundPos;
       const next: GroundPos = { ...cur, q: hops[hi].q, r: hops[hi].r };
+
+      // SHADOW never enters the standoff ring — stop one step short of the contact
+      if (isShadow && shadowTarget &&
+          hexDistance(next, shadowTarget) < RECON_TRICKS.SHADOW_STANDOFF_HEXES) break;
 
       const hex = getHex(s, next);
       if (!hex) break;
@@ -227,7 +244,8 @@ export function movementPass(
     // STRIKE never self-completes here: arrival is resolved by the engagement pass
     // (battle if the enemy is present, completion-with-miss if the estimate was stale).
     // EMBARK completes at the top of the pass, once co-located and actually loaded.
-    if (!isStrike && !isEmbark && pathIndex >= wps.length) {
+    // SHADOW is a standing order: the tail follows until superseded.
+    if (!isStrike && !isEmbark && !isShadow && pathIndex >= wps.length) {
       emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
     }
   }
