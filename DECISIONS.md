@@ -824,3 +824,23 @@ Async play: the hosted campaign runs continuously; players drop in whenever, plo
    with a 1990-char clamp (Discord's limit); a dead webhook logs a warning and never
    blocks the engine. Live-verified: autopaced demo pushed the contact ladder
    (GHOST→SHADOW→CONTACT→LOCK) to the blue channel only.
+
+## D-032 ✅ OPERATION DAGGERPOINT (the showcase) and the war diary
+1. **demo/assault.json** — a 3067 planetary assault authored to exercise every mechanic
+   (the checklist lives in docs/OPERATION_DAGGERPOINT.md). Generated+bulldozed terrain
+   (scripts/make-assault.mjs regenerates it deterministically), 33 formations, both
+   fleets carrying their armies, real 3067 hulls whose tags all derive from the library
+   (SPHEROID Overlord/Unions, AERODYNE Leopard CV, ECM+BEAGLE Raven 3L, STEALTH Sha Yu,
+   C3M Atlas AS7-CM). Acceptance plays the opening act on plotted orders alone — burn in
+   under light-lagged observation, descend, land, first lance on the dirt — byte-exact.
+   Two design findings the acceptance test caught: the demo loader silently dropped
+   `laneId`/`burnProfile`/`destinationNodeId`/`targetHex`/`targetFormationId` from
+   authored orders (space transits could never be pre-plotted in ANY campaign file —
+   fixed), and the first VP tuning let the defender win by sitting still on day 4,
+   before the fleet could even land (threshold retuned to 100: full-hold wins in ~14
+   days, giving the invader ~11 days after landing to flip the race).
+2. **The war diary** (`server/diary.ts`, `/api/side/:id/diary`, a 📖 panel on the player
+   screen): each side's chronicle built from the event log under the same fog discipline
+   as the live screens — delivered reports, its battles and losses, atmosphere
+   crossings, ship landings, shop/refit work, blockade transitions (deduped to actual
+   changes), endings. Day-grouped, capped at the most recent 800 entries.

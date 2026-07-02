@@ -1,0 +1,2174 @@
+{
+  "seed": "DAGGERPOINT-3067",
+  "config": {
+    "name": "Operation DAGGERPOINT — Menghao, 3067",
+    "dawnTick": 60,
+    "duskTick": 180,
+    "weather": "RAIN",
+    "airHexByTheater": {
+      "menghao": {
+        "q": 12,
+        "r": 9
+      }
+    },
+    "vpThreshold": 100,
+    "endTick": 7200
+  },
+  "theaters": [
+    {
+      "id": "menghao",
+      "name": "Menghao — Jiangxi Lowlands",
+      "width": 26,
+      "height": 18,
+      "defaultTerrain": "CLEAR",
+      "overrides": [
+        {
+          "q": 1,
+          "r": 0,
+          "terrain": "WATER"
+        },
+        {
+          "q": 10,
+          "r": 0,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 11,
+          "r": 0,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 13,
+          "r": 0,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 14,
+          "r": 0,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 15,
+          "r": 0,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 19,
+          "r": 0,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 20,
+          "r": 0,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 0,
+          "r": 1,
+          "terrain": "WATER"
+        },
+        {
+          "q": 1,
+          "r": 1,
+          "terrain": "WATER"
+        },
+        {
+          "q": 2,
+          "r": 1,
+          "terrain": "WATER"
+        },
+        {
+          "q": 9,
+          "r": 1,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 10,
+          "r": 1,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 11,
+          "r": 1,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 13,
+          "r": 1,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 15,
+          "r": 1,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 20,
+          "r": 1,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 21,
+          "r": 1,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 22,
+          "r": 1,
+          "terrain": "WATER"
+        },
+        {
+          "q": 0,
+          "r": 2,
+          "terrain": "WATER"
+        },
+        {
+          "q": 1,
+          "r": 2,
+          "terrain": "WATER"
+        },
+        {
+          "q": 2,
+          "r": 2,
+          "terrain": "WATER"
+        },
+        {
+          "q": 7,
+          "r": 2,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 8,
+          "r": 2,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 9,
+          "r": 2,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 10,
+          "r": 2,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 19,
+          "r": 2,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 20,
+          "r": 2,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 0,
+          "r": 3,
+          "terrain": "WATER"
+        },
+        {
+          "q": 1,
+          "r": 3,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 6,
+          "r": 3,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 7,
+          "r": 3,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 10,
+          "r": 3,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 11,
+          "r": 3,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 17,
+          "r": 3,
+          "terrain": "WATER"
+        },
+        {
+          "q": 18,
+          "r": 3,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 19,
+          "r": 3,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 20,
+          "r": 3,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 25,
+          "r": 3,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 0,
+          "r": 4,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 1,
+          "r": 4,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 4,
+          "r": 4,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 5,
+          "r": 4,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 6,
+          "r": 4,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 10,
+          "r": 4,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 11,
+          "r": 4,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 12,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 16,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 17,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 18,
+          "r": 4,
+          "terrain": "CLEAR",
+          "objective": {
+            "vpPerDay": 2,
+            "ownerSideId": "liao",
+            "fake": true
+          }
+        },
+        {
+          "q": 19,
+          "r": 4,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 20,
+          "r": 4,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 21,
+          "r": 4,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 22,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 23,
+          "r": 4,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 24,
+          "r": 4,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 0,
+          "r": 5,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 1,
+          "r": 5,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 4,
+          "r": 5,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 7,
+          "r": 5,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 9,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 10,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 11,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 15,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 16,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 17,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 18,
+          "r": 5,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 19,
+          "r": 5,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 20,
+          "r": 5,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 21,
+          "r": 5,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 22,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 23,
+          "r": 5,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 24,
+          "r": 5,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 25,
+          "r": 5,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 0,
+          "r": 6,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 1,
+          "r": 6,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 7,
+          "r": 6,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 8,
+          "r": 6,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 9,
+          "r": 6,
+          "terrain": "CLEAR",
+          "infra": [
+            "AIRSTRIP",
+            "ROAD"
+          ],
+          "objective": {
+            "vpPerDay": 1,
+            "ownerSideId": "liao"
+          }
+        },
+        {
+          "q": 10,
+          "r": 6,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 11,
+          "r": 6,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 14,
+          "r": 6,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 15,
+          "r": 6,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 16,
+          "r": 6,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 17,
+          "r": 6,
+          "terrain": "WATER"
+        },
+        {
+          "q": 18,
+          "r": 6,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 20,
+          "r": 6,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 21,
+          "r": 6,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 22,
+          "r": 6,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 0,
+          "r": 7,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 1,
+          "r": 7,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 6,
+          "r": 7,
+          "terrain": "URBAN",
+          "infra": [
+            "TOWN",
+            "ROAD"
+          ]
+        },
+        {
+          "q": 7,
+          "r": 7,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 8,
+          "r": 7,
+          "terrain": "CLEAR",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 9,
+          "r": 7,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 13,
+          "r": 7,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 14,
+          "r": 7,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 17,
+          "r": 7,
+          "terrain": "WATER"
+        },
+        {
+          "q": 4,
+          "r": 8,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 5,
+          "r": 8,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 6,
+          "r": 8,
+          "terrain": "SWAMP",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 7,
+          "r": 8,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 3,
+          "r": 9,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 4,
+          "r": 9,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 5,
+          "r": 9,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 6,
+          "r": 9,
+          "terrain": "CLEAR",
+          "infra": [
+            "SPACEPORT",
+            "ROAD"
+          ],
+          "objective": {
+            "vpPerDay": 3,
+            "ownerSideId": "liao"
+          }
+        },
+        {
+          "q": 7,
+          "r": 9,
+          "infra": [
+            "ROAD"
+          ],
+          "terrain": "CLEAR"
+        },
+        {
+          "q": 8,
+          "r": 9,
+          "terrain": "MOUNTAIN",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 9,
+          "r": 9,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 10,
+          "r": 9,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 11,
+          "r": 9,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 12,
+          "r": 9,
+          "terrain": "URBAN",
+          "infra": [
+            "TOWN",
+            "ROAD"
+          ]
+        },
+        {
+          "q": 25,
+          "r": 9,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 5,
+          "r": 10,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 7,
+          "r": 10,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 8,
+          "r": 10,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 9,
+          "r": 10,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 20,
+          "r": 10,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 10,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 24,
+          "r": 10,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 25,
+          "r": 10,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 6,
+          "r": 11,
+          "terrain": "CLEAR",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 7,
+          "r": 11,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 8,
+          "r": 11,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 9,
+          "r": 11,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 13,
+          "r": 11,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 14,
+          "r": 11,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 15,
+          "r": 11,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 20,
+          "r": 11,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 11,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 24,
+          "r": 11,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 25,
+          "r": 11,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 11,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 12,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 13,
+          "r": 12,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 14,
+          "r": 12,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 15,
+          "r": 12,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 24,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 10,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 11,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 12,
+          "r": 13,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 13,
+          "r": 13,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 14,
+          "r": 13,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 15,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 16,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 7,
+          "r": 14,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 9,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 10,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 11,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 12,
+          "r": 14,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 13,
+          "r": 14,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 14,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 15,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 5,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 6,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 7,
+          "r": 15,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 9,
+          "r": 15,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 10,
+          "r": 15,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 11,
+          "r": 15,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 12,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 13,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 14,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 17,
+          "r": 15,
+          "terrain": "WATER"
+        },
+        {
+          "q": 22,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 23,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 4,
+          "r": 16,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 9,
+          "r": 16,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 10,
+          "r": 16,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 14,
+          "r": 16,
+          "terrain": "WATER"
+        },
+        {
+          "q": 15,
+          "r": 16,
+          "terrain": "WATER"
+        },
+        {
+          "q": 16,
+          "r": 16,
+          "terrain": "WATER"
+        },
+        {
+          "q": 17,
+          "r": 16,
+          "terrain": "WATER"
+        },
+        {
+          "q": 18,
+          "r": 16,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 20,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 22,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 23,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 9,
+          "r": 17,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 14,
+          "r": 17,
+          "terrain": "WATER"
+        },
+        {
+          "q": 15,
+          "r": 17,
+          "terrain": "WATER"
+        },
+        {
+          "q": 16,
+          "r": 17,
+          "terrain": "WATER"
+        },
+        {
+          "q": 18,
+          "r": 17,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 20,
+          "r": 17,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 17,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 5,
+          "r": 12,
+          "terrain": "CLEAR",
+          "infra": [
+            "DEPOT",
+            "ROAD"
+          ]
+        },
+        {
+          "q": 8,
+          "r": 12,
+          "terrain": "CLEAR",
+          "infra": [
+            "FACTORY",
+            "ROAD"
+          ],
+          "objective": {
+            "vpPerDay": 2,
+            "ownerSideId": "liao"
+          }
+        },
+        {
+          "q": 8,
+          "r": 8,
+          "terrain": "CLEAR",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 7,
+          "r": 12,
+          "terrain": "CLEAR",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 6,
+          "r": 10,
+          "terrain": "CLEAR",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 20,
+          "r": 12,
+          "terrain": "WOODS",
+          "objective": {
+            "vpPerDay": 2,
+            "ownerSideId": "liao",
+            "hidden": true
+          }
+        },
+        {
+          "q": 21,
+          "r": 9,
+          "terrain": "CLEAR"
+        }
+      ]
+    }
+  ],
+  "sides": [
+    {
+      "id": "davion",
+      "name": "1st Kittery Borderers (AFFS)"
+    },
+    {
+      "id": "liao",
+      "name": "Menghao Prefectorate Guard (CCAF)",
+      "importSpPerDay": 3,
+      "homeDepotId": "red-depot"
+    }
+  ],
+  "facilities": [
+    {
+      "id": "red-spaceport",
+      "sideId": "liao",
+      "name": "Port Menghao",
+      "theaterId": "menghao",
+      "q": 6,
+      "r": 9,
+      "tags": [
+        "SPACEPORT",
+        "DEPOT"
+      ],
+      "supplyPoints": 30,
+      "fuelFarmTons": 40,
+      "turnaroundCrews": 2,
+      "isCommandNode": true,
+      "sensorStation": {
+        "passive": 8,
+        "active": 12
+      }
+    },
+    {
+      "id": "red-airbase",
+      "sideId": "liao",
+      "name": "Chiang Airfield",
+      "theaterId": "menghao",
+      "q": 9,
+      "r": 6,
+      "tags": [
+        "AIRSTRIP"
+      ],
+      "supplyPoints": 6,
+      "fuelFarmTons": 25,
+      "turnaroundCrews": 2
+    },
+    {
+      "id": "red-depot",
+      "sideId": "liao",
+      "name": "Prefecture Depot",
+      "theaterId": "menghao",
+      "q": 5,
+      "r": 12,
+      "tags": [
+        "DEPOT"
+      ],
+      "supplyPoints": 24
+    },
+    {
+      "id": "red-factory",
+      "sideId": "liao",
+      "name": "Jiangxi Works",
+      "theaterId": "menghao",
+      "q": 8,
+      "r": 12,
+      "tags": [
+        "FACTORY"
+      ],
+      "supplyPoints": 10
+    }
+  ],
+  "satellites": [
+    {
+      "id": "red-sat",
+      "sideId": "liao",
+      "kind": "RECON",
+      "theaterId": "menghao",
+      "corridor": [
+        {
+          "q": 0,
+          "r": 9
+        },
+        {
+          "q": 25,
+          "r": 9
+        }
+      ],
+      "periodPulses": 4,
+      "nextPassTick": 20
+    }
+  ],
+  "markers": [
+    {
+      "id": "mine-1",
+      "kind": "MINEFIELD",
+      "theaterId": "menghao",
+      "q": 11,
+      "r": 9,
+      "sideId": "liao"
+    },
+    {
+      "id": "mine-2",
+      "kind": "MINEFIELD",
+      "theaterId": "menghao",
+      "q": 12,
+      "r": 8,
+      "sideId": "liao"
+    }
+  ],
+  "system": {
+    "nodes": [
+      {
+        "id": "zenith",
+        "type": "JUMP_ZENITH",
+        "name": "Zenith Point"
+      },
+      {
+        "id": "nadir",
+        "type": "JUMP_NADIR",
+        "name": "Nadir Point"
+      },
+      {
+        "id": "menghao",
+        "type": "PLANET",
+        "name": "Menghao",
+        "theaterId": "menghao"
+      },
+      {
+        "id": "tianzhu",
+        "type": "GAS_GIANT",
+        "name": "Tianzhu",
+        "objective": {
+          "vpPerDay": 1,
+          "ownerSideId": "liao"
+        }
+      },
+      {
+        "id": "shadow-point",
+        "type": "PIRATE_POINT",
+        "name": "Uncharted Lagrange",
+        "secret": true
+      }
+    ],
+    "lanes": [
+      {
+        "a": "zenith",
+        "b": "menghao",
+        "distanceAU": 8
+      },
+      {
+        "a": "nadir",
+        "b": "menghao",
+        "distanceAU": 8
+      },
+      {
+        "a": "tianzhu",
+        "b": "menghao",
+        "distanceAU": 5
+      },
+      {
+        "a": "shadow-point",
+        "b": "menghao",
+        "distanceAU": 2
+      }
+    ]
+  },
+  "formations": [
+    {
+      "id": "red-hq",
+      "sideId": "liao",
+      "name": "Prefecture Command",
+      "theaterId": "menghao",
+      "q": 6,
+      "r": 9,
+      "sigBase": 7,
+      "posture": "DUG_IN",
+      "_commandNode": true,
+      "units": [
+        {
+          "name": "Guard Actual",
+          "model": "Browning Mobile HQ",
+          "class": "VEHICLE"
+        },
+        {
+          "name": "Signals",
+          "model": "Browning Mobile HQ",
+          "class": "VEHICLE"
+        }
+      ]
+    },
+    {
+      "id": "red-line-1",
+      "sideId": "liao",
+      "name": "Ti Ts’ang Lance",
+      "theaterId": "menghao",
+      "q": 7,
+      "r": 9,
+      "sigBase": 7,
+      "units": [
+        {
+          "name": "Shiao-zhang Liu",
+          "model": "Ti Ts_ang TSG-10L",
+          "class": "MECH",
+          "pilot": {
+            "name": "Shiao-zhang Wen Liu",
+            "gunnery": 3,
+            "piloting": 4
+          }
+        },
+        {
+          "name": "Guard 2",
+          "model": "Vindicator VND-1R",
+          "class": "MECH"
+        },
+        {
+          "name": "Guard 3",
+          "model": "Vindicator VND-1R",
+          "class": "MECH"
+        },
+        {
+          "name": "Guard 4",
+          "model": "Cataphract CTF-2X",
+          "class": "MECH"
+        }
+      ]
+    },
+    {
+      "id": "red-recon",
+      "sideId": "liao",
+      "name": "Raven Scout Lance",
+      "theaterId": "menghao",
+      "q": 14,
+      "r": 8,
+      "sigBase": 7,
+      "emcon": "PASSIVE",
+      "units": [
+        {
+          "name": "Whisper",
+          "model": "Raven RVN-3L",
+          "class": "MECH",
+          "pilot": "Sao-wei Mei Chen"
+        },
+        {
+          "name": "Ghost 1",
+          "model": "Pegasus Scout Hover Tank",
+          "class": "VEHICLE"
+        },
+        {
+          "name": "Ghost 2",
+          "model": "Pegasus Scout Hover Tank",
+          "class": "VEHICLE"
+        }
+      ]
+    },
+    {
+      "id": "red-stealth",
+      "sideId": "liao",
+      "name": "Shadow Lance",
+      "theaterId": "menghao",
+      "q": 14,
+      "r": 11,
+      "sigBase": 7,
+      "posture": "HIDE",
+      "emcon": "DARK",
+      "units": [
+        {
+          "name": "Silent One",
+          "model": "Sha Yu SYU-2B",
+          "class": "MECH"
+        },
+        {
+          "name": "Silent Two",
+          "model": "Sha Yu SYU-2B",
+          "class": "MECH"
+        }
+      ]
+    },
+    {
+      "id": "red-armor",
+      "sideId": "liao",
+      "name": "Po Company",
+      "theaterId": "menghao",
+      "q": 8,
+      "r": 10,
+      "sigBase": 6,
+      "units": [
+        {
+          "name": "Iron 1",
+          "model": "Po Heavy Tank",
+          "class": "VEHICLE"
+        },
+        {
+          "name": "Iron 2",
+          "model": "Po Heavy Tank",
+          "class": "VEHICLE"
+        },
+        {
+          "name": "Iron 3",
+          "model": "Po Heavy Tank",
+          "class": "VEHICLE"
+        },
+        {
+          "name": "Iron 4",
+          "model": "Vedette Medium Tank",
+          "class": "VEHICLE"
+        }
+      ]
+    },
+    {
+      "id": "red-aa-port",
+      "sideId": "liao",
+      "name": "Spaceport Flak Battery",
+      "theaterId": "menghao",
+      "q": 6,
+      "r": 9,
+      "sigBase": 7,
+      "posture": "DUG_IN",
+      "units": [
+        {
+          "name": "Flak 1",
+          "model": "Partisan AA Vehicle",
+          "class": "VEHICLE",
+          "tags": [
+            "AA"
+          ]
+        },
+        {
+          "name": "Flak 2",
+          "model": "Partisan AA Vehicle",
+          "class": "VEHICLE",
+          "tags": [
+            "AA"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "red-aa-air",
+      "sideId": "liao",
+      "name": "Airbase Flak Battery",
+      "theaterId": "menghao",
+      "q": 9,
+      "r": 6,
+      "sigBase": 7,
+      "posture": "DUG_IN",
+      "units": [
+        {
+          "name": "Flak 3",
+          "model": "Partisan AA Vehicle",
+          "class": "VEHICLE",
+          "tags": [
+            "AA"
+          ]
+        },
+        {
+          "name": "Flak 4",
+          "model": "Partisan AA Vehicle",
+          "class": "VEHICLE",
+          "tags": [
+            "AA"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "red-inf",
+      "sideId": "liao",
+      "name": "Home Guard Infantry",
+      "theaterId": "menghao",
+      "q": 8,
+      "r": 12,
+      "sigBase": 10,
+      "posture": "DUG_IN",
+      "units": [
+        {
+          "name": "Home Guard",
+          "model": "Foot Platoon (Rifle)",
+          "class": "INFANTRY"
+        },
+        {
+          "name": "Militia",
+          "model": "Foot Platoon (Rifle)",
+          "class": "INFANTRY"
+        }
+      ]
+    },
+    {
+      "id": "red-arty",
+      "sideId": "liao",
+      "name": "Menghao Fire Support",
+      "theaterId": "menghao",
+      "q": 5,
+      "r": 10,
+      "sigBase": 7,
+      "posture": "DUG_IN",
+      "units": [
+        {
+          "name": "Thunder",
+          "model": "Mobile Long Tom Artillery LT-MOB-25F",
+          "class": "VEHICLE"
+        }
+      ]
+    },
+    {
+      "id": "red-mash",
+      "sideId": "liao",
+      "name": "Field Hospital",
+      "theaterId": "menghao",
+      "q": 5,
+      "r": 12,
+      "sigBase": 8,
+      "units": [
+        {
+          "name": "Mercy",
+          "model": "MASH Truck",
+          "class": "VEHICLE"
+        }
+      ]
+    },
+    {
+      "id": "red-eng",
+      "sideId": "liao",
+      "name": "48th Combat Engineers",
+      "theaterId": "menghao",
+      "q": 7,
+      "r": 11,
+      "sigBase": 8,
+      "units": [
+        {
+          "name": "Sapper 1",
+          "model": "J-27 Ordnance Transport",
+          "class": "VEHICLE",
+          "tags": [
+            "ENGINEER"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "red-convoy",
+      "sideId": "liao",
+      "name": "Supply Column",
+      "theaterId": "menghao",
+      "q": 5,
+      "r": 12,
+      "sigBase": 6,
+      "carriedSp": 12,
+      "units": [
+        {
+          "name": "Truck 1",
+          "model": "J-27 Ordnance Transport",
+          "class": "VEHICLE"
+        },
+        {
+          "name": "Truck 2",
+          "model": "J-27 Ordnance Transport",
+          "class": "VEHICLE"
+        }
+      ]
+    },
+    {
+      "id": "red-decoy",
+      "sideId": "liao",
+      "name": "Radar Site Garrison",
+      "theaterId": "menghao",
+      "q": 18,
+      "r": 4,
+      "sigBase": 6,
+      "emcon": "ACTIVE",
+      "units": [
+        {
+          "name": "Inflatables",
+          "model": "Foot Platoon (Rifle)",
+          "class": "SUPPORT",
+          "tags": [
+            "DECOY"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "red-cap",
+      "sideId": "liao",
+      "name": "Dianwei Flight",
+      "theaterId": "menghao",
+      "q": 9,
+      "r": 6,
+      "sigBase": 8,
+      "alertState": "ALERT15",
+      "flight": {
+        "homeFacilityId": "red-airbase"
+      },
+      "units": [
+        {
+          "name": "Dianwei 1",
+          "model": "Transit TR-10",
+          "class": "ASF",
+          "fuelFp": 360,
+          "safeThrust": 6
+        },
+        {
+          "name": "Dianwei 2",
+          "model": "Transit TR-10",
+          "class": "ASF",
+          "fuelFp": 360,
+          "safeThrust": 6
+        }
+      ]
+    },
+    {
+      "id": "red-carrier",
+      "sideId": "liao",
+      "name": "DropShip Zhanshi",
+      "theaterId": "menghao",
+      "q": 6,
+      "r": 9,
+      "sigBase": 8,
+      "flight": {},
+      "carrier": {
+        "bays": 2,
+        "crews": 1,
+        "avFuelTons": 40
+      },
+      "units": [
+        {
+          "name": "Zhanshi",
+          "model": "Union (2708)",
+          "class": "DROPSHIP",
+          "fuelTons": 120,
+          "tonsPerBurnDay": 1.84,
+          "maxThrust": 3,
+          "fuelFp": 3600
+        }
+      ]
+    },
+    {
+      "id": "red-stowed",
+      "sideId": "liao",
+      "name": "Sting Flight",
+      "theaterId": "menghao",
+      "q": 6,
+      "r": 9,
+      "sigBase": 9,
+      "mountedOn": "red-carrier",
+      "units": [
+        {
+          "name": "Sting 1",
+          "model": "Transit TR-10",
+          "class": "ASF",
+          "fuelFp": 360,
+          "safeThrust": 6
+        },
+        {
+          "name": "Sting 2",
+          "model": "Transit TR-10",
+          "class": "ASF",
+          "fuelFp": 360,
+          "safeThrust": 6
+        }
+      ]
+    },
+    {
+      "id": "red-picket",
+      "sideId": "liao",
+      "name": "Gas Giant Picket",
+      "nodeId": "tianzhu",
+      "sigBase": 8,
+      "emcon": "ACTIVE",
+      "units": [
+        {
+          "name": "Yao Guai",
+          "model": "Leopard (3056)",
+          "class": "DROPSHIP",
+          "fuelTons": 40,
+          "tonsPerBurnDay": 1.84,
+          "maxThrust": 3,
+          "fuelFp": 3600
+        }
+      ]
+    },
+    {
+      "id": "blue-jumpship",
+      "sideId": "davion",
+      "name": "JS Excalibur’s Word",
+      "nodeId": "zenith",
+      "sigBase": 8,
+      "emcon": "PASSIVE",
+      "units": [
+        {
+          "name": "Excalibur’s Word",
+          "model": "Invader JumpShip",
+          "class": "JUMPSHIP",
+          "drive": {
+            "chargePct": 0,
+            "sail": "DEPLOYED"
+          }
+        }
+      ]
+    },
+    {
+      "id": "blue-flag",
+      "sideId": "davion",
+      "name": "DropShip Fortune’s Hammer",
+      "nodeId": "zenith",
+      "sigBase": 8,
+      "flight": {},
+      "_commandNode": true,
+      "carrier": {
+        "bays": 4,
+        "crews": 2,
+        "avFuelTons": 80
+      },
+      "units": [
+        {
+          "name": "Fortune’s Hammer",
+          "model": "Overlord (2762)",
+          "class": "DROPSHIP",
+          "fuelTons": 200,
+          "tonsPerBurnDay": 1.84,
+          "maxThrust": 3,
+          "fuelFp": 3600
+        }
+      ]
+    },
+    {
+      "id": "blue-union",
+      "sideId": "davion",
+      "name": "DropShip Halberd",
+      "nodeId": "zenith",
+      "sigBase": 8,
+      "flight": {},
+      "carrier": {
+        "bays": 4,
+        "crews": 1,
+        "avFuelTons": 50
+      },
+      "units": [
+        {
+          "name": "Halberd",
+          "model": "Union (2708)",
+          "class": "DROPSHIP",
+          "fuelTons": 120,
+          "tonsPerBurnDay": 1.84,
+          "maxThrust": 3,
+          "fuelFp": 3600
+        }
+      ]
+    },
+    {
+      "id": "blue-cv",
+      "sideId": "davion",
+      "name": "DropShip Swift Wing",
+      "nodeId": "zenith",
+      "sigBase": 8,
+      "flight": {},
+      "carrier": {
+        "bays": 2,
+        "crews": 1,
+        "avFuelTons": 40
+      },
+      "units": [
+        {
+          "name": "Swift Wing",
+          "model": "Leopard CV (3054)",
+          "class": "DROPSHIP",
+          "fuelTons": 60,
+          "tonsPerBurnDay": 1.84,
+          "maxThrust": 3,
+          "fuelFp": 3600
+        }
+      ]
+    },
+    {
+      "id": "blue-qship",
+      "sideId": "davion",
+      "name": "FT Kestrel",
+      "nodeId": "nadir",
+      "sigBase": 8,
+      "emcon": "DARK",
+      "squawk": "Free Trader Kestrel (merchant)",
+      "carrier": {
+        "bays": 1,
+        "crews": 0,
+        "avFuelTons": 5
+      },
+      "flight": {},
+      "units": [
+        {
+          "name": "Kestrel",
+          "model": "Leopard (3056)",
+          "class": "DROPSHIP",
+          "fuelTons": 40,
+          "tonsPerBurnDay": 1.84,
+          "maxThrust": 3,
+          "fuelFp": 3600
+        }
+      ]
+    },
+    {
+      "id": "blue-assault",
+      "sideId": "davion",
+      "name": "Kerr’s Command Lance",
+      "theaterId": "menghao",
+      "q": 21,
+      "r": 9,
+      "sigBase": 7,
+      "mountedOn": "blue-flag",
+      "units": [
+        {
+          "name": "Kerr",
+          "model": "Atlas AS7-CM",
+          "class": "MECH",
+          "pilot": {
+            "name": "Hauptmann Adele Kerr",
+            "gunnery": 2,
+            "piloting": 3,
+            "ace": true,
+            "kills": 6
+          }
+        },
+        {
+          "name": "Sword 2",
+          "model": "Enforcer ENF-4R",
+          "class": "MECH"
+        },
+        {
+          "name": "Sword 3",
+          "model": "Centurion CN9-A",
+          "class": "MECH"
+        },
+        {
+          "name": "Sword 4",
+          "model": "Valkyrie VLK-QA",
+          "class": "MECH"
+        }
+      ]
+    },
+    {
+      "id": "blue-cav",
+      "sideId": "davion",
+      "name": "Cavalry Lance",
+      "theaterId": "menghao",
+      "q": 21,
+      "r": 9,
+      "sigBase": 7,
+      "mountedOn": "blue-flag",
+      "units": [
+        {
+          "name": "Lance 1",
+          "model": "Enforcer ENF-4R",
+          "class": "MECH"
+        },
+        {
+          "name": "Lance 2",
+          "model": "Centurion CN9-A",
+          "class": "MECH"
+        },
+        {
+          "name": "Lance 3",
+          "model": "Wasp WSP-1A",
+          "class": "MECH"
+        },
+        {
+          "name": "Lance 4",
+          "model": "Valkyrie VLK-QA",
+          "class": "MECH"
+        }
+      ]
+    },
+    {
+      "id": "blue-arty",
+      "sideId": "davion",
+      "name": "Thumper Battery",
+      "theaterId": "menghao",
+      "q": 21,
+      "r": 9,
+      "sigBase": 7,
+      "mountedOn": "blue-flag",
+      "units": [
+        {
+          "name": "Anvil 1",
+          "model": "Mobile Long Tom Artillery LT-MOB-25F",
+          "class": "VEHICLE"
+        },
+        {
+          "name": "Anvil 2",
+          "model": "Mobile Long Tom Artillery LT-MOB-25F",
+          "class": "VEHICLE"
+        }
+      ]
+    },
+    {
+      "id": "blue-aa",
+      "sideId": "davion",
+      "name": "Umbrella Battery",
+      "theaterId": "menghao",
+      "q": 21,
+      "r": 9,
+      "sigBase": 7,
+      "mountedOn": "blue-flag",
+      "units": [
+        {
+          "name": "Umbrella 1",
+          "model": "Partisan AA Vehicle",
+          "class": "VEHICLE",
+          "tags": [
+            "AA"
+          ]
+        },
+        {
+          "name": "Umbrella 2",
+          "model": "Partisan AA Vehicle",
+          "class": "VEHICLE",
+          "tags": [
+            "AA"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "blue-armor",
+      "sideId": "davion",
+      "name": "Bulldog Troop",
+      "theaterId": "menghao",
+      "q": 21,
+      "r": 9,
+      "sigBase": 7,
+      "mountedOn": "blue-union",
+      "units": [
+        {
+          "name": "Dog 1",
+          "model": "Bulldog Medium Tank",
+          "class": "VEHICLE"
+        },
+        {
+          "name": "Dog 2",
+          "model": "Bulldog Medium Tank",
+          "class": "VEHICLE"
+        },
+        {
+          "name": "Dog 3",
+          "model": "Vedette Medium Tank",
+          "class": "VEHICLE"
+        },
+        {
+          "name": "Dog 4",
+          "model": "Vedette Medium Tank",
+          "class": "VEHICLE"
+        }
+      ]
+    },
+    {
+      "id": "blue-recon",
+      "sideId": "davion",
+      "name": "Savannah Screen",
+      "theaterId": "menghao",
+      "q": 21,
+      "r": 9,
+      "sigBase": 7,
+      "mountedOn": "blue-union",
+      "units": [
+        {
+          "name": "Flea 1",
+          "model": "Savannah Master Hovercraft",
+          "class": "VEHICLE"
+        },
+        {
+          "name": "Flea 2",
+          "model": "Savannah Master Hovercraft",
+          "class": "VEHICLE"
+        },
+        {
+          "name": "Eyes",
+          "model": "Pegasus Scout Hover Tank",
+          "class": "VEHICLE"
+        }
+      ]
+    },
+    {
+      "id": "blue-trains",
+      "sideId": "davion",
+      "name": "Task Force Trains",
+      "theaterId": "menghao",
+      "q": 21,
+      "r": 9,
+      "sigBase": 6,
+      "mountedOn": "blue-union",
+      "carriedSp": 20,
+      "_commandNode": true,
+      "units": [
+        {
+          "name": "Aid Station",
+          "model": "MASH Truck",
+          "class": "VEHICLE"
+        },
+        {
+          "name": "Net Actual",
+          "model": "Browning Mobile HQ",
+          "class": "VEHICLE"
+        },
+        {
+          "name": "Stores 1",
+          "model": "J-27 Ordnance Transport",
+          "class": "VEHICLE"
+        },
+        {
+          "name": "Stores 2",
+          "model": "J-27 Ordnance Transport",
+          "class": "VEHICLE"
+        }
+      ]
+    },
+    {
+      "id": "blue-eng",
+      "sideId": "davion",
+      "name": "Pioneer Platoon",
+      "theaterId": "menghao",
+      "q": 21,
+      "r": 9,
+      "sigBase": 8,
+      "mountedOn": "blue-union",
+      "units": [
+        {
+          "name": "Pioneer 1",
+          "model": "J-27 Ordnance Transport",
+          "class": "VEHICLE",
+          "tags": [
+            "ENGINEER"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "blue-flight-1",
+      "sideId": "davion",
+      "name": "Corsair Flight",
+      "theaterId": "menghao",
+      "q": 21,
+      "r": 9,
+      "sigBase": 9,
+      "mountedOn": "blue-cv",
+      "units": [
+        {
+          "name": "Reaper 1",
+          "model": "Corsair COR-5R",
+          "class": "ASF",
+          "fuelFp": 400,
+          "safeThrust": 6
+        },
+        {
+          "name": "Reaper 2",
+          "model": "Corsair COR-5R",
+          "class": "ASF",
+          "fuelFp": 400,
+          "safeThrust": 6
+        }
+      ]
+    },
+    {
+      "id": "blue-flight-2",
+      "sideId": "davion",
+      "name": "Stuka Flight",
+      "theaterId": "menghao",
+      "q": 21,
+      "r": 9,
+      "sigBase": 9,
+      "mountedOn": "blue-cv",
+      "units": [
+        {
+          "name": "Hammer 1",
+          "model": "Stuka STU-K10",
+          "class": "ASF",
+          "fuelFp": 400,
+          "safeThrust": 6
+        },
+        {
+          "name": "Hammer 2",
+          "model": "Stuka STU-K10",
+          "class": "ASF",
+          "fuelFp": 400,
+          "safeThrust": 6
+        }
+      ]
+    },
+    {
+      "id": "blue-ba",
+      "sideId": "davion",
+      "name": "Cavalier Squad",
+      "theaterId": "menghao",
+      "q": 21,
+      "r": 9,
+      "sigBase": 10,
+      "mountedOn": "blue-qship",
+      "units": [
+        {
+          "name": "Cavaliers",
+          "model": "Cavalier BA [Flamer] (Sqd4)",
+          "class": "BA"
+        }
+      ]
+    }
+  ],
+  "commandNodes": {
+    "davion": [
+      "blue-flag",
+      "blue-trains"
+    ],
+    "liao": [
+      "red-hq",
+      "red-spaceport"
+    ]
+  },
+  "orders": [
+    {
+      "id": "o-flag",
+      "sideId": "davion",
+      "formationId": "blue-flag",
+      "kind": "TRANSIT",
+      "effectiveTick": 0,
+      "laneId": "zenith--menghao",
+      "destinationNodeId": "menghao",
+      "burnProfile": {
+        "g": 1
+      }
+    },
+    {
+      "id": "o-union",
+      "sideId": "davion",
+      "formationId": "blue-union",
+      "kind": "TRANSIT",
+      "effectiveTick": 0,
+      "laneId": "zenith--menghao",
+      "destinationNodeId": "menghao",
+      "burnProfile": {
+        "g": 1
+      }
+    },
+    {
+      "id": "o-cv",
+      "sideId": "davion",
+      "formationId": "blue-cv",
+      "kind": "TRANSIT",
+      "effectiveTick": 0,
+      "laneId": "zenith--menghao",
+      "destinationNodeId": "menghao",
+      "burnProfile": {
+        "g": 1
+      }
+    },
+    {
+      "id": "o-qship",
+      "sideId": "davion",
+      "formationId": "blue-qship",
+      "kind": "COLD_COAST",
+      "effectiveTick": 0,
+      "laneId": "nadir--menghao",
+      "destinationNodeId": "menghao",
+      "burnProfile": {
+        "g": 1,
+        "coastFromAU": 1
+      }
+    },
+    {
+      "id": "o-recon",
+      "sideId": "liao",
+      "formationId": "red-recon",
+      "kind": "PATROL",
+      "effectiveTick": 0,
+      "path": [
+        {
+          "q": 17,
+          "r": 7
+        },
+        {
+          "q": 19,
+          "r": 10
+        },
+        {
+          "q": 15,
+          "r": 12
+        },
+        {
+          "q": 14,
+          "r": 8
+        }
+      ],
+      "conditionals": [
+        {
+          "trigger": {
+            "when": "DETECTED_SELF",
+            "param": 0
+          },
+          "then": {
+            "kind": "MOVE",
+            "path": [
+              {
+                "q": 10,
+                "r": 9
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "o-picket",
+      "sideId": "liao",
+      "formationId": "red-picket",
+      "kind": "SKIM_FUEL",
+      "effectiveTick": 0
+    }
+  ]
+}

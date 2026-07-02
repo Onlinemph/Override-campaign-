@@ -196,6 +196,14 @@ export function buildCampaign(j: FixtureJson, source = 'campaign', enrich = true
       ...(o.airSpeed ? { airSpeed: o.airSpeed } : {}),
       ...(o.loiterTicks !== undefined ? { loiterTicks: o.loiterTicks } : {}),
       ...(o.emconOverride ? { emconOverride: o.emconOverride } : {}),
+      // space transits (M4) & carrier ops (ext) — pass the fields the passes read
+      ...(o.laneId ? { laneId: o.laneId } : {}),
+      ...(o.destinationNodeId ? { destinationNodeId: o.destinationNodeId } : {}),
+      ...(o.burnProfile ? { burnProfile: o.burnProfile } : {}),
+      ...(o.targetFormationId ? { targetFormationId: o.targetFormationId } : {}),
+      ...(o.targetHex ? { targetHex: { kind: 'ground' as const,
+        theaterId: o.targetHex.theaterId ?? theaterId,
+        q: o.targetHex.q, r: o.targetHex.r } } : {}),
       path: (o.path ?? []).map((p: any) => o.airPath
         ? { kind: 'air', gridQ: p.q, gridR: p.r, band: 'HIGH', altLevel: 6, velocity: 0, vectorDeg: 0 }
         : { kind: 'ground', theaterId, q: p.q, r: p.r }),

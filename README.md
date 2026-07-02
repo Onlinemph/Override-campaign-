@@ -68,6 +68,15 @@ the **tokenized player links** to hand out; they also print to the console at bo
 (e.g. `/player/blue/<token>`). Player screens show own forces, contacts with staleness,
 the report inbox, and click-to-plot order entry. All maps scroll-to-zoom and drag-to-pan.
 
+**Want the full experience?** Run **[OPERATION DAGGERPOINT](docs/OPERATION_DAGGERPOINT.md)**
+— `npm run dev -- demo/assault.json` — a 3067 planetary assault built to exercise **every
+mechanic in the engine**: a Davion task force burns in from the jump point (watched by
+light-lagged sensors), descends under flak, lands a combined-arms battalion from spheroid
+and aerodyne DropShips, and races a 30-day VP clock against a dug-in Capellan garrison
+with stealth mechs, minefields, artillery, decoys, and a fighter wing. The walkthrough
+doc is a complete first game night. And every player screen carries a **📖 War diary** —
+the campaign as that side lived it, day by day, fog intact.
+
 The demo is a 25-VP campaign: a satellite (watch its passes catch GHOST returns), an
 airbase, a supply convoy, hidden and contested objectives, a system layer with a gas-giant
 picket, and a red probe force already moving. Click **Run until event** a few times.

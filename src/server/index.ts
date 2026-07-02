@@ -24,6 +24,7 @@ import { rollForce, campaignUnitsFromForce } from '../roster/roll.js';
 import { buildMul } from '../handoff/mul.js';
 import { buildBattleRoster } from '../handoff/battle.js';
 import { collectNotifications, postWebhooks, webhookConfigFromEnv } from './notify.js';
+import { buildDiary } from './diary.js';
 import { enrichUnit } from '../roster/apply.js';
 import { searchLibrary } from '../roster/library.js';
 import { hashPick } from '../core/rng.js';
@@ -642,6 +643,13 @@ const server = createServer(async (req, res) => {
       if (!campaign.truth.sides[sideId]) return json(res, 404, { error: 'no such side' });
       if (url.searchParams.get('t') !== tokenFor(sideId)) return json(res, 403, { error: 'bad token' });
       return json(res, 200, project(campaign.truth, sideId, campaign.truth.tick));
+    }
+    const sideDiary = path.match(/^\/api\/side\/([^/]+)\/diary$/);
+    if (sideDiary) {
+      const sideId = sideDiary[1];
+      if (!campaign.truth.sides[sideId]) return json(res, 404, { error: 'no such side' });
+      if (url.searchParams.get('t') !== tokenFor(sideId)) return json(res, 403, { error: 'bad token' });
+      return json(res, 200, { entries: buildDiary(campaign.truth, campaign.store.all(), sideId) });
     }
     const sideOrder = path.match(/^\/api\/side\/([^/]+)\/order$/);
     if (sideOrder && req.method === 'POST') {

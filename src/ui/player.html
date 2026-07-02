@@ -43,6 +43,11 @@
 
   <div class="col">
     <div class="panel"><h2>Report inbox</h2><div id="inbox" style="max-height:34vh;overflow:auto"></div></div>
+    <div class="panel"><details ontoggle="if(this.open)loadDiary()"><summary><b>📖 War diary</b>
+      <span class="kv">— the campaign as your side lived it</span></summary>
+      <div style="margin:4px 0"><button onclick="loadDiary()">↻ refresh</button></div>
+      <div id="diary" style="max-height:40vh;overflow:auto"><small>(loading…)</small></div>
+    </details></div>
     <div class="panel">
       <h2>Order entry</h2>
       <div class="kv">formation <select id="o-formation"></select>
@@ -339,6 +344,19 @@ function previewOrder() {
   if (me && !me.onNet) warn = '<div style="color:var(--warn)">⚠ off-net — it won\'t receive this until a command node is in range</div>';
   else if (me && me.routed) warn = '<div style="color:var(--warn)">⚠ routed — uncommandable until it rallies</div>';
   document.getElementById('order-preview').innerHTML = warn + s;
+}
+
+async function loadDiary() {
+  const r = await (await fetch(`/api/side/${sideId}/diary?${q}`)).json();
+  const box = document.getElementById('diary');
+  if (!r.entries || !r.entries.length) { box.innerHTML = '<small>(nothing yet — the war is young)</small>'; return; }
+  let day = -1, html = '';
+  for (const e of r.entries) {
+    if (e.day !== day) { day = e.day; html += `<div style="margin-top:6px"><b>— Day ${day} —</b></div>`; }
+    html += `<div class="kv">${e.text.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>`;
+  }
+  box.innerHTML = html;
+  box.scrollTop = box.scrollHeight;
 }
 
 function clearPath() { plotted = []; document.getElementById('o-path').value = ''; refresh(); }
