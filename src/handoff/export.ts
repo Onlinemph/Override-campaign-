@@ -11,7 +11,7 @@ import type {
 } from '../core/types.js';
 import { hexKey } from '../core/types.js';
 import { hexDistance, neighbors } from '../hex/axial.js';
-import { jokerBingo, minSafeThrust } from '../engine/air.js';
+import { jokerBingo, minFp, minSafeThrust } from '../engine/air.js';
 
 const EDGES = ['E', 'NE', 'NW', 'W', 'SW', 'SE'] as const;
 // map a heading (0°=+q/E, CCW) to one of six entry edges
@@ -97,6 +97,24 @@ function sideBlock(
     }
   }
 
+  // off-board air (ext): friendly flights holding a ground-attack mission within call
+  // range of the battle theater's air hex. arrivesTurn 0 = already overhead.
+  const airOnStation: Array<{ formationId: Id; arrivesTurn: number; fpOnStation: number }> = [];
+  const battleAirHex = s.config.airHexByTheater?.[hex.theaterId] ?? { q: 0, r: 0 };
+  for (const f of Object.values(s.formations)) {
+    if (f.destroyed || f.sideId !== sideId || f.pos.kind !== 'air') continue;
+    const o = f.currentOrderId ? s.orders[f.currentOrderId] : undefined;
+    if (!o || o.completed || (o.kind !== 'CAS' && o.kind !== 'STRIKE_AIR')) continue;
+    const d = hexDistance({ q: f.pos.gridQ, r: f.pos.gridR }, battleAirHex);
+    if (d > SKYWATCH.CAS_ON_CALL.MAX_AIR_HEXES) continue;
+    airOnStation.push({
+      formationId: f.id,
+      arrivesTurn: Math.ceil(d / SKYWATCH.CAS_ON_CALL.HEXES_PER_TURN),
+      fpOnStation: minFp(s, f),
+    });
+  }
+  airOnStation.sort((a, b) => a.formationId.localeCompare(b.formationId));
+
   return {
     sideId,
     entryEdge: edgeFromHeading(avgHeading(s, ownIds)),
@@ -107,7 +125,7 @@ function sideBlock(
     fortified,
     rdyTnPenalty: rdyPenalty(worstRdy),
     units,
-    offboard: { artillery, airOnStation: [], reinforcements },
+    offboard: { artillery, airOnStation, reinforcements },
   };
 }
 

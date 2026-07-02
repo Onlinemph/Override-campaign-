@@ -345,6 +345,12 @@ export const SKYWATCH = {
   TAKEOFF_VSTOL_FP: 10, TAKEOFF_RUNWAY_FP: 4,
   LANDING_VSTOL_FP: 5, LANDING_RUNWAY_FP: 2,
   CRUISE_FP_PER_HEX: 1, CRUISE_HEX_PER_MIN: 2,   // 12 hexes per contact turn
+  // ext: CAS on call — flights holding a ground-attack mission near the battle show up
+  // in the handoff as off-board air support
+  CAS_ON_CALL: {
+    MAX_AIR_HEXES: 24,   // within ~2 turns' flight of the battle theater's air hex
+    HEXES_PER_TURN: 12,  // cruise: how fast "on call" becomes "overhead"
+  },
   DASH_FP_PER_HEX: 2,                            // speed: Safe Thrust hexes/min
   LOITER_FP_PER_MIN: 2, LEAN_LOITER_FP_PER_MIN: 1,
   ORBIT_LOITER_FP: 0,

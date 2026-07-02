@@ -86,7 +86,14 @@ export function setupNotes(side: HandoffRosterSide): string[] {
     const soonest = Math.min(...off.reinforcements.map(r => r.arrivesTurn));
     notes.push(`Reinforcements: ${off.reinforcements.length} (first ~turn ${soonest})`);
   }
-  if (off?.airOnStation?.length) notes.push(`Air on station: ${off.airOnStation.length}`);
+  if (off?.airOnStation?.length) {
+    const n = off.airOnStation.length;
+    const soonest = Math.min(...off.airOnStation.map(a => a.arrivesTurn));
+    const fp = off.airOnStation.map(a => a.fpOnStation).filter(x => x > 0);
+    notes.push(`Air support: ${n} flight${n === 1 ? '' : 's'} ` +
+      `(${soonest === 0 ? 'overhead now' : `first ~turn ${soonest}`}` +
+      `${fp.length ? `, ${Math.min(...fp)} FP` : ''})`);
+  }
   return notes;
 }
 

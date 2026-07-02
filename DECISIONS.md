@@ -719,3 +719,19 @@ player-facing bugs and several dead constants. Closed in one push:
 Still deliberately inert after this pass: DECOY/SKYEYE/C3M tags, SHADOW orders,
 LOSTECH_REPAIR_TN, the CONVOY_* spawn defaults, the `neutral` flag, and `ace` as a
 display-only honorific — candidates for a flavor pass, not bugs.
+
+## D-026 ✅ CAS to the table: airOnStation populated at last
+The handoff type, the roster bridge, and the tracker briefing all supported off-board air
+support since M3 — but `buildHandoff` hardcoded `airOnStation: []`, so no flight ever
+reached a battle. Now (constants in SKYWATCH.CAS_ON_CALL):
+1. A friendly airborne flight holding an active **CAS or STRIKE_AIR** order within
+   MAX_AIR_HEXES (24) of the battle theater's air hex is listed in that side's package:
+   `arrivesTurn = ceil(distance / HEXES_PER_TURN)` (0 = overhead now) and `fpOnStation`
+   (the flight's minimum FP — the table can rule how many passes that buys). Air-to-air
+   missions (CAP/SWEEP) don't count as ground support; each side sees only its own flights.
+2. The tracker briefing note grows from "Air on station: N" to
+   "Air support: N flights (overhead now, 220 FP)".
+3. Campaign time is frozen during the battle, so no loiter is paid while the table plays
+   out — the flight's ledger resumes on unfreeze. Tabletop effects of the air support are
+   the table's ruling (the engine never simulates battles); FP spent on strafing runs can
+   come home via the normal fpRemaining path if the GM adds the flight to the board.

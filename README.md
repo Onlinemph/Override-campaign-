@@ -88,6 +88,11 @@ result to campaign** folds the marked-up cards into a `BattleResult` — damage 
 (DESTROYED vs recoverable SALVAGE), ejected crews, victor — and posts it back, where it
 ingests and unfreezes the campaign (double-ingest is refused).
 
+**CAS reaches the table.** A flight holding a CAS or STRIKE_AIR mission near the battle
+shows up in the handoff as **off-board air support** — the briefing lists each side's
+flights with arrival timing ("overhead now" vs "first ~turn 2") and fuel state, so the
+tabletop knows exactly what's circling above the fight.
+
 **Aerospace merges** are first-class: a fighter / aerospace / DropShip gets a **✈ Flight
 panel** in play mode — fuel points with live **joker/bingo** thresholds (a `BINGO —
 disengage` warning when it runs low), velocity vs safe/max thrust, altitude, and thrust
