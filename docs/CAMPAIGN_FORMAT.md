@@ -203,13 +203,15 @@ map. `secret: true` (pirate points) hides the node from players until surveyed.
 ```
 
 `kind` is any ground (`MOVE FORCED_MARCH MOVE_CAUTIOUS HIDE DIG_IN PATROL SCREEN STRIKE
-SHADOW RESUPPLY REST REPAIR`), air (`CAP SWEEP RECON STRIKE_AIR CAS ESCORT INTERDICTION
-FERRY TANKER SAR ORBITAL_STANDBY`) or space (`TRANSIT COLD_COAST STATION_KEEP INTERCEPT
-SKIM_FUEL RECHARGE_SAIL QUICK_CHARGE JUMP INSPECT BLOCKADE BOARD`) order.
+SHADOW RESUPPLY REST REPAIR EMBARK DISEMBARK`), air (`CAP SWEEP RECON STRIKE_AIR CAS
+ESCORT INTERDICTION FERRY TANKER SAR ORBITAL_STANDBY LIFT_OFF LAND`) or space (`TRANSIT
+COLD_COAST STATION_KEEP INTERCEPT SKIM_FUEL RECHARGE_SAIL QUICK_CHARGE JUMP INSPECT
+BLOCKADE BOARD`) order.
 
 Extras: `airStation: {q,r}` + `airPath: true` (treat `path` as air hexes) + `airSpeed`
 + `loiterTicks` for air missions; `laneId`/`burnProfile` for space transits;
-`targetContactId` for STRIKE/SWEEP; `emconOverride`. `conditionals[]` fire even off-net
+`targetContactId` for STRIKE/SWEEP; `targetFormationId` for EMBARK (the carrier to load
+into); `targetHex` for LAND/DISEMBARK; `emconOverride`. `conditionals[]` fire even off-net
 (`when`: `CONTACT_WITHIN DETECTED_SELF TICK_REACHED HEX_REACHED FUEL_BELOW RDY_BELOW
 ALLY_ENGAGED`, with `param`).
 

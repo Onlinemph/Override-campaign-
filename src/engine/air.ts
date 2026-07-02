@@ -7,7 +7,7 @@
  * Air combat is never simulated — interception produces an AIR engagement that freezes
  * the campaign for the tabletop merge (export in handoff/export.ts).
  */
-import { CLOCK, LADDER, SKYWATCH } from '../rules.js';
+import { CLOCK, LADDER, SKYWATCH, TERRAIN } from '../rules.js';
 import type {
   AirPos, Formation, GroundPos, Id, Order, TruthState,
 } from '../core/types.js';
@@ -21,6 +21,7 @@ import { rollDice } from '../core/rng.js';
 export const AIR_MISSIONS = new Set([
   'CAP', 'ORBITAL_STANDBY', 'STRIKE_AIR', 'CAS', 'SWEEP', 'ESCORT', 'RECON',
   'INTERDICTION', 'FERRY', 'TANKER', 'SAR',
+  'LIFT_OFF', 'LAND', // ext: player carrier ops — lift & hold / put down on a hex
 ]);
 
 // ── Geometry & ledger helpers (pure; unit-tested against the §2 worked baseline) ──
@@ -260,6 +261,11 @@ function predictAirPos(s: TruthState, target: Formation, dt: number): { q: numbe
 
 function destAirHex(s: TruthState, f: Formation, order: Order | undefined, dt: number):
     { q: number; r: number } | null {
+  // LAND (ext) outranks RTB: putting down NOW is how a bingo ship saves itself —
+  // checked first so a fuel-forced RTB can't swallow the order.
+  if (order?.kind === 'LAND' && order.targetHex) {
+    return theaterAirHex(s, order.targetHex.theaterId);
+  }
   if (!order || f.air?.phase === 'RTB') return homeAirHexOf(s, f);
   if (order.targetContactId) {
     const c = s.contacts[order.targetContactId];
@@ -301,8 +307,21 @@ function flyStep(
     emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id, patch: { air: { speed } } });
   }
 
-  // on station: pay loiter, count down, then egress or RTB (§2, §4)
-  if (f.air?.phase === 'ON_STATION' && order) {
+  // LIFT_OFF (ext): get airborne and hold at altitude — a standing order that never
+  // self-completes. The ship loiters over its position (paying the ledger) until the
+  // next order (LAND, FERRY, a drop…) supersedes it.
+  if (order?.kind === 'LIFT_OFF' && f.air?.phase !== 'ON_STATION') {
+    emit({ type: 'AIR_PHASE', formationId: f.id, phase: 'ON_STATION', tick: s.tick });
+    emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id,
+           patch: { air: { loiterTicksRemaining: -1 } } });
+    return;
+  }
+
+  // on station: pay loiter, count down, then egress or RTB (§2, §4).
+  // Only when the ACTIVE order is the one holding station — a superseding order
+  // (LAND, FERRY…) must fall through to the movement machinery instead of loitering.
+  const holdsStation = !!order && (order.kind === 'LIFT_OFF' || !!order.station);
+  if (f.air?.phase === 'ON_STATION' && order && holdsStation) {
     const remaining = f.air.loiterTicksRemaining ?? -1;
     const loiterTicks = remaining < 0 ? dt : Math.min(dt, remaining);
     if (loiterTicks > 0) {
@@ -356,6 +375,24 @@ function flyStep(
 
   if (hexesFlown >= dist) {
     // arrived
+    // LAND (ext): put down on the plotted hex — no facility needed, any passable ground.
+    // Water/impassable terrain refuses the landing: the order completes and the ship
+    // stays aloft (holding for new orders).
+    if (order?.kind === 'LAND' && order.targetHex) {
+      const t = order.targetHex;
+      const hex = s.theaters[t.theaterId]?.hexes[hexKey(t.q, t.r)];
+      const passable = hex && TERRAIN[hex.terrain]?.ompCost !== null;
+      emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
+      if (passable) {
+        const runway = Object.values(s.facilities).some(fac =>
+          fac.sideId === f.sideId && fac.pos.kind === 'ground' &&
+          fac.pos.theaterId === t.theaterId && fac.pos.q === t.q && fac.pos.r === t.r &&
+          (fac.tags.includes('AIRSTRIP') || fac.tags.includes('SPACEPORT')));
+        emit({ type: 'AIR_LANDED', formationId: f.id, pos: { ...t },
+               fpPaid: landingFp(runway), tick: s.tick });
+      }
+      return;
+    }
     if (f.air?.phase === 'RTB' || !order) {
       // descend (free in atmosphere) and land at the home facility
       const fac = homeFacility(s, f);
@@ -413,10 +450,71 @@ function thresholds(s: TruthState, f: Formation, emit: (e: GameEvent) => void): 
   }
 }
 
+/**
+ * A stowed flight with an active air mission launches from its carrier's bay (ext):
+ * mount cleared, homed on the carrier, out the doors at the carrier's air position
+ * (or climbing off its back if the ship is on the ground). Mirrors the tryLaunch gates —
+ * turnaround still in progress, grounded crews, and blind intercept plots all hold it.
+ */
+function scrambleFromBay(s: TruthState, f: Formation, emit: (e: GameEvent) => void): void {
+  const order = activeAirOrder(s, f);
+  if (!order || s.tick < order.effectiveTick) return;
+  if (order.kind === 'LAND' || order.kind === 'LIFT_OFF') return; // nonsense from a bay
+  const carrier = s.formations[f.mounted!.carrierFormationId];
+  if (!carrier || carrier.destroyed) return; // carrierPass strands it
+  if (f.air?.turnaroundReadyTick != null && s.tick < f.air.turnaroundReadyTick) return;
+  const fatigues = f.unitIds.flatMap(uid =>
+    (s.units[uid]?.pilotIds ?? []).map(pid => s.pilots[pid]?.fatigue ?? 0));
+  if (fatigues.some(ft => ft >= SKYWATCH.FATIGUE_GROUNDED_AT)) return;
+  if (order.targetContactId) {
+    const c = s.contacts[order.targetContactId];
+    if ((c?.delivered?.level ?? 0) < SKYWATCH.MIN_PLOT_INTERCEPT_LEVEL) return;
+  }
+
+  let hex: { q: number; r: number };
+  let altLevel: number;
+  let fpPaid: number;
+  if (carrier.pos.kind === 'air') {
+    hex = airQR(carrier.pos);
+    altLevel = carrier.pos.altLevel;
+    fpPaid = takeoffFp(false); // already at altitude: just the launch burn
+  } else if (carrier.pos.kind === 'ground') {
+    hex = theaterAirHex(s, carrier.pos.theaterId);
+    altLevel = SKYWATCH.CRUISE_ALT_LEVEL;
+    fpPaid = takeoffFp(false) + climbFp(SKYWATCH.CRUISE_ALT_LEVEL);
+  } else {
+    return; // in space: a DEEP SKY sortie, not this pass
+  }
+  emit({ type: 'MOUNT_CHANGED', formationId: f.id, carrierFormationId: null });
+  emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id,
+         patch: { air: { homeCarrierId: carrier.id } } });
+  const pos: AirPos = {
+    kind: 'air', gridQ: hex.q, gridR: hex.r, band: 'HIGH', altLevel,
+    velocity: (order.airSpeed ?? 'CRUISE') === 'DASH'
+      ? minSafeThrust(s, f) : SKYWATCH.ENTRY_VELOCITY_CRUISE,
+    vectorDeg: 0,
+  };
+  emit({ type: 'AIR_LAUNCHED', formationId: f.id, pos, fpPaid, tick: s.tick });
+  emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id,
+         patch: { air: { speed: order.airSpeed ?? 'CRUISE', lean: order.lean ?? false,
+                         jokerWarned: false, bingoCalled: false,
+                         loiterTicksRemaining: order.loiterTicks } } });
+  for (const uid of f.unitIds) {
+    for (const pid of s.units[uid]?.pilotIds ?? []) {
+      emit({ type: 'PILOT_FATIGUE', pilotId: pid, delta: SKYWATCH.FATIGUE_PER_SORTIE });
+    }
+  }
+}
+
 export function airPass(s: TruthState, dt: number, emit: (e: GameEvent) => void): void {
   for (const f of Object.values(s.formations)) {
     if (f.destroyed || !isFlight(s, f)) continue;
-    if (f.mounted) continue; // stowed in a carrier bay: no ledger, no flight (carrierPass)
+    if (f.mounted) {
+      // stowed in a bay: no ledger, no upkeep — but an active air order scrambles the
+      // flight straight off the deck (ext), homed on the carrier for RTB/joker/bingo
+      scrambleFromBay(s, f, emit);
+      continue;
+    }
     alertUpkeep(s, f, dt, emit);
     const order = activeAirOrder(s, f);
     if (f.pos.kind === 'ground') {

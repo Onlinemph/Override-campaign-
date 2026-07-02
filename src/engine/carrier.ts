@@ -11,8 +11,10 @@
  * MOUNT_MOVED is emitted only when the position actually changed, so a parked carrier costs
  * nothing and the event is not "interesting" (no clock compression from riding along).
  */
-import type { Formation, Position, TruthState } from '../core/types.js';
+import type { Formation, GroundPos, Position, TruthState } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
+import { hexKey } from '../core/types.js';
+import { hexDistance } from '../hex/axial.js';
 
 /** Structural position equality across all four position kinds. */
 export function samePos(a: Position, b: Position): boolean {
@@ -55,6 +57,23 @@ export function carrierPass(s: TruthState, emit: (e: GameEvent) => void): void {
     if (!samePos(f.pos, carrier.pos)) {
       emit({ type: 'MOUNT_MOVED', formationId: f.id,
              pos: structuredClone(carrier.pos), tick: s.tick });
+    }
+    // DISEMBARK (ext): a plotted order to step off — executes the moment the carrier is
+    // on the ground (an airborne carrier makes the order wait for the landing).
+    const order = f.currentOrderId ? s.orders[f.currentOrderId] : undefined;
+    if (order && !order.completed && order.kind === 'DISEMBARK' &&
+        s.tick >= order.effectiveTick && carrier.pos.kind === 'ground') {
+      let at: GroundPos = { ...carrier.pos };
+      const want = order.targetHex;
+      if (want && want.theaterId === carrier.pos.theaterId &&
+          hexDistance(carrier.pos, want) <= 1 &&
+          s.theaters[want.theaterId]?.hexes[hexKey(want.q, want.r)]) {
+        at = { ...want }; // step off into a chosen adjacent hex
+      }
+      emit({ type: 'MOUNT_CHANGED', formationId: f.id, carrierFormationId: null });
+      emit({ type: 'FORMATION_MOVED', formationId: f.id, to: at,
+             movedKind: 'NORMAL', onRoad: false, headingDeg: 0, tick: s.tick });
+      emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
     }
   }
 }

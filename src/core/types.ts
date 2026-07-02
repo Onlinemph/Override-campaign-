@@ -247,10 +247,14 @@ export type GroundOrderKind =
   | 'HIDE' | 'DIG_IN' | 'PATROL' | 'SCREEN'
   | 'STRIKE' | 'SHADOW' | 'RESUPPLY' | 'REST' | 'REPAIR'
   // ext (M7, core §9): a standing fire mission, and the engineer toolkit
-  | 'FIRE' | 'LAY_MINES' | 'BREACH' | 'DEMOLISH' | 'BUILD_BRIDGE';
+  | 'FIRE' | 'LAY_MINES' | 'BREACH' | 'DEMOLISH' | 'BUILD_BRIDGE'
+  // ext: player carrier ops — march to a carrier and load / step off a landed one
+  | 'EMBARK' | 'DISEMBARK';
 export type AirMission =
   'CAP' | 'ORBITAL_STANDBY' | 'STRIKE_AIR' | 'CAS' | 'SWEEP' | 'ESCORT'
-  | 'RECON' | 'INTERDICTION' | 'FERRY' | 'TANKER' | 'SAR';
+  | 'RECON' | 'INTERDICTION' | 'FERRY' | 'TANKER' | 'SAR'
+  // ext: player carrier ops — a DropShip lifts and holds, or puts down on any open hex
+  | 'LIFT_OFF' | 'LAND';
 export type SpaceOrderKind =
   'TRANSIT' | 'COLD_COAST' | 'STATION_KEEP' | 'INTERCEPT' | 'SKIM_FUEL'
   | 'RECHARGE_SAIL' | 'QUICK_CHARGE' | 'JUMP' | 'INSPECT' | 'BLOCKADE' | 'BOARD';
@@ -264,6 +268,7 @@ export interface Order {
   id: Id; sideId: Id; formationId: Id; issuedTick: Tick; effectiveTick: Tick;
   kind: GroundOrderKind | AirMission | SpaceOrderKind;
   path?: Position[]; targetContactId?: Id; targetHex?: GroundPos; station?: Position;
+  targetFormationId?: Id;          // ext: EMBARK — the own-side carrier to load into
   burnProfile?: BurnProfile;
   conditionals: { trigger: Trigger; thenOrder: Omit<Order, 'conditionals'>;
                   fired?: boolean /* ext (M2): consumed, won't re-fire */ }[];

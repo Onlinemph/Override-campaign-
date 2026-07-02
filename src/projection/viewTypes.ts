@@ -23,6 +23,10 @@ export interface OwnFormationView {
   currentOrder?: { id: Id; kind: string; completed: boolean; path?: Array<{ q: number; r: number }> };
   units: OwnUnitView[];
   inSupply: boolean;
+  // ext: carrier ops — your own bays and rides, always visible
+  carrier?: { bays: number; crews: number; avFuelTons: number;
+              aboard: Array<{ id: Id; name: string }> };
+  mountedOn?: { id: Id; name: string };
   // M3: the flight board — your own ledgers, always visible (SKYWATCH §2)
   alertState?: string;
   flight?: {

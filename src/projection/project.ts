@@ -51,6 +51,19 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
         }),
         inSupply: f.supply.inSupply,
       };
+      // ext: carrier ops — own bays & rides
+      if (f.carrier) {
+        view.carrier = {
+          bays: f.carrier.bays, crews: f.carrier.crews, avFuelTons: f.carrier.avFuelTons,
+          aboard: Object.values(truth.formations)
+            .filter(x => !x.destroyed && x.mounted?.carrierFormationId === f.id)
+            .map(x => ({ id: x.id, name: x.name })),
+        };
+      }
+      if (f.mounted) {
+        const c = truth.formations[f.mounted.carrierFormationId];
+        if (c) view.mountedOn = { id: c.id, name: c.name };
+      }
       // own sensor reach (reflects derived probe/HQ gear) — for the inspect panel & rings
       if (f.pos.kind === 'ground') view.sensor = formationSensors(truth, f);
       if (f.alertState) view.alertState = f.alertState;

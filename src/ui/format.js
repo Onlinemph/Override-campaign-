@@ -107,6 +107,14 @@
       line += `\n   ⛁ ${v.fuelTons} t fuel (${v.burnDaysRemaining} burn-days)` +
         (v.drives || []).map(d => ` · jump drive ${d.chargePct}% charged, sail ${orderWords(d.sail)}`).join('');
     }
+    // carrier ops: your own bays & rides (ext)
+    if (f.mountedOn) line += `\n   🚢 embarked aboard ${f.mountedOn.name} — rides with the ship`;
+    if (f.carrier) {
+      line += `\n   🚢 carrier: ${f.carrier.aboard.length}/${f.carrier.bays} bays` +
+        ` · ${f.carrier.crews} crew${f.carrier.crews === 1 ? '' : 's'}` +
+        ` · ${f.carrier.avFuelTons} t av fuel` +
+        (f.carrier.aboard.length ? ` · aboard: ${f.carrier.aboard.map(x => x.name).join(', ')}` : '');
+    }
     return line;
   }
 

@@ -89,7 +89,32 @@ export function movementPass(
     if (!order || order.completed || f.pos.kind !== 'ground') continue;
     if (s.tick < order.effectiveTick) continue;
     const isStrike = order.kind === 'STRIKE';
-    if (!isStrike && !MOVE_KINDS.has(order.kind)) continue;
+    const isEmbark = order.kind === 'EMBARK';
+    if (!isStrike && !isEmbark && !MOVE_KINDS.has(order.kind)) continue;
+
+    // EMBARK (ext): march to the carrier's live position; load when co-located with it
+    // landed and holding a free bay. A bad target (not a carrier / wrong side / gone)
+    // fizzles the order; a full or airborne carrier makes the column wait at the ramp.
+    if (isEmbark) {
+      const carrier = order.targetFormationId ? s.formations[order.targetFormationId] : undefined;
+      if (!carrier || carrier.destroyed || !carrier.carrier || carrier.sideId !== f.sideId ||
+          carrier.id === f.id) {
+        emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
+        continue;
+      }
+      if (carrier.pos.kind === 'ground' && hexDistance(f.pos as GroundPos, carrier.pos) === 0 &&
+          (f.pos as GroundPos).theaterId === carrier.pos.theaterId) {
+        const aboard = Object.values(s.formations).filter(x =>
+          !x.destroyed && x.mounted?.carrierFormationId === carrier.id).length;
+        if (aboard < carrier.carrier.bays) {
+          emit({ type: 'MOUNT_CHANGED', formationId: f.id, carrierFormationId: carrier.id });
+          emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
+        }
+        continue; // loaded — or waiting at the ramp for a bay
+      }
+      if (carrier.pos.kind !== 'ground') continue; // carrier aloft: wait for it to land
+      // fall through to the movement machinery, marching on the carrier's hex
+    }
 
     // STRIKE re-paths toward the live contact estimate; everything else follows its plot.
     const cur0 = f.pos as GroundPos;
@@ -98,11 +123,15 @@ export function movementPass(
       const target = strikeTargetHex(s, order);
       if (!target || hexDistance(cur0, target) === 0) continue; // arrived or blind: hold
       wps = [target];
+    } else if (isEmbark) {
+      // re-path toward the carrier's current hex every step (own force: always known)
+      const carrier = s.formations[order.targetFormationId!];
+      wps = [{ ...(carrier.pos as GroundPos) }];
     } else {
       if (!order.path) continue;
       wps = order.path.filter((p): p is GroundPos => p.kind === 'ground');
     }
-    let pathIndex = isStrike ? 0 : (f.pathIndex ?? 0);
+    let pathIndex = (isStrike || isEmbark) ? 0 : (f.pathIndex ?? 0);
     // skip any leading waypoint we're already standing on
     while (pathIndex < wps.length && hexDistance(cur0, wps[pathIndex]) === 0) pathIndex++;
 
@@ -197,7 +226,8 @@ export function movementPass(
 
     // STRIKE never self-completes here: arrival is resolved by the engagement pass
     // (battle if the enemy is present, completion-with-miss if the estimate was stale).
-    if (!isStrike && pathIndex >= wps.length) {
+    // EMBARK completes at the top of the pass, once co-located and actually loaded.
+    if (!isStrike && !isEmbark && pathIndex >= wps.length) {
       emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
     }
   }

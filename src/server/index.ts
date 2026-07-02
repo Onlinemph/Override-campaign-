@@ -638,6 +638,12 @@ const server = createServer(async (req, res) => {
         ...(airStation ? { station: airStation } : {}),
         ...(b.airSpeed ? { airSpeed: b.airSpeed } : {}),
         ...(b.loiterTicks !== undefined ? { loiterTicks: Number(b.loiterTicks) } : {}),
+        // ext: carrier ops — EMBARK's carrier, LAND/DISEMBARK's hex
+        ...(b.targetFormationId ? { targetFormationId: b.targetFormationId } : {}),
+        ...(b.targetHex ? { targetHex: {
+          kind: 'ground' as const,
+          theaterId: b.targetHex.theaterId || theaterId || Object.keys(campaign.truth.theaters)[0],
+          q: Number(b.targetHex.q), r: Number(b.targetHex.r) } } : {}),
       };
       const result = campaign.issueOrder(order);
       if (result.ok) broadcast();

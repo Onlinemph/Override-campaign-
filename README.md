@@ -105,6 +105,18 @@ too — tick **carrier** on a formation (bays / crews / av fuel) and pick **emba
 another to start it stowed in a bay (it snaps to the ship's hex); live validation catches
 overloaded bays, cross-side loading, and nested carriers as you build.
 
+**Players fly their own DropShips.** Carrier ops are plotted orders through the double-blind
+command net, not GM table-talk: **EMBARK** marches a formation to its ship and loads it
+(waiting at the ramp if the bays are full or the ship is aloft), **DISEMBARK** steps off a
+landed carrier into a chosen adjacent hex, **LIFT_OFF** launches and *holds at altitude*
+(a standing order — the ship loiters on the fuel ledger until the next order supersedes it),
+and **LAND** puts down on any passable hex, no facility needed — water and mountains wave it
+off. LAND outranks a fuel-forced RTB, so putting a bingo ship down *now* always works. A
+**stowed fighter flight given any air mission scrambles straight off the deck**, homed on its
+carrier. The player screen shows your bays and rides on every formation card, and the order
+panel picks the carrier / target hex from the map. All of it obeys the net: an off-net
+DropShip runs on standing orders like everything else.
+
 `npm run setup` builds the tracker; `npm run dev` (and `start.cmd`) build it on first launch
 if it's missing. Needs only Node — the build unpacks the library with a pure-Node fallback,
 so no `unzip`/WSL on Windows.

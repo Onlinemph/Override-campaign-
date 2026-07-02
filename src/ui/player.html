@@ -46,12 +46,17 @@
     <div class="panel">
       <h2>Order entry</h2>
       <div class="kv">formation <select id="o-formation"></select>
-        kind <select id="o-kind">
+        kind <select id="o-kind" onchange="syncCarrierRow()">
           <option>MOVE</option><option>FORCED_MARCH</option><option>MOVE_CAUTIOUS</option>
           <option>HIDE</option><option>DIG_IN</option><option>PATROL</option>
           <option>SCREEN</option><option>STRIKE</option><option>REST</option>
           <option>CAP</option><option>SWEEP</option><option>RECON</option><option>FERRY</option>
+          <option>LIFT_OFF</option><option>LAND</option>
+          <option>EMBARK</option><option>DISEMBARK</option>
         </select></div>
+      <div class="kv" id="carrier-row" style="display:none">carrier
+        <select id="o-carrier"><option value="">—</option></select>
+        <span style="opacity:.7">EMBARK marches to it &amp; loads · LAND/DISEMBARK use the last map click as the hex</span></div>
       <div class="kv">path <input id="o-path" size="26" placeholder="click the map, or q,r;q,r">
         <button onclick="clearPath()">✕</button></div>
       <div class="kv">strike/intercept target <select id="o-target"><option value="">—</option></select>
@@ -267,6 +272,15 @@ async function refresh() {
   const cur = sel.value;
   sel.innerHTML = v.ownFormations.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
   if (cur) sel.value = cur;
+  // own carriers for EMBARK (and the row only shows for the carrier-ops kinds)
+  const csel = document.getElementById('o-carrier');
+  const curC = csel.value;
+  csel.innerHTML = '<option value="">—</option>' + v.ownFormations
+    .filter(f => f.carrier)
+    .map(f => `<option value="${f.id}">${f.name} (${f.carrier.aboard.length}/${f.carrier.bays} bays)</option>`)
+    .join('');
+  if (curC) csel.value = curC;
+  syncCarrierRow();
   const opts = '<option value="">—</option>' + v.contacts.map(c => {
     const at = c.estPos.kind === 'ground' ? `${c.estPos.q},${c.estPos.r}` : c.estPos.kind;
     return `<option value="${c.id}">${c.levelName} @ ${at}</option>`;
@@ -328,12 +342,26 @@ function clearPath() { plotted = []; document.getElementById('o-path').value = '
 const parsePath = s => s.trim() ? s.trim().split(';').map(p =>
   ({ q: +p.split(',')[0], r: +p.split(',')[1] })) : [];
 
+function syncCarrierRow() {
+  const kind = document.getElementById('o-kind').value;
+  document.getElementById('carrier-row').style.display =
+    ['EMBARK', 'DISEMBARK', 'LAND'].includes(kind) ? '' : 'none';
+}
+
 async function sendOrder() {
+  const kind = document.getElementById('o-kind').value;
+  const path = parsePath(document.getElementById('o-path').value);
   const body = {
     formationId: document.getElementById('o-formation').value,
-    kind: document.getElementById('o-kind').value,
-    path: parsePath(document.getElementById('o-path').value),
+    kind,
+    path,
   };
+  // carrier ops: EMBARK names its ship; LAND/DISEMBARK take the last plotted hex
+  if (kind === 'EMBARK') body.targetFormationId = document.getElementById('o-carrier').value;
+  if ((kind === 'LAND' || kind === 'DISEMBARK') && path.length) {
+    body.targetHex = path[path.length - 1];
+    body.path = [];
+  }
   const target = document.getElementById('o-target').value;
   if (target) body.targetContactId = target;
   const emcon = document.getElementById('o-emcon').value;

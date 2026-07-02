@@ -610,3 +610,36 @@ into a light MekHQ-style persistence layer. All numbers in `rules.ts` CAREER.
    carriers, and embarking snaps the formation to the ship's hex. The validator gains carrier
    checks (numeric ranges, unknown/self/cross-side/nested `mountedOn`, and bay overflow —
    counted once per carrier, not per stowed formation).
+
+## D-022 ✅ Player carrier orders: EMBARK / DISEMBARK / LIFT_OFF / LAND
+Carrier ops become plotted orders through the double-blind loop (players were GM-fiat-only).
+1. **EMBARK** (ground kind, `targetFormationId` = the carrier): movementPass marches the
+   formation toward the carrier's *live* position (re-pathed per step, like STRIKE — own
+   force, always known) and loads on co-location when the carrier is landed with a free bay.
+   A full or airborne carrier makes the column wait at the ramp; a bad target (not a
+   carrier / wrong side / dead) fizzles the order cleanly.
+2. **DISEMBARK** (`targetHex` optional, adjacent): handled in carrierPass — the only pass
+   that runs for mounted formations — the moment the carrier is on the ground.
+3. **LIFT_OFF** is a *standing* air order: tryLaunch gets the ship up (alert-board delay),
+   then it holds ON_STATION indefinitely (`loiterTicksRemaining −1`), paying loiter on the
+   ledger until the next order supersedes it. It never self-completes — "hold at altitude"
+   is a state, not a task. The ON_STATION loiter branch now only holds when the ACTIVE
+   order is the station-holder (LIFT_OFF or a `station` order), so a superseding order
+   falls through to the movement machinery instead of loitering forever.
+4. **LAND** (`targetHex`): fly to the theater's air hex, then put down on any *passable*
+   hex — no facility required; water/impassable waves off (order completes, ship stays
+   aloft). A friendly AIRSTRIP/SPACEPORT in the hex still earns the runway landing rate.
+   From the ground, LAND doubles as ship repositioning (lift → fly → land). **LAND outranks
+   RTB in destAirHex** — found in testing: a bingo-forced RTB used to swallow the LAND
+   order (completing it as a no-op), meaning a fuel-starved ship refused the one order that
+   could save it. AIR_LANDED's `facilityId` becomes optional for open-field landings.
+5. **Scramble from the bay**: a stowed flight (mounted, isFlight) holding any active air
+   mission launches itself off the deck — mount cleared, homed on the carrier
+   (`homeCarrierId`), out at the carrier's air position or climbing off its back on the
+   ground. Mirrors tryLaunch's gates (turnaround in progress, fatigue-grounded crews,
+   blind intercept plots all hold it).
+6. **Surfaces**: order kinds in the player screen's order entry (carrier picker for EMBARK,
+   last map click as the hex for LAND/DISEMBARK); projection exposes own `carrier` (bays,
+   crews, av fuel, who's aboard) and `mountedOn` on OwnFormationView; the side-order API
+   forwards `targetFormationId`/`targetHex`; schema ORDER_KINDS extended. Net rules apply
+   unchanged — an off-net DropShip can only be reached by standing orders/conditionals.

@@ -87,8 +87,8 @@ export type GameEvent =
       speed: 'CRUISE' | 'DASH'; tick: Tick }
   | { type: 'AIR_PHASE'; formationId: Id; phase: NonNullable<Formation['air']>['phase'];
       tick: Tick }
-  | { type: 'AIR_LANDED'; formationId: Id; facilityId: Id; pos: GroundPos;
-      fpPaid: number; tick: Tick }
+  | { type: 'AIR_LANDED'; formationId: Id; facilityId?: Id; pos: GroundPos;
+      fpPaid: number; tick: Tick } // facilityId absent ⇒ an open-field landing (LAND order)
   | { type: 'FUEL_SPENT'; formationId: Id; fpPaid: number; reason: string; tick: Tick }
   | { type: 'FUEL_THRESHOLD'; formationId: Id; threshold: 'JOKER' | 'BINGO';
       fpMin: number; tick: Tick }
