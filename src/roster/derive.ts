@@ -82,6 +82,12 @@ export function extractTags(text: string, motionType?: string): string[] {
   if (has(/mobile\s*(hq|headquarters)|command\s*console/i)) tags.add('HQ');
 
   if ((motionType ?? '').toLowerCase().includes('wheeled')) tags.add('WHEELED');
+
+  // hull shape (DropShips/small craft): the flying egg vs the lifting body — spheroids
+  // crawl in atmosphere (SKYWATCH SPHEROID_ATMO_HEX_PER_TICK); the fast lane is orbit
+  const motion = (motionType ?? '').toLowerCase();
+  if (motion.includes('spheroid') || /<motion_type>\s*spheroid/i.test(t)) tags.add('SPHEROID');
+  else if (motion.includes('aerodyne') || /<motion_type>\s*aerodyne/i.test(t)) tags.add('AERODYNE');
   return [...tags];
 }
 

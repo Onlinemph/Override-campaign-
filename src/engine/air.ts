@@ -60,6 +60,21 @@ export function cruiseHexesPerTick(): number {
 export function dashHexesPerTick(s: TruthState, f: Formation): number {
   return minSafeThrust(s, f) * CLOCK.TICK_MINUTES;
 }
+
+/** A spheroid hull in the formation: the whole flight stands on its drive plume. */
+export function isSpheroid(s: TruthState, f: Formation): boolean {
+  return f.unitIds.some(uid => s.units[uid]?.tags.includes('SPHEROID'));
+}
+
+/**
+ * Atmospheric speed in air hexes per tick — the ONE place hull shape matters (ext):
+ * a spheroid crawls at SPHEROID_ATMO_HEX_PER_TICK regardless of thrust; everything
+ * else flies cruise/dash as before. The fast lane for a spheroid is the orbital hop.
+ */
+export function atmoHexesPerTick(s: TruthState, f: Formation, speed: 'CRUISE' | 'DASH'): number {
+  if (isSpheroid(s, f)) return SKYWATCH.SPHEROID_ATMO_HEX_PER_TICK;
+  return speed === 'DASH' ? dashHexesPerTick(s, f) : cruiseHexesPerTick();
+}
 export function transitFpPerHex(s: TruthState, f: Formation, speed: 'CRUISE' | 'DASH'): number {
   const base = speed === 'DASH' ? SKYWATCH.DASH_FP_PER_HEX : SKYWATCH.CRUISE_FP_PER_HEX;
   return base * convFactor(s, f);
@@ -252,12 +267,12 @@ function predictAirPos(s: TruthState, target: Formation, dt: number): { q: numbe
     // heading home: predict along its return leg, stopping at the base (or parked if none)
     const home = homeAirHexOf(s, target);
     if (!home) return cur;
-    const step = Math.min(cruiseHexesPerTick() * dt, hexDistance(cur, home));
+    const step = Math.min(atmoHexesPerTick(s, target, 'CRUISE') * dt, hexDistance(cur, home));
     const line = hexLine(cur, home);
     return line[Math.min(step, line.length - 1)];
   }
   const mode: 'CRUISE' | 'DASH' = targetOrder?.airSpeed ?? target.air?.speed ?? 'CRUISE';
-  const speed = (mode === 'DASH' ? dashHexesPerTick(s, target) : cruiseHexesPerTick()) * dt;
+  const speed = atmoHexesPerTick(s, target, mode) * dt;
   const dir = DIR_BY_SIXTH[Math.round(((target.pos.vectorDeg % 360) + 360) % 360 / 60) % 6];
   return { q: cur.q + dir.q * speed, r: cur.r + dir.r * speed };
 }
@@ -402,7 +417,7 @@ function flyStep(
   }
 
   const cur = airQR(f.pos);
-  let budget = (speed === 'DASH' ? dashHexesPerTick(s, f) : cruiseHexesPerTick()) * dt;
+  let budget = atmoHexesPerTick(s, f, speed) * dt;
   const dist = hexDistance(cur, dest);
   const hexesFlown = Math.min(budget, dist);
 

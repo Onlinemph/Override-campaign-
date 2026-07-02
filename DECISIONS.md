@@ -788,3 +788,20 @@ Resources short ⇒ the queue stays open and picks jobs up as SP/crews free (a c
 restock resumes it automatically); the order completes when the whole formation stands
 at OK. The GM's per-unit 🔧 button remains for cherry-picking. Same CAREER.REPAIR costs,
 same careerPass completion, same clean-sheet semantics as D-028.
+
+## D-030 ✅ Spheroids crawl in atmosphere (user ruling)
+A spheroid DropShip stands on its drive plume — it does not fly, it hovers with intent.
+1. **Hull shape derives from the record sheet**: the library's `<motion_type>` block (the
+   blk parser already read it) tags SPHEROID or AERODYNE through the normal derivation
+   pipeline, alongside ECM/probe/AA extraction.
+2. **The rule** (user ruling, SKYWATCH.SPHEROID_ATMO_HEX_PER_TICK): a formation with any
+   spheroid hull moves **1 air hex per contact turn** in atmosphere — cruise or dash,
+   thrust be damned. `atmoHexesPerTick` is the single speed gate: flyStep transit, chase
+   prediction, and the CAS on-call `arrivesTurn` all consult it, so a spheroid gunship
+   two hexes from the battle is honestly two turns away in the briefing.
+3. **The fast lane is orbit**: ASCEND, cross the system map, DESCEND over the target
+   theater, LAND. The D-023 seam plus this rule make the doctrine emergent — aerodynes
+   are your couriers and CAS trucks inside an atmosphere; spheroids reposition by
+   suborbital hop and pay the ATMO fuel bills for it.
+4. Fuel per hex is unchanged (1 FP/hex cruise) — a spheroid burns the same per hex but
+   takes twelve times the clock, which is the real cost at campaign scale.

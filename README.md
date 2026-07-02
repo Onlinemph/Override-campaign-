@@ -122,6 +122,13 @@ too — tick **carrier** on a formation (bays / crews / av fuel) and pick **emba
 another to start it stowed in a bay (it snaps to the ship's hex); live validation catches
 overloaded bays, cross-side loading, and nested carriers as you build.
 
+**Hull shape matters.** The record sheet's motion type derives onto every DropShip:
+**spheroids move 1 air hex per contact turn** in atmosphere — cruise or dash, thrust be
+damned — while aerodynes fly a full 12-hex cruise. A spheroid that wants to reposition
+fast goes *up*: ASCEND to orbit, cross the system map, DESCEND over the target theater,
+and LAND. Chase prediction and CAS arrival timing all respect the crawl, so a spheroid
+gunship two hexes from the battle is honestly two turns away in the briefing.
+
 **The sky is one continuous system.** Two orders bridge DEEP SKY and SKYWATCH: **DESCEND**
 re-enters from a planet/moon node into its theater's air layer (~18 min, a modest braking
 burn — the atmosphere does the work), and **ASCEND** climbs the well from the air (or

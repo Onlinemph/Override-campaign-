@@ -13,7 +13,7 @@ import type {
 } from '../core/types.js';
 import { hexKey } from '../core/types.js';
 import { hexDistance, neighbors } from '../hex/axial.js';
-import { jokerBingo, minFp, minSafeThrust } from '../engine/air.js';
+import { atmoHexesPerTick, jokerBingo, minFp, minSafeThrust } from '../engine/air.js';
 
 const EDGES = ['E', 'NE', 'NW', 'W', 'SW', 'SE'] as const;
 // map a heading (0°=+q/E, CCW) to one of six entry edges
@@ -119,7 +119,8 @@ function sideBlock(
     if (d > SKYWATCH.CAS_ON_CALL.MAX_AIR_HEXES) continue;
     airOnStation.push({
       formationId: f.id,
-      arrivesTurn: Math.ceil(d / SKYWATCH.CAS_ON_CALL.HEXES_PER_TURN),
+      // per-flight speed: a spheroid gunship two hexes out is still two turns away
+      arrivesTurn: Math.ceil(d / Math.max(1, atmoHexesPerTick(s, f, 'CRUISE'))),
       fpOnStation: minFp(s, f),
     });
   }
