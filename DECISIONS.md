@@ -778,3 +778,13 @@ exact boxes lived only at the table. Now the marked-up card itself round-trips.
    (WOUND_RECOVERY_DAYS_MASH = 1/hit). No hits reported defaults to 1.
 4. Tracker side: `battleResultFromForces` ships the blob only when something is actually
    marked; `importHandoffFromHash` seeds `ForceUnit.damage` from the incoming sheet.
+
+## D-029 ✅ Player-serve repairs: the REPAIR order returns, working
+D-025 deleted REPAIR as a dead order kind; it comes back as the player-facing shop queue.
+Plotted on a formation at a friendly repair hex (DEPOT/FACTORY/SPACEPORT) — or embarked in
+a carrier — maintenancePass feeds every DAMAGED/CRIPPLED unit onto a bench as resources
+allow: SP per job from the facility, or one free turnaround crew per job aboard ship.
+Resources short ⇒ the queue stays open and picks jobs up as SP/crews free (a convoy
+restock resumes it automatically); the order completes when the whole formation stands
+at OK. The GM's per-unit 🔧 button remains for cherry-picking. Same CAREER.REPAIR costs,
+same careerPass completion, same clean-sheet semantics as D-028.

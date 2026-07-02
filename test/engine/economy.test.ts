@@ -78,6 +78,55 @@ describe('REARM — dry ground units draw ammo at last', () => {
   });
 });
 
+describe('REPAIR — players queue their own shop work', () => {
+  it('feeds every damaged unit into the shop as SP allows; completes when all stand OK', () => {
+    const truth = baseTruth('PREPAIR-1');
+    truth.facilities['depot'] = mkFacility({ id: 'depot', sideId: 'blue', name: 'Yards',
+      pos: gp(5, 5), tags: ['DEPOT'], supplyPoints: 2 }); // enough for one DAMAGED + one CRIPPLED? no: 1+2=3 > 2
+    const f = addMechFormation(truth, { id: 'm1', sideId: 'blue', pos: gp(5, 5) });
+    truth.units[f.unitIds[0]].damage = 'DAMAGED';   // 1 SP, 1 day
+    truth.units[f.unitIds[1]].damage = 'CRIPPLED';  // 2 SP, 3 days
+    activate(truth, moveOrder('o1', f, 'REPAIR', []));
+    const c = Campaign.create(truth);
+
+    c.step();
+    // 2 SP on hand: the DAMAGED job (1 SP) and... only one of the two fits
+    const inShop = f.unitIds.filter(uid => c.truth.units[uid].repairReadyTick != null);
+    expect(inShop.length).toBe(1);
+    expect(c.truth.orders['o1'].completed).toBeUndefined(); // queue still open
+
+    // the factory pays out / a convoy arrives — top the depot and let the clock run
+    c.inject({ type: 'SP_CHANGED', facilityId: 'depot', delta: 5, reason: 'test restock' });
+    for (let i = 0; i < 150 && !c.truth.orders['o1'].completed; i++) c.step();
+    expect(c.truth.units[f.unitIds[0]].damage).toBe('OK');
+    expect(c.truth.units[f.unitIds[1]].damage).toBe('OK');
+    expect(c.truth.orders['o1'].completed).toBe(true);
+    expect(replay(c.store.all())).toEqual(c.truth);
+  });
+
+  it('nowhere to repair: the order waits; an embarked formation uses the carrier crews', () => {
+    const truth = baseTruth('PREPAIR-2');
+    const ds = addMechFormation(truth, { id: 'ds1', sideId: 'blue', pos: gp(7, 7) },
+      1, { class: 'DROPSHIP' });
+    ds.carrier = { bays: 2, crews: 1, avFuelTons: 20 };
+    const field = addMechFormation(truth, { id: 'field', sideId: 'blue', pos: gp(2, 2) });
+    truth.units[field.unitIds[0]].damage = 'DAMAGED';
+    activate(truth, moveOrder('of', field, 'REPAIR', []));
+    const aboard = addMechFormation(truth, { id: 'cargo', sideId: 'blue', pos: gp(7, 7) });
+    aboard.mounted = { carrierFormationId: 'ds1' };
+    truth.units[aboard.unitIds[0]].damage = 'DAMAGED';
+    truth.units[aboard.unitIds[1]].damage = 'DAMAGED';
+    activate(truth, moveOrder('oc', aboard, 'REPAIR', []));
+    const c = Campaign.create(truth);
+
+    c.step();
+    expect(c.truth.units[field.unitIds[0]].repairReadyTick).toBeUndefined(); // open field: waits
+    // the carrier's single crew takes one job; the second waits for the bench
+    const started = aboard.unitIds.filter(uid => c.truth.units[uid].repairReadyTick != null);
+    expect(started.length).toBe(1);
+  });
+});
+
 describe('factories produce', () => {
   it('a FACTORY mints SP at each daily boundary', () => {
     const truth = baseTruth('FACTORY-1');

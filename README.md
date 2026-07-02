@@ -178,8 +178,11 @@ what.
 **Damage heals in the shop.** A `DAMAGED` or `CRIPPLED` unit whose formation sits on a
 friendly **depot / factory / spaceport** hex (or rides embarked in a carrier with a free
 turnaround crew) can be repaired — SP and days scale with how bad it is (1 SP / 1 day
-damaged, 2 SP / 3 days crippled). One click in the roster panel; the engine delivers the
-fix on schedule.
+damaged, 2 SP / 3 days crippled). Players queue it themselves with the **REPAIR** order
+(a quick-button on the player screen): every damaged unit in the formation goes onto a
+bench as SP and crews allow, the queue waits out shortages and resumes when a convoy
+restocks the depot, and the order completes when the whole formation stands at OK. The
+GM's per-unit 🔧 button remains for cherry-picking.
 
 **The recon tricks work.** **SHADOW** trails a contact at a two-hex standoff — closing when
 the trail stretches, holding when near, never blundering into a battle — a standing order

@@ -5,7 +5,7 @@
  * effects (SP draw, out-of-supply attrition) are driven off each formation's
  * `lastSuppliedTick` so they fire correctly regardless of clock-compression step size.
  */
-import { CLOCK, COMBAT, RDY, SUPPLY, TERRAIN } from '../rules.js';
+import { CAREER, CLOCK, COMBAT, RDY, SUPPLY, TERRAIN } from '../rules.js';
 import type { Facility, Formation, GroundPos, Id, TruthState } from '../core/types.js';
 import { hexKey } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
@@ -184,6 +184,48 @@ export function maintenancePass(s: TruthState, dt: number, emit: (e: GameEvent) 
                    damage: s.units[uid].damage, ammoState: 'FULL' });
           }
           emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
+        }
+      }
+    }
+
+    // REPAIR (ext): feed every damaged unit into the shop — SP from a co-located
+    // repair-capable facility, or a free turnaround crew when embarked in a carrier.
+    // Resources short ⇒ the queue waits; the order completes when the whole formation
+    // stands at OK. (The GM's per-unit 🔧 button remains for cherry-picking.)
+    if (order && !order.completed && order.kind === 'REPAIR') {
+      const hurt = f.unitIds
+        .map(uid => s.units[uid])
+        .filter(u => u && (u.damage === 'DAMAGED' || u.damage === 'CRIPPLED'));
+      if (hurt.length === 0) {
+        emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
+      } else {
+        const here = f.pos.kind === 'ground' ? f.pos : undefined;
+        const fac = here ? Object.values(s.facilities).find(x =>
+          x.sideId === f.sideId && x.pos.kind === 'ground' &&
+          x.pos.theaterId === here.theaterId && x.pos.q === here.q && x.pos.r === here.r &&
+          CAREER.REPAIR_FACILITY_TAGS.some(t => (x.tags as string[]).includes(t))) : undefined;
+        const carrier = f.mounted ? s.formations[f.mounted.carrierFormationId] : undefined;
+        let facSp = fac?.supplyPoints ?? 0;
+        let freeCrews = carrier?.carrier
+          ? carrier.carrier.crews -
+            (carrier.carrier.crewBusyUntil ?? []).filter(t => t > s.tick).length
+          : 0;
+        for (const u of hurt) {
+          if (u.repairReadyTick != null) continue; // already on a bench
+          const cost = CAREER.REPAIR[u.damage as 'DAMAGED' | 'CRIPPLED'];
+          const readyTick = s.tick + cost.DAYS * CLOCK.TICKS_PER_DAY;
+          if (fac && facSp >= cost.SP) {
+            facSp -= cost.SP;
+            emit({ type: 'SP_CHANGED', facilityId: fac.id, delta: -cost.SP,
+                   reason: `repairing ${u.name}` });
+            emit({ type: 'REPAIR_STARTED', unitId: u.id, readyTick, facilityId: fac.id,
+                   tick: s.tick });
+          } else if (carrier && !carrier.destroyed && carrier.carrier && freeCrews > 0) {
+            freeCrews -= 1;
+            emit({ type: 'REPAIR_STARTED', unitId: u.id, readyTick, carrierId: carrier.id,
+                   tick: s.tick });
+          }
+          // neither source can take it now: it waits in the queue
         }
       }
     }
