@@ -805,3 +805,22 @@ A spheroid DropShip stands on its drive plume — it does not fly, it hovers wit
    suborbital hop and pay the ATMO fuel bills for it.
 4. Fuel per hex is unchanged (1 FP/hex cruise) — a spheroid burns the same per hex but
    takes twelve times the clock, which is the real cost at campaign scale.
+
+## D-031 ✅ The slow war: autopace + fog-respecting Discord pings
+Async play: the hosted campaign runs continuously; players drop in whenever, plot orders
+(effective next tick as always), and are pinged when something of THEIRS happens.
+1. **Autopace**: `OVERRIDE_AUTOPACE=<minutes>` or the GM screen's ⏱ control — one engine
+   step per interval, skipping while an engagement is frozen or the campaign has ended.
+   Battle night IS the pause: the ⚔ ping gathers the group, the result unfreezes the war.
+2. **Webhooks** (`server/notify.ts`): `OVERRIDE_WEBHOOK_<SIDEID>` + `OVERRIDE_WEBHOOK_GM`.
+   `collectNotifications` is pure and fog-scoped — a side receives only its delivered
+   reports, its shop/refit completions, its BINGO calls, engagements it is party to, and
+   endings; the GM feed gets the who-vs-who. Deliberately quiet: no per-move spam, no
+   JOKER (only BINGO), no pilot-recovery ping (indistinguishable from post-battle OK
+   statuses at the event level — the roster panel is that surface).
+3. Wiring: `drainNotifications` hangs off `broadcast()` (the single post-mutation choke
+   point), tracking a high-water mark in the event store — boot does not replay history
+   into Discord, and a GM campaign switch resets the mark. Posts are fire-and-forget
+   with a 1990-char clamp (Discord's limit); a dead webhook logs a warning and never
+   blocks the engine. Live-verified: autopaced demo pushed the contact ladder
+   (GHOST→SHADOW→CONTACT→LOCK) to the blue channel only.

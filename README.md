@@ -54,6 +54,14 @@ Fly.io / any VPS. `PORT`, `OVERRIDE_GM_KEY`, `OVERRIDE_LOG`, and `OVERRIDE_CAMPA
 vars configure everything; the JSONL log is the whole campaign — copy it and you have a
 byte-exact backup.
 
+**Play it as a slow war.** Hosted campaigns run **asynchronously**: set
+`OVERRIDE_AUTOPACE=60` (or the GM screen's ⏱ control) and the clock steps itself,
+pausing automatically when a battle freezes the campaign — that ⚔ ping is what gathers
+the group for battle night. Wire `OVERRIDE_WEBHOOK_<SIDE>` / `_GM` to Discord webhooks
+and each side gets pinged with **only what its own screens would show** — delivered
+contact reports, repairs finishing, BINGO fuel calls. Fog of war holds in Discord; players
+drop in whenever, plot orders, and the war moves on.
+
 Then open `http://localhost:8420/gm` — the GM screen (truth map with belief overlays,
 event log, step / run-until-event, noise injection, VP & endings). The GM screen lists
 the **tokenized player links** to hand out; they also print to the console at boot

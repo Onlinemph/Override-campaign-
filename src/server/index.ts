@@ -23,6 +23,7 @@ import { generateCampaign } from '../campaign/generate.js';
 import { rollForce, campaignUnitsFromForce } from '../roster/roll.js';
 import { buildMul } from '../handoff/mul.js';
 import { buildBattleRoster } from '../handoff/battle.js';
+import { collectNotifications, postWebhooks, webhookConfigFromEnv } from './notify.js';
 import { enrichUnit } from '../roster/apply.js';
 import { searchLibrary } from '../roster/library.js';
 import { hashPick } from '../core/rng.js';
@@ -77,8 +78,41 @@ if (logPath) {
 
 const wss = new WebSocketServer({ noServer: true });
 const sockets = new Set<WebSocket>();
+
+// ── the slow war (ext): Discord pings + a clock that runs itself ──
+const webhookCfg = webhookConfigFromEnv(process.env, Object.keys(campaign.truth.sides));
+let notifiedThrough = campaign.store.length(); // don't replay history into Discord on boot
+function drainNotifications() {
+  const all = campaign.store.all();
+  if (all.length <= notifiedThrough) { notifiedThrough = all.length; return; }
+  const fresh = all.slice(notifiedThrough);
+  notifiedThrough = all.length;
+  if (!webhookCfg.gm && Object.keys(webhookCfg.sides).length === 0) return;
+  postWebhooks(webhookCfg, collectNotifications(campaign.truth, fresh));
+}
+
+// Autopace: every N real minutes the clock takes one step on its own, pausing while an
+// engagement is frozen (battle night) or the campaign has ended. Players plot orders
+// whenever they like; the war moves without the GM at the keyboard.
+let autopaceMinutes = Number(process.env.OVERRIDE_AUTOPACE ?? 0) || 0;
+let autopaceTimer: NodeJS.Timeout | null = null;
+function setAutopace(minutes: number): void {
+  autopaceMinutes = Math.max(0, minutes);
+  if (autopaceTimer) { clearInterval(autopaceTimer); autopaceTimer = null; }
+  if (autopaceMinutes > 0) {
+    autopaceTimer = setInterval(() => {
+      if (campaign.truth.pendingEngagementId || campaign.truth.ended) return;
+      campaign.step();
+      broadcast();
+    }, autopaceMinutes * 60_000);
+    autopaceTimer.unref?.();
+  }
+}
+if (autopaceMinutes > 0) setAutopace(autopaceMinutes);
+
 function broadcast() {
   for (const ws of sockets) if (ws.readyState === WebSocket.OPEN) ws.send('update');
+  drainNotifications();
 }
 
 function gmState() {
@@ -93,6 +127,8 @@ function gmState() {
     pendingEngagement: eng,
     salvage: Object.values(campaign.truth.salvage),
     persist: activeLogPath ? { path: activeLogPath, events: campaign.store.length() } : null,
+    autopaceMinutes,
+    webhooks: { gm: !!webhookCfg.gm, sides: Object.keys(webhookCfg.sides) },
     campaignName: campaign.truth.config.name,
     netNodesBySide: Object.fromEntries(sides.map(s => [s,
       commandNodesOf(campaign.truth, s).filter(n => !n.theaterWide)
@@ -257,6 +293,12 @@ const server = createServer(async (req, res) => {
         : campaign.step(body.fine ? 'CONTACT' : undefined);
       broadcast();
       return json(res, 200, { tick: campaign.truth.tick, events: events.length });
+    }
+    if (path === '/api/gm/autopace' && req.method === 'POST') {
+      const b = await readBody(req);
+      setAutopace(Number(b.minutes) || 0);
+      broadcast();
+      return json(res, 200, { ok: true, autopaceMinutes });
     }
     if (path === '/api/gm/recall' && req.method === 'POST') {
       // GM courier: order a stranded formation back to its nearest command node, bypassing

@@ -87,6 +87,35 @@ On a plain VPS, put a reverse proxy (Caddy makes HTTPS one line:
 `your.domain { reverse_proxy localhost:8420 }`) in front and run the container
 under `--restart unless-stopped`.
 
+## The slow war — async play (players drop in anytime)
+
+Hosted campaigns really shine played **asynchronously**: the war runs continuously,
+players open their link whenever life allows, read their inbox, plot orders, and get
+pinged when something needs them. Three switches turn it on:
+
+1. **Autopace** — the clock advances itself. Set `OVERRIDE_AUTOPACE=30` (one step every
+   30 real minutes) or use the GM screen's **⏱ Autopace** control to tune it live. The
+   clock pauses automatically while an engagement is frozen (that's battle night — resolve
+   it in the tracker and the war resumes) and when the campaign ends. Orders players plot
+   take effect on the next tick, exactly as in live play.
+2. **Discord pings** — create a webhook per side channel (Discord → channel settings →
+   Integrations → Webhooks) and set:
+   ```
+   OVERRIDE_WEBHOOK_BLUE=https://discord.com/api/webhooks/…   # one per side id
+   OVERRIDE_WEBHOOK_RED=https://discord.com/api/webhooks/…
+   OVERRIDE_WEBHOOK_GM=https://discord.com/api/webhooks/…     # the spectator feed
+   ```
+   Each side is pinged only with what its own screens would show — delivered contact
+   reports, its repairs/refits completing, BINGO fuel calls, and the engagements it is
+   party to. **Fog of war holds in Discord**: red never sees blue's reports. The GM feed
+   gets the who-vs-who on engagements, results, and endings.
+3. **Persistence** — you already have it (`OVERRIDE_LOG` on a volume). The war survives
+   restarts mid-campaign; autopace and webhooks reconnect on boot.
+
+A good cadence for a weeks-long campaign: autopace 60 (one step per real hour ≈ a game
+day every day or two), players check Discord like a play-by-mail game, and the group
+gathers only when the ⚔ ping lands.
+
 ## Backups & campaign life
 
 The entire campaign is one append-only file: whatever `OVERRIDE_LOG` points at.

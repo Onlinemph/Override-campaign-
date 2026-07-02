@@ -15,6 +15,10 @@
   <button onclick="advance(true, 10)" title="Advance up to 1 hour, stopping early on any event">Run ≤1h</button>
   <button onclick="advance(true, 60)" title="Advance up to 6 hours, stopping early on any event">Run ≤6h</button>
   <button onclick="advance(true)" title="Fast-forward to the next event (up to a full day)">Run to event</button>
+  <span style="margin-left:8px">⏱ <input id="autopace-min" size="3" placeholder="min" title="Slow war: auto-step every N real minutes (pauses on battles)">
+    <button onclick="setPace(+document.getElementById('autopace-min').value||0)" title="The clock advances itself every N minutes; battles pause it">Autopace</button>
+    <button onclick="setPace(0)" title="Stop the automatic clock">■</button>
+    <span id="autopace-status" class="kv"></span></span>
   <button onclick="undoStep()" title="Rewind the last step">↶ Undo step</button>
   <span class="kv">belief overlay:
     <select id="belief" onchange="refresh()"><option value="">truth only</option></select></span>
@@ -389,6 +393,16 @@ async function refresh() {
     ? `<span style="color:var(--good)">● saving</span> to ${esc(s.persist.path)} (${s.persist.events} events)`
     : `<span style="color:var(--warn)">● in-memory</span> — not saved (restart with <b>--log file.jsonl</b>)`;
 
+  // slow-war status: the self-running clock + who gets pinged
+  const ap = document.getElementById('autopace-status');
+  if (ap) {
+    const hooks = s.webhooks && (s.webhooks.gm || (s.webhooks.sides || []).length)
+      ? ` · 🔔 ${[(s.webhooks.gm ? 'gm' : null), ...(s.webhooks.sides || [])].filter(Boolean).join(', ')}` : '';
+    ap.textContent = (s.autopaceMinutes
+      ? `▶ stepping every ${s.autopaceMinutes} min${t.pendingEngagementId ? ' (paused: battle)' : ''}`
+      : '') + hooks;
+  }
+
   // status log — a readable chronicle (toggle "show detail" for the raw firehose)
   const detail = document.getElementById('log-detail').checked;
   const logEl = document.getElementById('log');
@@ -457,6 +471,7 @@ async function post(path, body) {
     body: JSON.stringify(body || {}) })).json();
 }
 async function advance(untilEvent, maxTicks, fine) { await post('/api/gm/advance', { untilEvent, maxTicks, fine: !!fine }); refresh(); }
+async function setPace(minutes) { await post('/api/gm/autopace', { minutes }); refresh(); }
 async function recall(formationId) {
   const r = await post('/api/gm/recall', { formationId });
   notify(r.ok ? `↩ courier sent — ${fname(formationId)} recalled toward ${r.toward}` : `✗ ${r.reason}`, r.ok ? 'good' : 'bad');
