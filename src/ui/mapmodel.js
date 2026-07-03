@@ -73,6 +73,15 @@
                     objective: hx.objective ? { vp: hx.objective.vpPerDay } : undefined }));
     const markers = [];
     (v.ownFormations || []).forEach(f => {
+      // congruent sky (D-037): an airborne flight draws on the hex it is directly over
+      if (f.flight && f.flight.airPos && f.flight.overhead) {
+        if (f.flight.overhead.theaterId !== th.id) return;
+        markers.push({ q: f.flight.overhead.q, r: f.flight.overhead.r, kind: 'formation',
+          side: v.sideId, label: '✈', sub: f.name,
+          title: `${f.name} · ${f.flight.phase} ${f.flight.speed} @ ${f.flight.airPos.band}` +
+                 ` · ${f.flight.fpMin} FP (joker ${f.flight.jokerFp} / bingo ${f.flight.bingoFp})` });
+        return;
+      }
       if (!f.pos) return;
       const gear = [...new Set((f.units || []).flatMap(u => (u.tags || [])
         .filter(t => ['ECM', 'ANGEL_ECM', 'BEAGLE', 'STEALTH', 'C3M', 'HQ', 'RECON'].includes(t))))];
@@ -90,6 +99,15 @@
                `${fc.supplyPoints ? ' · ' + fc.supplyPoints + ' SP' : ''}` });
     });
     (v.contacts || []).forEach(c => {
+      // air contacts draw on the hex their estimate sits over (D-037 congruent sky)
+      if (c.estPos.kind === 'air' && c.overhead && c.overhead.theaterId === th.id) {
+        markers.push({ q: c.overhead.q, r: c.overhead.r, kind: 'contact',
+          label: '✈' + LV[c.level], error: c.posErrorHexes > 0, stale: c.ageTicks,
+          sub: c.estSizeClass || '', title: `${c.levelName} (air)` +
+            (c.estComposition ? ` · ${c.estComposition}` : '') +
+            ` · as of t${c.staleAsOfTick} (${c.ageTicks} stale)` });
+        return;
+      }
       if (c.estPos.kind !== 'ground' || c.estPos.theaterId !== th.id) return;
       markers.push({ q: c.estPos.q, r: c.estPos.r, kind: c.kind === 'ECM_HAZE' ? 'haze' : 'contact',
         label: LV[c.level], error: c.posErrorHexes > 0, stale: c.ageTicks,

@@ -39,7 +39,7 @@ describe('spheroids crawl in atmosphere', () => {
     const wing = dropship(truth, 'wing', ['AERODYNE']);
     expect(atmoHexesPerTick(truth, egg, 'CRUISE')).toBe(SKYWATCH.SPHEROID_ATMO_HEX_PER_TICK);
     expect(atmoHexesPerTick(truth, egg, 'DASH')).toBe(SKYWATCH.SPHEROID_ATMO_HEX_PER_TICK);
-    expect(atmoHexesPerTick(truth, wing, 'CRUISE')).toBe(cruiseHexesPerTick());
+    expect(atmoHexesPerTick(truth, wing, 'CRUISE')).toBe(cruiseHexesPerTick(truth, wing));
   });
 
   it('the same LAND order: the aerodyne is down while the spheroid is still wallowing', () => {
@@ -48,12 +48,13 @@ describe('spheroids crawl in atmosphere', () => {
       const ds = dropship(truth, 'ds', tags);
       activate(truth, { ...moveOrder('o1', ds, 'MOVE', []), kind: 'LAND',
                         targetHex: gp(10, 10), path: [] });
-      truth.config.airHexByTheater = { 'theater-1': { q: 10, r: 10 } }; // 20 air hexes out
+      // D-037 congruent sky: the LZ's overhead hex is (10,10) — 20 air hexes from the
+      // ship's position at (0,0)
       return Campaign.create(truth);
     };
     const wing = mk(['AERODYNE']);
     for (let i = 0; i < 3; i++) wing.step('CONTACT');
-    expect(wing.truth.formations['ds'].pos).toEqual(gp(10, 10)); // 12 hexes/turn: down fast
+    expect(wing.truth.formations['ds'].pos).toEqual(gp(10, 10)); // ST 3 ⇒ 9 hexes/turn: down in 3
 
     const egg = mk(['SPHEROID']);
     for (let i = 0; i < 3; i++) egg.step('CONTACT');

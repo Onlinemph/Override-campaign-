@@ -4,7 +4,7 @@
 import { CLOCK, CONTACT_MODE_RANGE_HEXES, SKYWATCH } from '../rules.js';
 import type { AirPos, ClockMode, TruthState } from '../core/types.js';
 import { hexDistance } from '../hex/axial.js';
-import { AIR_MISSIONS, isLaunchPending } from './air.js';
+import { AIR_MISSIONS, airHexOver, isLaunchPending } from './air.js';
 
 export function isNight(s: TruthState, tick: number): boolean {
   const tod = ((tick % CLOCK.TICKS_PER_DAY) + CLOCK.TICKS_PER_DAY) % CLOCK.TICKS_PER_DAY;
@@ -37,18 +37,22 @@ export function chooseClockMode(s: TruthState): ClockMode {
     }
   }
 
-  // M3 (SKYWATCH §6, D-010.7): scrambles and chases run in contact turns —
-  // a pending launch, or an airborne formation near the enemy (their flights, or the
-  // sky over a theater they occupy) drops the clock to contact pace.
+  // M3 (SKYWATCH §6, D-010.7 / D-037): scrambles and chases run in contact turns — a
+  // pending launch, or an airborne formation near the enemy (their flights, or the sky
+  // directly over their ground positions). Congruent sky: overflying empty wilderness
+  // does NOT tighten the clock; buzzing an enemy column or base does.
   const enemyAirHexesBySide = new Map<string, Array<{ q: number; r: number }>>();
   for (const sideId of Object.keys(s.sides)) {
     const hexes: Array<{ q: number; r: number }> = [];
-    for (const t of Object.keys(s.theaters)) {
-      const occupied =
-        live.some(f => f.sideId !== sideId && f.pos.kind === 'ground' && f.pos.theaterId === t) ||
-        Object.values(s.facilities).some(fac =>
-          fac.sideId !== sideId && fac.pos.kind === 'ground' && fac.pos.theaterId === t);
-      if (occupied) hexes.push(s.config.airHexByTheater?.[t] ?? { q: 0, r: 0 });
+    for (const f of live) {
+      if (f.sideId !== sideId && f.pos.kind === 'ground' && !f.mounted) {
+        hexes.push(airHexOver(s, f.pos));
+      }
+    }
+    for (const fac of Object.values(s.facilities)) {
+      if (fac.sideId !== sideId && fac.pos.kind === 'ground') {
+        hexes.push(airHexOver(s, fac.pos));
+      }
     }
     enemyAirHexesBySide.set(sideId, hexes);
   }

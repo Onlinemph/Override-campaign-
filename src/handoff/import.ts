@@ -8,7 +8,7 @@
  */
 import { CAREER, CLOCK, DEEPSKY, ENGAGEMENT, LADDER, RDY } from '../rules.js';
 import { battleXp } from '../engine/career.js';
-import { theaterAirHex } from '../engine/air.js';
+import { groundHexUnder, theaterAirHex } from '../engine/air.js';
 import { hexDistance } from '../hex/axial.js';
 import type {
   BattleResult, Contact, ContactSnapshot, Engagement, GroundPos, Id, LadderLevel,
@@ -154,15 +154,20 @@ export function ingestBattleResult(
   // salvage for whoever held the sky. No victor ⇒ the wrecks burn in, unclaimed.
   if (eng.domain === 'AIR' && eng.airPos && result.victorSideId) {
     const merge = { q: eng.airPos.gridQ, r: eng.airPos.gridR };
-    const under = Object.values(s.theaters)
-      .map(t => ({ t, d: hexDistance(theaterAirHex(s, t.id), merge) }))
-      .sort((a, b) => a.d - b.d || a.t.id.localeCompare(b.t.id))[0];
-    // the fall hex: the merge coordinates if they exist on the map, else the nearest hex
-    const fall = under && (under.t.hexes[`${merge.q},${merge.r}`]
-      ? merge
+    // D-037 (congruent sky): the wreckage falls onto the hex directly under the merge
+    // when the fight was over a theater; else onto the nearest hex of the nearest region.
+    const directly = groundHexUnder(s, merge);
+    const under = directly
+      ? { t: s.theaters[directly.theaterId], d: 0 }
+      : Object.values(s.theaters)
+          .map(t => ({ t, d: hexDistance(theaterAirHex(s, t.id), merge) }))
+          .sort((a, b) => a.d - b.d || a.t.id.localeCompare(b.t.id))[0];
+    const local = directly ? { q: directly.q, r: directly.r } : merge;
+    const fall = under && (under.t.hexes[`${local.q},${local.r}`]
+      ? local
       : Object.keys(under.t.hexes)
           .map(k => { const [q, r] = k.split(',').map(Number); return { q, r }; })
-          .sort((a, b) => hexDistance(a, merge) - hexDistance(b, merge)
+          .sort((a, b) => hexDistance(a, local) - hexDistance(b, local)
                         || a.q - b.q || a.r - b.r)[0]);
     if (under && fall) {
       const hex: GroundPos = { kind: 'ground', theaterId: under.t.id, q: fall.q, r: fall.r };

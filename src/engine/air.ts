@@ -30,6 +30,32 @@ export const AIR_MISSIONS = new Set([
 
 export const airQR = (p: AirPos) => ({ q: p.gridQ, r: p.gridR });
 
+/**
+ * The congruent sky (D-037): every ground hex has an air hex directly above it.
+ * `airHexByTheater` is the theater's ORIGIN on the global air grid — its air region
+ * spans the whole map 1:1 from there. Position in the sky is real: a CAP covers a
+ * radius, a raid crosses radar pickets on the way in, and RTB distance is geography.
+ */
+export function airHexOver(
+  s: TruthState, pos: { theaterId: Id; q: number; r: number },
+): { q: number; r: number } {
+  const o = s.config.airHexByTheater?.[pos.theaterId] ?? { q: 0, r: 0 };
+  return { q: o.q + pos.q, r: o.r + pos.r };
+}
+
+/** The ground hex under an air hex, if any theater's region contains it. */
+export function groundHexUnder(
+  s: TruthState, air: { q: number; r: number },
+): GroundPos | null {
+  for (const tid of Object.keys(s.theaters).sort()) {
+    const o = s.config.airHexByTheater?.[tid] ?? { q: 0, r: 0 };
+    const q = air.q - o.q, r = air.r - o.r;
+    if (s.theaters[tid].hexes[hexKey(q, r)]) return { kind: 'ground', theaterId: tid, q, r };
+  }
+  return null;
+}
+
+/** A representative hex over a theater (its region origin) — prefer airHexOver. */
 export function theaterAirHex(s: TruthState, theaterId: Id): { q: number; r: number } {
   return s.config.airHexByTheater?.[theaterId] ?? { q: 0, r: 0 };
 }
@@ -54,8 +80,13 @@ function convFactor(s: TruthState, f: Formation): number {
   return isConvFlight(s, f) ? SKYWATCH.CONV_FIGHTER_COST_FACTOR : 1;
 }
 
-export function cruiseHexesPerTick(): number {
-  return SKYWATCH.CRUISE_HEX_PER_MIN * CLOCK.TICK_MINUTES; // 12
+/**
+ * Speeds come off the card (ext): dash = Safe Thrust hexes/min, cruise = half that —
+ * a Cheetah outruns a Shilone even loafing. The old flat CRUISE_HEX_PER_MIN 2 was the
+ * Safe-Thrust-4 case of this formula, so default units fly exactly as before.
+ */
+export function cruiseHexesPerTick(s: TruthState, f: Formation): number {
+  return Math.max(1, Math.floor(minSafeThrust(s, f) * CLOCK.TICK_MINUTES / 2));
 }
 export function dashHexesPerTick(s: TruthState, f: Formation): number {
   return minSafeThrust(s, f) * CLOCK.TICK_MINUTES;
@@ -73,7 +104,7 @@ export function isSpheroid(s: TruthState, f: Formation): boolean {
  */
 export function atmoHexesPerTick(s: TruthState, f: Formation, speed: 'CRUISE' | 'DASH'): number {
   if (isSpheroid(s, f)) return SKYWATCH.SPHEROID_ATMO_HEX_PER_TICK;
-  return speed === 'DASH' ? dashHexesPerTick(s, f) : cruiseHexesPerTick();
+  return speed === 'DASH' ? dashHexesPerTick(s, f) : cruiseHexesPerTick(s, f);
 }
 export function transitFpPerHex(s: TruthState, f: Formation, speed: 'CRUISE' | 'DASH'): number {
   const base = speed === 'DASH' ? SKYWATCH.DASH_FP_PER_HEX : SKYWATCH.CRUISE_FP_PER_HEX;
@@ -116,11 +147,11 @@ function homeAirHexOf(s: TruthState, f: Formation): { q: number; r: number } | n
   const carrier = carrierId ? s.formations[carrierId] : undefined;
   if (carrier && !carrier.destroyed) {
     if (carrier.pos.kind === 'air') return airQR(carrier.pos);
-    if (carrier.pos.kind === 'ground') return theaterAirHex(s, carrier.pos.theaterId);
+    if (carrier.pos.kind === 'ground') return airHexOver(s, carrier.pos);
   }
   const fac = homeFacility(s, f);
   if (!fac || fac.pos.kind !== 'ground') return null;
-  return theaterAirHex(s, fac.pos.theaterId);
+  return airHexOver(s, fac.pos);
 }
 
 /** RTB transit distance in air hexes from the flight's current air position to home. */
@@ -226,7 +257,7 @@ function tryLaunch(s: TruthState, f: Formation, order: Order, emit: (e: GameEven
   const climbLevels = SKYWATCH.CRUISE_ALT_LEVEL; // ground → HIGH band
   const fpPaid = takeoffFp(runway) + climbFp(climbLevels);
   const here = f.pos as GroundPos;
-  const hex = theaterAirHex(s, here.theaterId);
+  const hex = airHexOver(s, here); // you climb into the sky over your own base
   const pos: AirPos = {
     kind: 'air', gridQ: hex.q, gridR: hex.r, band: 'HIGH',
     altLevel: SKYWATCH.CRUISE_ALT_LEVEL,
@@ -282,7 +313,7 @@ function destAirHex(s: TruthState, f: Formation, order: Order | undefined, dt: n
   // LAND (ext) outranks RTB: putting down NOW is how a bingo ship saves itself —
   // checked first so a fuel-forced RTB can't swallow the order.
   if (order?.kind === 'LAND' && order.targetHex) {
-    return theaterAirHex(s, order.targetHex.theaterId);
+    return airHexOver(s, order.targetHex); // fly to the sky over the LZ, then put down
   }
   if (!order || f.air?.phase === 'RTB') return homeAirHexOf(s, f);
   if (order.targetContactId) {
@@ -297,7 +328,7 @@ function destAirHex(s: TruthState, f: Formation, order: Order | undefined, dt: n
     }
     const est = c.delivered?.estPos ?? c.estPos;
     if (est?.kind === 'air') return { q: est.gridQ, r: est.gridR };
-    if (est?.kind === 'ground') return theaterAirHex(s, est.theaterId);
+    if (est?.kind === 'ground') return airHexOver(s, est);
     return null;
   }
   // the station leg is consumed once its loiter clock has run out (=== 0); the
@@ -322,8 +353,8 @@ function ascentNodeFor(s: TruthState, f: Formation, order: Order): Id | null {
     .filter(n => n.theaterId && s.theaters[n.theaterId])
     .sort((a, b) => a.id.localeCompare(b.id));
   if (here) {
-    const over = withTheater.find(n =>
-      hexDistance(theaterAirHex(s, n.theaterId!), here) === 0);
+    const under = groundHexUnder(s, here); // ascend from wherever you are in the region
+    const over = under ? withTheater.find(n => n.theaterId === under.theaterId) : undefined;
     if (over) return over.id;
   }
   return withTheater[0]?.id ?? null;
@@ -558,7 +589,7 @@ function scrambleFromBay(s: TruthState, f: Formation, emit: (e: GameEvent) => vo
     altLevel = carrier.pos.altLevel;
     fpPaid = takeoffFp(false); // already at altitude: just the launch burn
   } else if (carrier.pos.kind === 'ground') {
-    hex = theaterAirHex(s, carrier.pos.theaterId);
+    hex = airHexOver(s, carrier.pos);
     altLevel = SKYWATCH.CRUISE_ALT_LEVEL;
     fpPaid = takeoffFp(false) + climbFp(SKYWATCH.CRUISE_ALT_LEVEL);
   } else {
@@ -661,7 +692,7 @@ export function airDetectionPass(s: TruthState, emit: (e: GameEvent) => void): v
   for (const fac of Object.values(s.facilities)) {
     if (fac.pos.kind !== 'ground' || !fac.sensorStation) continue;
     searchers.push({ id: fac.id, sideId: fac.sideId, name: fac.name,
-      airHex: theaterAirHex(s, fac.pos.theaterId),
+      airHex: airHexOver(s, fac.pos),
       range: SKYWATCH.RADAR_HORIZON.HIGH_BAND_AIR_HEXES +
              SKYWATCH.RADAR_HORIZON.STATION_HQ_BONUS_AIR_HEXES,
       active: !!fac.activeSweep, alwaysOnNet: true });
@@ -670,7 +701,7 @@ export function airDetectionPass(s: TruthState, emit: (e: GameEvent) => void): v
     if (f.destroyed || f.pos.kind !== 'ground' || f.mounted) continue;
     const isHq = f.unitIds.some(uid => s.units[uid]?.tags.includes('HQ'));
     searchers.push({ id: f.id, sideId: f.sideId, name: f.name,
-      airHex: theaterAirHex(s, f.pos.theaterId),
+      airHex: airHexOver(s, f.pos),
       range: SKYWATCH.RADAR_HORIZON.HIGH_BAND_AIR_HEXES +
              (isHq ? SKYWATCH.RADAR_HORIZON.STATION_HQ_BONUS_AIR_HEXES : 0),
       active: f.emcon === 'ACTIVE', alwaysOnNet: false });

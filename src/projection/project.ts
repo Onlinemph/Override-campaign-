@@ -14,7 +14,7 @@ import { isNight } from '../engine/clock.js';
 import { commandNodesOf } from '../engine/net.js';
 import { supplyEnvelope } from '../engine/logistics.js';
 import { formationSensors } from '../engine/detection.js';
-import { isFlight, jokerBingo, minFp } from '../engine/air.js';
+import { groundHexUnder, isFlight, jokerBingo, minFp } from '../engine/air.js';
 import { stallReason } from '../engine/stall.js';
 import { burnDaysRemaining, transitDays } from '../engine/space.js';
 import type { ContactView, OwnFacilityView, OwnFormationView, OwnSatelliteView,
@@ -91,10 +91,15 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
         const { joker, bingo } = jokerBingo(truth, f);
         const fatigues = f.unitIds.flatMap(uid =>
           (truth.units[uid]?.pilotIds ?? []).map(pid => truth.pilots[pid]?.fatigue ?? 0));
+        // D-037 congruent sky: `overhead` is the ground hex directly below, so the map
+        // can draw the flight where it actually is
+        const over = f.pos.kind === 'air'
+          ? groundHexUnder(truth, { q: f.pos.gridQ, r: f.pos.gridR }) : null;
         view.flight = {
           airPos: f.pos.kind === 'air'
             ? { q: f.pos.gridQ, r: f.pos.gridR, band: f.pos.band, altLevel: f.pos.altLevel }
             : null,
+          overhead: over ? { theaterId: over.theaterId, q: over.q, r: over.r } : null,
           phase: f.air?.phase ?? 'GROUNDED',
           speed: f.air?.speed ?? 'CRUISE',
           fpMin: minFp(truth, f),
@@ -121,6 +126,11 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
         staleAsOfTick: d.asOfTick,
         ageTicks: now - d.asOfTick,
       };
+      // D-037: an air contact also carries the ground hex its estimate sits over
+      if (d.estPos.kind === 'air') {
+        const under = groundHexUnder(truth, { q: d.estPos.gridQ, r: d.estPos.gridR });
+        if (under) view.overhead = { theaterId: under.theaterId, q: under.q, r: under.r };
+      }
       // spec §4 reveal table — fields strictly by level
       if (d.level >= 2) {
         view.estVector = d.estVector;

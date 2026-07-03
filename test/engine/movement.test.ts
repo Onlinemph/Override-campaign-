@@ -170,6 +170,28 @@ describe('B5 — movement', () => {
     expect(posOf(truth, 'xc')).toEqual(gp(4, 10));
   });
 
+  it('rail (D-037): a marching battalion rides the line at RAIL_OMP hexes/hour', () => {
+    const railHexes = Array.from({ length: 14 }, (_, i) =>
+      ({ q: i, r: 5, infra: ['RAIL' as const] }));
+    const truth = baseTruth('RAIL-SEED', railHexes, 20);
+    truth.clockMode = 'PULSE';
+    // a slow mech battalion (omp 3) on the rail line: 12 hexes in one pulse, not 4.5
+    const f = addMechFormation(truth, { id: 'rail', sideId: 'blue', pos: gp(0, 5), omp: 3 });
+    activate(truth, moveOrder('or', f, 'MOVE',
+      Array.from({ length: 13 }, (_, i) => gp(i + 1, 5))));
+    run(truth, 10); // one pulse
+    expect(posOf(truth, 'rail')).toEqual(gp(12, 5));
+
+    // contact mode: the train still runs at RAIL_OMP — 1.2 hexes/turn beats omp/10
+    const truth2 = baseTruth('RAIL-SEED', railHexes, 20);
+    truth2.clockMode = 'CONTACT';
+    const f2 = addMechFormation(truth2, { id: 'rail', sideId: 'blue', pos: gp(0, 5), omp: 3 });
+    activate(truth2, moveOrder('or', f2, 'MOVE',
+      Array.from({ length: 13 }, (_, i) => gp(i + 1, 5))));
+    for (let i = 0; i < 5; i++) run(truth2, 1);
+    expect(posOf(truth2, 'rail')).toEqual(gp(6, 5)); // 5 turns × 1.2 = 6 hexes
+  });
+
   it('forced march: ×1.5 speed and RDY −1 per pulse marched', () => {
     const truth = baseTruth('MOVE-SEED', [], 40);
     truth.clockMode = 'PULSE';

@@ -5,7 +5,7 @@ import type {
   AirPos, BattleResult, Emcon, Engagement, GroundPos, HandoffPackage, Id, Order, TruthState,
 } from './types.js';
 import {
-  airQR, climbFp, isFlight, landingFp, takeoffFp, theaterAirHex,
+  airHexOver, airQR, climbFp, isFlight, landingFp, takeoffFp,
 } from '../engine/air.js';
 import { applyEvent, type GameEvent, type LoggedEvent } from './events.js';
 import type { EventStore } from './log.js';
@@ -614,7 +614,7 @@ export class Campaign {
       hex = airQR(carrier.pos);
       altLevel = carrier.pos.altLevel;
     } else if (carrier.pos.kind === 'ground') {
-      hex = theaterAirHex(this.truth, carrier.pos.theaterId);
+      hex = airHexOver(this.truth, carrier.pos);
       altLevel = SKYWATCH.CRUISE_ALT_LEVEL;
     } else {
       return { ok: false, reason: 'carrier is in space — launch there is a DEEP SKY sortie' };
@@ -657,7 +657,7 @@ export class Campaign {
     }
     const flightHex = airQR(flight.pos);
     const carrierHex = carrier.pos.kind === 'air' ? airQR(carrier.pos)
-      : carrier.pos.kind === 'ground' ? theaterAirHex(this.truth, carrier.pos.theaterId)
+      : carrier.pos.kind === 'ground' ? airHexOver(this.truth, carrier.pos)
       : null;
     if (!carrierHex) return { ok: false, reason: 'carrier is in space' };
     if (hexDistance(flightHex, carrierHex) !== 0) {

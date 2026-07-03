@@ -33,6 +33,8 @@ export interface OwnFormationView {
   alertState?: string;
   flight?: {
     airPos: { q: number; r: number; band: AirPos['band']; altLevel: number } | null;
+    /** D-037 congruent sky: the ground hex directly under the flight, if over a map. */
+    overhead?: { theaterId: string; q: number; r: number } | null;
     phase: string;
     speed: 'CRUISE' | 'DASH';
     fpMin: number;
@@ -80,6 +82,8 @@ export interface ContactView {
   levelName: string;
   kind: 'STANDARD' | 'ECM_HAZE';
   estPos: GroundPos | AirPos | NodePos | LanePos; posErrorHexes: number;
+  /** D-037: air contacts — the ground hex the estimate sits over, for the map. */
+  overhead?: { theaterId: Id; q: number; r: number };
   estVector?: number;           // SHADOW+
   estSizeClass?: string;        // SHADOW+
   estComposition?: string;      // CONTACT+

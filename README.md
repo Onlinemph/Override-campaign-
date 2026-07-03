@@ -74,6 +74,14 @@ VTOLs cross mountains and lakes; hovercraft skim water; tanks do neither), every
 with what it actually does, detection math, the career loop, carriers, flak, space, and
 the GM toolkit. The in-app 📘 `/manual` is its player-facing summary with live numbers.
 
+**The sky is a map now.** Every ground hex has an air hex above it: aircraft launch over
+their own base, cross the map at their record sheet's real speed, and thread the gaps
+between radar pickets (ground units see high traffic 12 hexes out, sensor stations 24).
+Warning time, combat radius, and forward basing are all geography. Maps scale to
+continental size (up to 120 hexes / 2,160 km — pan and zoom included), where **rail
+lines** move ground battalions four times faster than they march and spheroid DropShips
+descend from orbit directly onto the hex they want.
+
 **Want the full experience?** Run **[OPERATION DAGGERPOINT](docs/OPERATION_DAGGERPOINT.md)**
 — `npm run dev -- demo/assault.json` — a 3067 planetary assault built to exercise **every
 mechanic in the engine**: a Davion task force burns in from the jump point (watched by

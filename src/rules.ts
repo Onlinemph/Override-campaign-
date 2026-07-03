@@ -393,10 +393,13 @@ export const SKYWATCH = {
   // ── §5 seeing the sky ──
   AIR_SIG: { FLIGHT_3_6: 6, PAIR: 8, SINGLE: 9, DROPSHIP_THRUST: 3, SKYEYE: 5 },
   AIR_SIG_MODS: { DASH_OR_CLIMB: -2, LEAN_LOITER: 1, BALLISTIC_GLIDE: 3 },
+  // D-037 (congruent sky): the air grid maps 1:1 onto the ground map, so radar horizons
+  // are real radii. A ground formation sees the HIGH band ~216 km out; a sensor station
+  // or Mobile HQ doubles that. Radar coverage becomes geography you can route around.
   RADAR_HORIZON: {
-    HIGH_BAND_AIR_HEXES: 0,         // ground sensors: HIGH band within their theater air hex
-    STATION_HQ_BONUS_AIR_HEXES: 1,  // sensor stations & Mobile HQs see one air hex further
-    LOW_BAND_OP_HEXES: 6,
+    HIGH_BAND_AIR_HEXES: 12,        // any ground formation: HIGH band within 12 air hexes
+    STATION_HQ_BONUS_AIR_HEXES: 12, // sensor stations & Mobile HQs reach 24
+    LOW_BAND_OP_HEXES: 6,           // under-the-radar: LOW band only within 6 hexes
   },
   AIR_TO_AIR_DETECT_AIR_HEXES: 1,   // fighters resolve air targets in own + adjacent hex (D-010.6)
   SKYEYE_SENSOR: { passive: 6, active: 12 },

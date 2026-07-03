@@ -15,6 +15,7 @@ import type {
 import type { GameEvent } from '../core/events.js';
 import { rollDice } from '../core/rng.js';
 import { registerDetection } from './detection.js';
+import { airHexOver } from './air.js';
 
 export const SPACE_ORDERS = new Set([
   'TRANSIT', 'COLD_COAST', 'STATION_KEEP', 'INTERCEPT', 'SKIM_FUEL',
@@ -546,7 +547,12 @@ export function descentPass(s: TruthState, emit: (e: GameEvent) => void): void {
       continue;
     }
     if (s.tick < end) continue;
-    const hex = theaterAirHexById(s, theaterId);
+    // D-037 (congruent sky): you come down over the hex you aimed at — a targetHex on
+    // the DESCEND order puts you in the sky over the LZ (the spheroid doctrine: cross
+    // in space, descend on the spot). No target ⇒ over the theater's center.
+    const aim = order.targetHex?.theaterId === theaterId
+      ? order.targetHex : theaterCenter(s, theaterId);
+    const hex = airHexOver(s, { theaterId, q: aim.q, r: aim.r });
     const pos: AirPos = {
       kind: 'air', gridQ: hex.q, gridR: hex.r, band: 'HIGH',
       altLevel: SKYWATCH.CRUISE_ALT_LEVEL,
@@ -558,8 +564,13 @@ export function descentPass(s: TruthState, emit: (e: GameEvent) => void): void {
   }
 }
 
-function theaterAirHexById(s: TruthState, theaterId: string): { q: number; r: number } {
-  return s.config.airHexByTheater?.[theaterId] ?? { q: 0, r: 0 };
+function theaterCenter(s: TruthState, theaterId: string): { q: number; r: number } {
+  let maxQ = 0, maxR = 0;
+  for (const key of Object.keys(s.theaters[theaterId]?.hexes ?? {})) {
+    const [q, r] = key.split(',').map(Number);
+    maxQ = Math.max(maxQ, q); maxR = Math.max(maxR, r);
+  }
+  return { q: Math.floor(maxQ / 2), r: Math.floor(maxR / 2) };
 }
 
 export function spacePass(s: TruthState, dt: number, emit: (e: GameEvent) => void): void {

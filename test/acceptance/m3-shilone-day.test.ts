@@ -29,12 +29,13 @@ const DAWN_OF_DAY = 60;
 
 function buildScenario(): TruthState {
   const truth = baseTruth(SEED, [], 30, 22);
-  // the theater sits under air hex (0,0)
+  // D-037 congruent sky: the airbase sits at ground (0,0), so Talon-2 launches into
+  // air hex (0,0) and the SS12 intercept geometry reads exactly as written.
   truth.config.airHexByTheater = { 'theater-1': { q: 0, r: 0 } };
 
   // Blue: airbase (runway, 14-ton fuel farm), EW station on active sweep, HQ node
   truth.facilities['airbase'] = mkFacility({
-    id: 'airbase', sideId: 'blue', name: 'Airbase Talon', pos: gp(5, 5),
+    id: 'airbase', sideId: 'blue', name: 'Airbase Talon', pos: gp(0, 0),
     tags: ['AIRSTRIP'], fuelFarmTons: 14,
     turnaroundCrews: { total: 2, busyUntil: [] }, isCommandNode: true,
   });
@@ -49,7 +50,7 @@ function buildScenario(): TruthState {
   const talon = addFlight(truth, {
     id: 'talon-2', sideId: 'blue', count: 1, klass: 'ASF',
     fp: 400, tons: 5, safeThrust: 6,
-    basePos: gp(5, 5), homeFacilityId: 'airbase', withPilots: true,
+    basePos: gp(0, 0), homeFacilityId: 'airbase', withPilots: true,
   });
   truth.units[talon.unitIds[0]].model = 'SL-17 Shilone';
 

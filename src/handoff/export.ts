@@ -13,7 +13,7 @@ import type {
 } from '../core/types.js';
 import { hexKey } from '../core/types.js';
 import { hexDistance, neighbors } from '../hex/axial.js';
-import { atmoHexesPerTick, jokerBingo, minFp, minSafeThrust } from '../engine/air.js';
+import { airHexOver, atmoHexesPerTick, jokerBingo, minFp, minSafeThrust } from '../engine/air.js';
 
 const EDGES = ['E', 'NE', 'NW', 'W', 'SW', 'SE'] as const;
 // map a heading (0°=+q/E, CCW) to one of six entry edges
@@ -110,7 +110,8 @@ function sideBlock(
   // off-board air (ext): friendly flights holding a ground-attack mission within call
   // range of the battle theater's air hex. arrivesTurn 0 = already overhead.
   const airOnStation: Array<{ formationId: Id; arrivesTurn: number; fpOnStation: number }> = [];
-  const battleAirHex = s.config.airHexByTheater?.[hex.theaterId] ?? { q: 0, r: 0 };
+  // D-037: measured from the sky directly over the battle hex — "on call" is positional
+  const battleAirHex = airHexOver(s, hex);
   for (const f of Object.values(s.formations)) {
     if (f.destroyed || f.sideId !== sideId || f.pos.kind !== 'air') continue;
     const o = f.currentOrderId ? s.orders[f.currentOrderId] : undefined;

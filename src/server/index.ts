@@ -273,6 +273,7 @@ const server = createServer(async (req, res) => {
                     HOT_PIT_PULSES: SKYWATCH.HOT_PIT_PULSES,
                     SPHEROID_ATMO_HEX_PER_TICK: SKYWATCH.SPHEROID_ATMO_HEX_PER_TICK,
                     CAS_ON_CALL: SKYWATCH.CAS_ON_CALL,
+                    RADAR_HORIZON: SKYWATCH.RADAR_HORIZON,
                     FATIGUE_GROUNDED_AT: SKYWATCH.FATIGUE_GROUNDED_AT },
       });
     }
@@ -414,7 +415,10 @@ const server = createServer(async (req, res) => {
     if (path === '/api/gm/generate' && req.method === 'POST') {
       const b = await readBody(req);
       const camp = generateCampaign({
-        name: b.name, seed: b.seed, width: Number(b.width) || 20, height: Number(b.height) || 14,
+        name: b.name, seed: b.seed,
+        // continental maps (D-037): up to 120 hexes (2,160 km) across
+        width: Math.max(4, Math.min(120, Number(b.width) || 20)),
+        height: Math.max(4, Math.min(120, Number(b.height) || 14)),
         sides: Array.isArray(b.sides) ? b.sides : undefined,
       });
       return json(res, 200, { campaign: camp });

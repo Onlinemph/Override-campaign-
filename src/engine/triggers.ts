@@ -11,7 +11,7 @@ import type { GroundPos, Id, Order, TruthState, Trigger } from '../core/types.js
 import { hexKey } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
 import { hexDistance } from '../hex/axial.js';
-import { theaterAirHex } from './air.js';
+import { airHexOver } from './air.js';
 
 function asHex(pos: { kind: string }): GroundPos | null {
   return pos.kind === 'ground' ? (pos as GroundPos) : null;
@@ -21,7 +21,7 @@ function asHex(pos: { kind: string }): GroundPos | null {
 function airHexOf(s: TruthState, f: { pos: { kind: string } }): { q: number; r: number } | null {
   const pos = f.pos as GroundPos | { kind: 'air'; gridQ: number; gridR: number };
   if (pos.kind === 'air') return { q: pos.gridQ, r: pos.gridR };
-  if (pos.kind === 'ground') return theaterAirHex(s, (pos as GroundPos).theaterId);
+  if (pos.kind === 'ground') return airHexOver(s, pos as GroundPos);
   return null;
 }
 

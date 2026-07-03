@@ -29,11 +29,13 @@ const station = (q: number, r: number): AirPos =>
   ({ kind: 'air', gridQ: q, gridR: r, band: 'HIGH', altLevel: 6, velocity: 0, vectorDeg: 0 });
 
 describe('M3 — ledger math (pure helpers)', () => {
-  it('rates: cruise 12 hexes/CT; dash = ST×6 hexes/CT; costs 1 / 2 FP per hex', () => {
+  it('rates come off the card: cruise = ST×3, dash = ST×6 hexes/CT; costs 1 / 2 FP per hex', () => {
     const truth = baseTruth();
     const f = addFlight(truth, { id: 'f', sideId: 'blue', basePos: gp(5, 5), safeThrust: 6 });
-    expect(cruiseHexesPerTick()).toBe(12);
+    expect(cruiseHexesPerTick(truth, f)).toBe(18); // ST 6: a hot ship loafs faster
     expect(dashHexesPerTick(truth, f)).toBe(36);
+    const slow = addFlight(truth, { id: 's', sideId: 'blue', basePos: gp(6, 5), safeThrust: 4 });
+    expect(cruiseHexesPerTick(truth, slow)).toBe(12); // ST 4 = the old doctrinal 12
     expect(transitFpPerHex(truth, f, 'CRUISE')).toBe(1);
     expect(transitFpPerHex(truth, f, 'DASH')).toBe(2);
   });
@@ -142,8 +144,9 @@ describe('M3 — CAP, loiter & fuel thresholds', () => {
                                  homeFacilityId: 'base', fp: 100 });
     f.alertState = 'ALERT5';
     const c = Campaign.create(truth);
+    // D-037 congruent sky: launch is over the base hex (5,5); station 3 hexes east
     c.inject({ type: 'ORDER_ISSUED', order: airOrder('o', 'flt', 'CAP',
-      { station: station(3, 0), issuedTick: 0 }) });
+      { station: station(8, 5), issuedTick: 0 }) });
 
     let guard = 0;
     while (c.truth.formations['flt'].air?.phase !== 'ON_STATION' && guard++ < 10) c.step();
@@ -168,7 +171,7 @@ describe('M3 — CAP, loiter & fuel thresholds', () => {
                        homeFacilityId: 'base', fp: 400 }).alertState = 'ALERT5';
     const c = Campaign.create(truth);
     c.inject({ type: 'ORDER_ISSUED', order: airOrder('o', 'flt', 'RECON',
-      { station: station(2, 0), loiterTicks: 2, issuedTick: 0 }) });
+      { station: station(7, 5), loiterTicks: 2, issuedTick: 0 }) }); // 2 hexes off the base
     let guard = 0;
     while (c.truth.formations['flt'].pos.kind === 'air' || guard === 0) {
       c.step();
@@ -201,30 +204,45 @@ describe('M3 — air detection & SIG', () => {
     expect(computeAirSig(truth, pair, false, false).tn).toBe(9);   // lean loiter +1
   });
 
-  it('radar horizon: a sensor station sees one air hex past its theater hex; plain ground does not', () => {
+  it('radar horizon (D-037): stations reach 24 air hexes, plain ground 12, beyond is quiet', () => {
     const truth = baseTruth('AIR-EW');
     truth.facilities['st'] = mkFacility({
       id: 'st', sideId: 'blue', name: 'EW Station', pos: gp(5, 5),
       tags: ['SENSOR_STATION'], sensorStation: { passive: 6, active: 12 },
       activeSweep: true,
     });
-    // theater air hex defaults to (0,0); bandit one air hex out at (1,0), SIG trivial
+    // congruent sky: the station searches from over its own hex (5,5); 20 hexes out is
+    // inside its 24-hex horizon
     const bandit = addFlight(truth, { id: 'bandit', sideId: 'red', count: 4,
-                                      airPos: { q: 1, r: 0 } });
+                                      airPos: { q: 25, r: 5 } });
     bandit.sigBase = 6;
     const c = Campaign.create(truth);
     c.step();
     expect(c.store.all().some(l => l.event.type === 'DIE_ROLLED' &&
       (l.event as any).roll.purpose.includes('EW Station'))).toBe(true);
 
-    // two air hexes out: beyond the EW line, no roll
+    // 30 air hexes out: over the horizon, no roll
     const truth2 = baseTruth('AIR-EW2');
     truth2.facilities['st'] = truth.facilities['st'];
-    addFlight(truth2, { id: 'bandit', sideId: 'red', count: 4, airPos: { q: 2, r: 0 } });
+    addFlight(truth2, { id: 'bandit', sideId: 'red', count: 4, airPos: { q: 35, r: 5 } });
     const c2 = Campaign.create(truth2);
     c2.step();
     expect(c2.store.all().some(l => l.event.type === 'DIE_ROLLED' &&
       (l.event as any).roll.purpose.includes('air detection'))).toBe(false);
+
+    // a plain ground formation reaches 12 — half the station's line
+    const truth3 = baseTruth('AIR-EW3');
+    addMechFormation(truth3, { id: 'watchers', sideId: 'blue', pos: gp(5, 5) });
+    addFlight(truth3, { id: 'near', sideId: 'red', count: 4, airPos: { q: 15, r: 5 } })
+      .sigBase = 6;                                             // 10 out: seen
+    addFlight(truth3, { id: 'far', sideId: 'red', count: 4, airPos: { q: 25, r: 5 } });
+    const c3 = Campaign.create(truth3);
+    c3.step();
+    const rolls = c3.store.all().filter(l => l.event.type === 'DIE_ROLLED' &&
+      (l.event as any).roll.purpose.includes('air detection'))
+      .map(l => (l.event as any).roll.purpose);
+    expect(rolls.some((p: string) => p.includes('near'))).toBe(true);
+    expect(rolls.some((p: string) => p.includes('far'))).toBe(false);
   });
 });
 

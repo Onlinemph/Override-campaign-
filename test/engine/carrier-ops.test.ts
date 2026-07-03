@@ -95,10 +95,9 @@ describe('carrier ops — launch / recover / rearm', () => {
 
   it('recovers an airborne flight co-located with the carrier, then rearms it', () => {
     const truth = carrierTruth();
-    // flight aloft over the carrier's theater air hex, low on fuel
-    const airHex = truth.config.airHexByTheater?.['theater-1'] ?? { q: 0, r: 0 };
+    // D-037 congruent sky: recovery needs the flight in the hex directly over the ship
     const flt = addFlight(truth, { id: 'f1', sideId: 'blue',
-      airPos: { q: airHex.q, r: airHex.r }, fp: 20, tons: 5 });
+      airPos: { q: 10, r: 10 }, fp: 20, tons: 5 });
     flt.air = { ...flt.air!, homeCarrierId: 'ds1' };
     const c = Campaign.create(truth);
 

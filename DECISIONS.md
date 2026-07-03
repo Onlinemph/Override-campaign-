@@ -910,3 +910,32 @@ Async play: the hosted campaign runs continuously; players drop in whenever, plo
 3. stall.ts routes its impassable-ahead check through hexEntryCost, so the ⏳ reason is
    motion-aware too — water stalls a tank column, not a VTOL wing. Written up (with the
    full terrain × motion matrix) in docs/GAME_GUIDE.md, the new complete-mechanics guide.
+
+## D-037 ✅ The congruent sky: simulationist air war at continental scale
+The air layer's one-hex-per-theater config wasted a positional engine that was already
+built (hex-by-hex flight, pursuit prediction, live joker/bingo). Rather than abstract
+around it (packages/tracks were considered and rejected as un-simulationist — user
+call), the sky now maps 1:1 onto the ground:
+1. **Congruent grid**: `airHexOver(groundHex)` / `groundHexUnder(airHex)`;
+   `airHexByTheater` is reinterpreted as the theater's region ORIGIN on the global air
+   grid. Launches climb over their own base; LAND flies to the sky over the LZ; RTB,
+   joker and bingo measure real geography; CAS "on call" is a radius from over the
+   battle hex; DESCEND with a targetHex arrives over that hex (the spheroid doctrine in
+   one order); air wrecks fall on the hex under the merge. Flights and air contacts now
+   draw on the ground map at the hex they're actually over.
+2. **Card-true speeds**: dash = Safe Thrust × 6 hexes/turn (unchanged), cruise = half
+   dash — the flat CRUISE_HEX_PER_MIN 2 was the ST-4 case of this formula, so default
+   units fly exactly as before. Spheroids keep their 1 hex/turn atmo crawl (D-030).
+3. **Radar horizons became real radii**: ground formations see the HIGH band at 12 air
+   hexes (~216 km), sensor stations & Mobile HQs at 24. Coverage is geography; the gaps
+   between pickets are routes; warning time is literal minutes against the alert-state
+   scramble delays.
+4. **Rail**: a column on RAIL infra rides at RAIL_OMP (12 hexes/hour) when that beats
+   its feet — the parked Milestone-0 constant, finally alive. Rail lines are the
+   operational fast lane big maps demand (and engineers can cut them).
+5. **Continental maps**: generator and editor accept up to 120×120 (2,160 km); the
+   existing pan/zoom handles the canvas. Clock compression (WATCH/PULSE) absorbs the
+   empty space — big maps are why it exists.
+6. The clock's air-proximity check now keys on the sky over enemy formations and
+   facilities, not "over an occupied theater" — overflying empty wilderness no longer
+   drops the campaign to 6-minute turns.

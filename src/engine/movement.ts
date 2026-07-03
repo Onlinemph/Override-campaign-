@@ -228,11 +228,16 @@ export function movementPass(
 
       const c = hexEntryCost(s, f, hex);
       if (c === null) break; // impassable: order stalls, GM sees the stuck counter
+      // riding the line (D-037): a column on RAIL infra moves at RAIL_OMP hexes/hour
+      // when that beats its own feet — trains are the operational fast lane
+      const onRail = !flies && hex.infra.includes('RAIL');
       let hexCost: number; // in the unit of `avail`
       if (contactScale) {
         hexCost = c;
+        if (onRail) hexCost *= Math.min(1, (f.omp * mult) / MOVEMENT.RAIL_OMP);
       } else {
-        const rate = f.omp * (onRoad ? MOVEMENT.ROAD_BONUS : 1) * mult; // hexes per pulse
+        let rate = f.omp * (onRoad ? MOVEMENT.ROAD_BONUS : 1) * mult; // hexes per pulse
+        if (onRail) rate = Math.max(rate, MOVEMENT.RAIL_OMP);
         hexCost = 1 / rate; // pulses per hex
       }
 

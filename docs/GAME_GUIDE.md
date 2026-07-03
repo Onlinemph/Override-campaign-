@@ -35,9 +35,13 @@ replace it.
 
 ## 2. The three maps
 
-- **Ground theaters** — hex maps at 18 km/hex. Formations, facilities, terrain, roads.
-- **The air layer** — one high-altitude grid above the theaters; a whole theater map
-  sits under a single air hex. Flights, DropShips in atmosphere.
+- **Ground theaters** — hex maps at 18 km/hex. Formations, facilities, terrain, roads,
+  rail. Maps run up to 120 hexes (2,160 km) across — continental scale.
+- **The air layer** — **congruent with the ground map**: every ground hex has an air hex
+  directly above it (D-037). Position in the sky is real: launches climb over their own
+  base, a raid crosses the map hex by hex, a CAP covers a radius, and radar coverage is
+  geography you can route around. Between theaters the air grid keeps going (each
+  theater's sky region is anchored by `airHexByTheater`).
 - **The system map** — nodes (jump points, planets, moons, gas giants, stations, belts,
   pirate points) connected by lanes measured in AU. DropShips, JumpShips, WarShips.
 
@@ -89,10 +93,15 @@ and the column is barred from mountains.
 
 *(numbers are OMP cost to enter the hex in contact mode; ✗ = impassable)*
 
-**Roads & rail**: entry cost ×½ (minimum 1) in contact mode; ×1.5 speed at pulse scale.
+**Roads**: entry cost ×½ (minimum 1) in contact mode; ×1.5 speed at pulse scale.
 Marching on a road makes you predictable: SIG −1 to be spotted. VTOLs ignore roads both
 ways. An impassable hex on your plotted route **stalls the column** — the order sits
 with a ⏳ reason on your screen until you re-plot.
+
+**Rail** (D-037): a column moving along RAIL infrastructure rides the line at
+**12 hexes/hour** (216 km/h) when that beats its own speed — four times faster than a
+marching mech battalion. Rail lines are operational arteries: plan offensives around
+them, defend the junctions, and cut the enemy's (engineers can DEMOLISH bridges).
 
 ### Speeds in real terms
 
@@ -265,7 +274,7 @@ track is live; a cold trail means the bandit shook you and the flight turns home
 | **JUMP** | through the door: needs 100% charge or an L-F battery. Pirate points need the survey (secret until acquired) and roll 2d6 ≥ 9 (≥ 7 surveyed); ≤ 4 misjumps. The jump flash announces you system-wide, after light lag |
 | **INSPECT** | customs: resolve a transponder squawk (lie holds on 2d6 ≥ 9; a hard-burning "merchant" fails automatically) |
 | **BLOCKADE / BOARD** | intent markers the GM resolves — blockades choke off-world imports (see Supply); boarding is possible against a crippled ship in a MATCHED encounter |
-| **DESCEND** | re-enter from a planet/moon node into its theater's air layer: ~18 min, 20 FP (the atmosphere does the braking) |
+| **DESCEND** | re-enter from a planet/moon node into its theater's air layer: ~18 min, 20 FP (the atmosphere does the braking). Give it a `targetHex` and you arrive in the sky **directly over that hex** — the spheroid doctrine in one order |
 
 ---
 
@@ -338,10 +347,23 @@ clears it (−1 per 6 pulses).
 
 ## 11. The sky — fuel is the game
 
-Every airborne tick pays the **flight ledger** (FP). Cruise 1 FP/hex (12 hexes/turn),
-dash 2 FP/hex (safe thrust × 6 hexes/turn), loiter 2 FP/min (lean loiter 1 — but your
-searches roll −1). Conventional fighters pay **half** on transit and loiter. Takeoff:
-10 FP vertical, 4 with a runway (AIRSTRIP/SPACEPORT). Climbing costs 2 FP/level.
+Every airborne tick pays the **flight ledger** (FP). **Speeds come off the card**
+(D-037): dash = Safe Thrust × 6 hexes per turn at 2 FP/hex; cruise = half that at
+1 FP/hex — a Safe Thrust 6 interceptor loafs at 18 hexes/turn while a ST 4 bomber
+cruises 12; a hot ship outruns a slow one even off the throttle. Loiter 2 FP/min (lean
+loiter 1 — but your searches roll −1). Conventional fighters pay **half** on transit and
+loiter. Takeoff: 10 FP vertical, 4 with a runway (AIRSTRIP/SPACEPORT). Climbing costs
+2 FP/level.
+
+**Position is real** (D-037). You launch into the sky over your own base and fly to the
+mission hex by hex, visible to whatever radar you cross: any ground formation sees the
+HIGH band within **12 air hexes** (~216 km); sensor stations and Mobile HQs reach
+**24**. The gaps between pickets are routes. Warning time is literal — an EW station 24
+hexes out from the target buys the defender four minutes of scramble clock against a
+cruising ST-4 raid, which is exactly what the alert states are for. Your combat radius
+is your tank divided by your route, and joker/bingo are recomputed from your *actual*
+distance home every tick. Basing forward — a captured strip, a grounded carrier —
+extends reach; that's why the enemy will come for it.
 
 **JOKER / BINGO**, recomputed live from your actual distance home: JOKER (return-at-dash
 × 1.25) is the warning; **BINGO** (return-at-cruise × 1.10) cancels the mission and
