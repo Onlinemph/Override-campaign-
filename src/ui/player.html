@@ -58,7 +58,9 @@
         <select id="o-carrier"><option value="">—</option></select>
         <span style="opacity:.7">EMBARK marches to it &amp; loads · LAND/DISEMBARK use the last map click as the hex</span></div>
       <div class="kv">path <input id="o-path" size="26" placeholder="click the map, or q,r;q,r">
-        <button onclick="clearPath()">✕</button></div>
+        <button onclick="clearPath()">✕</button>
+        <label title="Click a destination and the route plots itself — roads preferred, rail ridden, impassable terrain avoided (using only what your side has scouted)"><input type="checkbox" id="o-autoroute" checked> ✨ auto-route</label>
+        <span id="o-eta" class="kv"></span></div>
       <div class="kv">strike/intercept target <select id="o-target"><option value="">—</option></select>
         EMCON <select id="o-emcon"><option value="">keep</option><option>DARK</option>
           <option>PASSIVE</option><option>ACTIVE</option></select></div>
@@ -215,10 +217,7 @@ async function refresh() {
         { points: routeThrough(start, plotted), color: '#ffd75e' }];
     }
     renderHexMap(document.getElementById('map'), model,
-      { onHexClick: (q, r) => { plotted.push({ q, r });
-          document.getElementById('o-path').value = plotted.map(p => p.q + ',' + p.r).join(';');
-          refresh(); },
-        showCoords: true });
+      { onHexClick: (q, r) => { plotHex(q, r); }, showCoords: true });
   }
   const sysModel = buildPlayerSysModel(v);
   document.getElementById('sys-panel').style.display = sysModel ? '' : 'none';
@@ -363,7 +362,33 @@ async function loadDiary() {
   box.scrollTop = box.scrollHeight;
 }
 
-function clearPath() { plotted = []; document.getElementById('o-path').value = ''; refresh(); }
+function clearPath() { plotted = []; document.getElementById('o-path').value = '';
+  document.getElementById('o-eta').textContent = ''; refresh(); }
+
+// A map click plots a waypoint — or, with ✨ auto-route on and a formation selected,
+// asks the engine for the best-known route to that hex (D-041) and shows the ETA.
+async function plotHex(q, r) {
+  const selId = document.getElementById('o-formation').value;
+  const auto = document.getElementById('o-autoroute').checked;
+  if (auto && selId) {
+    const res = await fetch(`/api/side/${sideId}/route?t=${encodeURIComponent(token)}` +
+        `&formationId=${encodeURIComponent(selId)}&q=${q}&r=${r}`)
+      .then(x => x.json()).catch(() => null);
+    if (res && res.path && res.path.length) {
+      plotted = res.path.map(p => ({ q: p.q, r: p.r }));
+      document.getElementById('o-path').value = plotted.map(p => p.q + ',' + p.r).join(';');
+      document.getElementById('o-eta').textContent =
+        `→ arrives ~${clock(lastView ? lastView.now + res.etaTicks : res.etaTicks)} (${(res.etaTicks / 240).toFixed(1)} d march)`;
+      refresh();
+      return;
+    }
+    document.getElementById('o-eta').textContent = '✗ no route there for this formation';
+  }
+  plotted.push({ q, r });
+  document.getElementById('o-path').value = plotted.map(p => p.q + ',' + p.r).join(';');
+  document.getElementById('o-eta').textContent = '';
+  refresh();
+}
 const parsePath = s => s.trim() ? s.trim().split(';').map(p =>
   ({ q: +p.split(',')[0], r: +p.split(',')[1] })) : [];
 

@@ -7,6 +7,7 @@
  * and adds objectives/bases in the editor; armies are rolled/imported separately.
  */
 import type { InfraTag, TerrainType } from '../core/types.js';
+import { generateContinent } from './continent.js';
 
 export interface GenOverride { q: number; r: number; terrain?: TerrainType; infra?: InfraTag[] }
 export interface GenSide { id: string; name: string }
@@ -147,7 +148,12 @@ export function generateCampaign(params: GenParams): Record<string, unknown> {
     config: { name: params.name ?? 'Generated Campaign', dawnTick: 60, duskTick: 180, weather: 'CLEAR' },
     theaters: [{
       id: 'theater', name: 'Theater', width, height,
-      defaultTerrain: 'CLEAR', overrides: generateOverrides({ width, height, seed }),
+      defaultTerrain: 'CLEAR',
+      // big maps get structured geography (ranges/passes/rivers/cities/networks,
+      // D-041); small boards keep the classic blob painter
+      overrides: width * height >= 2000
+        ? generateContinent({ width, height, seed })
+        : generateOverrides({ width, height, seed }),
     }],
     sides,
     facilities: [], satellites: [], formations: [], commandNodes: {}, orders: [],

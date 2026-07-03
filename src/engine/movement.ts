@@ -80,6 +80,9 @@ export function hexEntryCost(s: TruthState, f: Formation, hex: Hex): number | nu
   if (family === 'NAVAL') return hex.terrain === 'WATER' ? 1 : null;
   // hover skims: water & swamp at 1, mountains are a wall (TERRAIN.hoverCost)
   let cost = family === 'HOVER' && row.hoverCost !== undefined ? row.hoverCost : row.ompCost;
+  // a BRIDGE carries the column over the water (D-041) — and engineers can DROP it,
+  // turning the river back into a wall. Chokepoints are load-bearing now.
+  if (cost === null && hex.terrain === 'WATER' && hex.infra.includes('BRIDGE')) cost = 1;
   if (cost === null) return null;
   // mountains take mechs and infantry only — no vehicle of any kind (core §5.2)
   if (row.mechInfantryOnly && hasGroundVehicles(s, f)) return null;

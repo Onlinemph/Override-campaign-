@@ -104,6 +104,17 @@ with a ⏳ reason on your screen until you re-plot.
 marching mech battalion. Rail lines are operational arteries: plan offensives around
 them, defend the junctions, and cut the enemy's (engineers can DEMOLISH bridges).
 
+**Bridges & rivers** (D-041): a WATER hex carrying a BRIDGE is crossable by ground
+columns at road pace — and engineers can **drop the bridge**, turning the river back
+into a wall. Generated continents route their road networks through mountain passes
+and over river bridges, so the chokepoints are made by the geography itself.
+
+**✨ Auto-route** (D-041): check the box next to the path field, click a destination,
+and the route plots itself — roads preferred, rail ridden, impassable terrain avoided
+for *your* formation's motion type — with an arrival estimate ("arrives ~Day 4 09:20").
+It only uses terrain your side has **scouted**; unscouted ground is assumed clear, so
+the suggested route can be wrong about ground nobody has seen. Scout first.
+
 ### Speeds in real terms
 
 OMP is hexes per hour. A mech battalion ≈ 3 (54 km/h), tanks ≈ 4, hover/VTOL ≈ 8×2

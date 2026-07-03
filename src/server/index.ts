@@ -24,6 +24,7 @@ import { rollForce, campaignUnitsFromForce } from '../roster/roll.js';
 import { buildMul } from '../handoff/mul.js';
 import { buildBattleRoster } from '../handoff/battle.js';
 import { buildBattlePack } from './print.js';
+import { findRoute } from '../engine/route.js';
 import { collectNotifications, postWebhooks, webhookConfigFromEnv } from './notify.js';
 import { buildDiary } from './diary.js';
 import { enrichUnit } from '../roster/apply.js';
@@ -688,6 +689,21 @@ const server = createServer(async (req, res) => {
       if (!campaign.truth.sides[sideId]) return json(res, 404, { error: 'no such side' });
       if (url.searchParams.get('t') !== tokenFor(sideId)) return json(res, 403, { error: 'bad token' });
       return json(res, 200, project(campaign.truth, sideId, campaign.truth.tick));
+    }
+    // Auto-route (D-041): best-known route + ETA for one of the side's formations.
+    // Fog-safe: the router only trusts hexes this side has scouted.
+    const sideRoute = path.match(/^\/api\/side\/([^/]+)\/route$/);
+    if (sideRoute) {
+      const sideId = sideRoute[1];
+      if (!campaign.truth.sides[sideId]) return json(res, 404, { error: 'no such side' });
+      if (url.searchParams.get('t') !== tokenFor(sideId)) return json(res, 403, { error: 'bad token' });
+      const f = campaign.truth.formations[String(url.searchParams.get('formationId'))];
+      if (!f || f.sideId !== sideId) return json(res, 400, { error: 'not your formation' });
+      const route = findRoute(campaign.truth, f,
+        { q: Number(url.searchParams.get('q')), r: Number(url.searchParams.get('r')) }, sideId);
+      if (!route) return json(res, 200, { path: [], etaTicks: 0 });
+      return json(res, 200, { path: route.path.map(p => ({ q: p.q, r: p.r })),
+                              etaTicks: route.etaTicks });
     }
     const sideDiary = path.match(/^\/api\/side\/([^/]+)\/diary$/);
     if (sideDiary) {

@@ -992,3 +992,24 @@ HQs 96 ≈ 1,700 km) and air-to-air ×2 (24 air hexes ≈ 430 km — four turns 
 against a dashing ST-6 raid). On 200-300-hex continental maps the picket-gap game
 survives at the new radii; on small maps a sensor station now simply owns the sky,
 which is what a planetary radar site should do.
+
+## D-041 ✅ Structured geography + auto-routing: chokepoints emerge, and the map plans the march
+1. **generateContinent** (campaign/continent.ts): big generated maps (≥2,000 hexes) get
+   geography with structure instead of blob noise — ridgeline mountain RANGES with
+   carved PASSES, a coastal ocean, RIVERS walked downhill from the ridges to the sea,
+   biome-scale forests, swamp margins, an URBAN-cluster capital with satellite towns,
+   and a road network PATHFOUND between settlements over the real terrain costs (rail
+   on the trunk line). The network funnels through the passes and bridges the rivers,
+   so chokepoints are produced by the map, not placed by hand. Deterministic; the
+   classic blob painter remains for small boards.
+2. **Bridges are load-bearing**: a WATER hex with BRIDGE infra is passable (cost 1) to
+   ground columns — and engineers can DEMOLISH it, closing the river again. The
+   movement rule is one line in hexEntryCost; the drama is the whole point.
+3. **findRoute** (engine/route.ts): A* per formation minimizing TRAVEL TIME at pulse
+   scale (the same formula movementPass uses), so roads pull the route, a rail line is
+   worth a long detour, a tank column threads the pass while a mech lance climbs
+   straight over, and a bridge is found because it is the only way across. **Fog-safe**:
+   with a sideId it only trusts scouted hexes (unscouted ground is assumed clear —
+   the route can be wrong, which is correct). /api/side/:id/route serves it; the player
+   order form's ✨ auto-route (default on) plots a click's route and shows
+   "arrives ~Day N HH:MM (x.x d march)".
