@@ -939,3 +939,20 @@ call), the sky now maps 1:1 onto the ground:
 6. The clock's air-proximity check now keys on the sky over enemy formations and
    facilities, not "over an occupied theater" — overflying empty wilderness no longer
    drops the campaign to 6-minute turns.
+
+## D-038 ✅ The sky slows down and opens its eyes (user rulings)
+1. **Speeds are Safe Thrust per contact turn**, not per minute: dash = ST air hexes per
+   6-minute turn, cruise = half that (min 1). A Shilone dashes 6 hexes (~1,080 km/h,
+   Mach 0.9) instead of 36 (~Mach 5) — atmospheric sanity, and crossing a continent
+   becomes an operation (~2½ hours at ST-6 cruise across 80 hexes). Fuel stays charged
+   per hex, so range in hexes is untouched; endurance in time grows 6×. The §12 worked
+   day re-based: 400 → 360 → 299 → 279 FP (same ledger structure, new legs); its
+   per-minute speeds are superseded.
+2. **Air-to-air radar reaches 6 air hexes** (~108 km, was 1): at the slower speeds a
+   chase keeps its tally instead of flying into darkness every turn. CAS call range
+   rescaled to 12 air hexes (~half an hour's cruise from over the battle hex).
+3. **The lead is only as good as the track**: the intercept predictor plots clean at
+   LOCK, drifts ±1 hex at CONTACT and ±2 at SHADOW (INTERCEPT_LEAD_ERROR_HEXES). The
+   drift is a pure hash of (seed, target, tick) — replay stays byte-exact with no new
+   events. Parked/on-station targets need no lead and take no error. Escape by jinking
+   a marginal pursuer with a poor track is now real; get LOCK before you commit.

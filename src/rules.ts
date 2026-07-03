@@ -351,15 +351,18 @@ export const SKYWATCH = {
   FP_PER_TON: 80,
   TAKEOFF_VSTOL_FP: 10, TAKEOFF_RUNWAY_FP: 4,
   LANDING_VSTOL_FP: 5, LANDING_RUNWAY_FP: 2,
-  CRUISE_FP_PER_HEX: 1, CRUISE_HEX_PER_MIN: 2,   // 12 hexes per contact turn
+  // D-038 (user ruling): atmospheric speeds are per CONTACT TURN, not per minute —
+  // dash = Safe Thrust air hexes per 6-minute turn, cruise = half that. A Shilone
+  // dashes 6 hexes (~1,080 km/h, Mach 0.9); crossing a continent is an operation.
+  // Fuel stays per hex, so range in hexes is unchanged; endurance in time grows.
+  CRUISE_FP_PER_HEX: 1,
   // ext: a spheroid in atmosphere stands on its drive plume — 1 air hex per contact
   // turn, cruise or dash. Fast repositioning is the orbital hop: ASCEND, cross, DESCEND.
   SPHEROID_ATMO_HEX_PER_TICK: 1,
   // ext: CAS on call — flights holding a ground-attack mission near the battle show up
   // in the handoff as off-board air support
   CAS_ON_CALL: {
-    MAX_AIR_HEXES: 24,   // within ~2 turns' flight of the battle theater's air hex
-    HEXES_PER_TURN: 12,  // cruise: how fast "on call" becomes "overhead"
+    MAX_AIR_HEXES: 12,   // D-038: within ~half an hour's cruise of the sky over the battle
   },
   DASH_FP_PER_HEX: 2,                            // speed: Safe Thrust hexes/min
   LOITER_FP_PER_MIN: 2, LEAN_LOITER_FP_PER_MIN: 1,
@@ -401,7 +404,10 @@ export const SKYWATCH = {
     STATION_HQ_BONUS_AIR_HEXES: 12, // sensor stations & Mobile HQs reach 24
     LOW_BAND_OP_HEXES: 6,           // under-the-radar: LOW band only within 6 hexes
   },
-  AIR_TO_AIR_DETECT_AIR_HEXES: 1,   // fighters resolve air targets in own + adjacent hex (D-010.6)
+  AIR_TO_AIR_DETECT_AIR_HEXES: 6,   // D-038: fighter radar reaches ~108 km — a chase keeps its tally
+  // D-038: the intercept predictor's lead error by track level — LOCK plots clean,
+  // CONTACT is ±1 hex, SHADOW ±2. Escape by jinking is real below a full picture.
+  INTERCEPT_LEAD_ERROR_HEXES: { 4: 0, 3: 1, 2: 2 } as Record<number, number>,
   SKYEYE_SENSOR: { passive: 6, active: 12 },
   MIN_PLOT_INTERCEPT_LEVEL: 2,      // you cannot plot an interception against < SHADOW
 

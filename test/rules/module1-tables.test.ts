@@ -6,10 +6,9 @@ import { describe, expect, it } from 'vitest';
 import { SKYWATCH } from '../../src/rules.js';
 
 describe('M1-tables — fuel & the flight ledger (SKYWATCH §1–2, appendix)', () => {
-  it('80 FP/ton; cruise 1 FP/hex @ 2 hex/min; dash 2 FP/hex @ ST hex/min', () => {
+  it('80 FP/ton; cruise 1 FP/hex, dash 2 (D-038: speeds are ST-per-turn, off the card)', () => {
     expect(SKYWATCH.FP_PER_TON).toBe(80);
     expect(SKYWATCH.CRUISE_FP_PER_HEX).toBe(1);
-    expect(SKYWATCH.CRUISE_HEX_PER_MIN).toBe(2);
     expect(SKYWATCH.DASH_FP_PER_HEX).toBe(2);
   });
   it('CAP loiter 2 FP/min (lean 1); orbit 0; climb 2 FP/level; orbit ~30 up / ~35 down', () => {

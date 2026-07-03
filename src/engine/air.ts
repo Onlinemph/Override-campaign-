@@ -17,7 +17,7 @@ import { hexDistance, hexLine, headingDeg } from '../hex/axial.js';
 import { isNight } from './clock.js';
 import { registerDetection } from './detection.js';
 import { flakGauntlet } from './flak.js';
-import { rollDice } from '../core/rng.js';
+import { hashPick, rollDice } from '../core/rng.js';
 
 export const AIR_MISSIONS = new Set([
   'CAP', 'ORBITAL_STANDBY', 'STRIKE_AIR', 'CAS', 'SWEEP', 'ESCORT', 'RECON',
@@ -81,15 +81,16 @@ function convFactor(s: TruthState, f: Formation): number {
 }
 
 /**
- * Speeds come off the card (ext): dash = Safe Thrust hexes/min, cruise = half that —
- * a Cheetah outruns a Shilone even loafing. The old flat CRUISE_HEX_PER_MIN 2 was the
- * Safe-Thrust-4 case of this formula, so default units fly exactly as before.
+ * Speeds come off the card, per contact turn (D-038, user ruling): dash = Safe Thrust
+ * air hexes per 6-minute turn, cruise = half that — a Cheetah outruns a Shilone even
+ * loafing, and crossing a continent is an operation, not an afterthought. Fuel is
+ * charged per hex, so range in hexes is untouched; endurance in time grows.
  */
 export function cruiseHexesPerTick(s: TruthState, f: Formation): number {
-  return Math.max(1, Math.floor(minSafeThrust(s, f) * CLOCK.TICK_MINUTES / 2));
+  return Math.max(1, Math.floor(minSafeThrust(s, f) / 2));
 }
 export function dashHexesPerTick(s: TruthState, f: Formation): number {
-  return minSafeThrust(s, f) * CLOCK.TICK_MINUTES;
+  return minSafeThrust(s, f);
 }
 
 /** A spheroid hull in the formation: the whole flight stands on its drive plume. */
@@ -287,11 +288,24 @@ const DIR_BY_SIXTH: Array<{ q: number; r: number }> = [
 /**
  * Where will an airborne target be at the end of this contact turn? The chase computes
  * its intercept "ahead of the bandit's plot" (§6/§12) from the tracked vector & speed.
+ * D-038: the lead is only as good as the track — below LOCK the predicted point drifts
+ * (CONTACT ±1 hex, SHADOW ±2; deterministic in the seed, so replay is byte-exact).
+ * A parked or on-station target needs no lead, and takes no error.
  */
-function predictAirPos(s: TruthState, target: Formation, dt: number): { q: number; r: number } | null {
+export function predictAirPos(
+  s: TruthState, target: Formation, dt: number, trackLevel: number = LADDER.MAX_LEVEL,
+): { q: number; r: number } | null {
   if (target.pos.kind !== 'air') return null;
   const cur = airQR(target.pos);
   if (target.air?.phase === 'ON_STATION' || target.air?.phase === 'GROUNDED') return cur;
+  const smear = (p: { q: number; r: number }) => {
+    const maxErr = SKYWATCH.INTERCEPT_LEAD_ERROR_HEXES[Math.min(LADDER.MAX_LEVEL, trackLevel)] ?? 2;
+    if (maxErr <= 0) return p;
+    const mag = hashPick(s.seed, ['lead-mag', target.id, s.tick], maxErr + 1);
+    if (mag === 0) return p;
+    const dir = DIR_BY_SIXTH[hashPick(s.seed, ['lead-dir', target.id, s.tick], 6)];
+    return { q: p.q + dir.q * mag, r: p.r + dir.r * mag };
+  };
   // resolve the target's speed exactly the way its own movement will (order profile wins)
   const targetOrder = activeAirOrder(s, target);
   if (target.air?.phase === 'RTB' || (!targetOrder && target.air?.phase === 'ENROUTE')) {
@@ -300,12 +314,12 @@ function predictAirPos(s: TruthState, target: Formation, dt: number): { q: numbe
     if (!home) return cur;
     const step = Math.min(atmoHexesPerTick(s, target, 'CRUISE') * dt, hexDistance(cur, home));
     const line = hexLine(cur, home);
-    return line[Math.min(step, line.length - 1)];
+    return smear(line[Math.min(step, line.length - 1)]);
   }
   const mode: 'CRUISE' | 'DASH' = targetOrder?.airSpeed ?? target.air?.speed ?? 'CRUISE';
   const speed = atmoHexesPerTick(s, target, mode) * dt;
   const dir = DIR_BY_SIXTH[Math.round(((target.pos.vectorDeg % 360) + 360) % 360 / 60) % 6];
-  return { q: cur.q + dir.q * speed, r: cur.r + dir.r * speed };
+  return smear({ q: cur.q + dir.q * speed, r: cur.r + dir.r * speed });
 }
 
 function destAirHex(s: TruthState, f: Formation, order: Order | undefined, dt: number):
@@ -323,7 +337,8 @@ function destAirHex(s: TruthState, f: Formation, order: Order | undefined, dt: n
     // the stale estimate and hope the trail is warm
     if (c.level >= SKYWATCH.MIN_PLOT_INTERCEPT_LEVEL) {
       const target = s.formations[c.targetFormationId];
-      const predicted = target && !target.destroyed ? predictAirPos(s, target, dt) : null;
+      const predicted = target && !target.destroyed
+        ? predictAirPos(s, target, dt, c.level) : null;
       if (predicted) return predicted;
     }
     const est = c.delivered?.estPos ?? c.estPos;

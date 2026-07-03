@@ -29,13 +29,13 @@ const station = (q: number, r: number): AirPos =>
   ({ kind: 'air', gridQ: q, gridR: r, band: 'HIGH', altLevel: 6, velocity: 0, vectorDeg: 0 });
 
 describe('M3 — ledger math (pure helpers)', () => {
-  it('rates come off the card: cruise = ST×3, dash = ST×6 hexes/CT; costs 1 / 2 FP per hex', () => {
+  it('rates come off the card (D-038): dash = ST, cruise = ST/2 hexes per turn; 1 / 2 FP per hex', () => {
     const truth = baseTruth();
     const f = addFlight(truth, { id: 'f', sideId: 'blue', basePos: gp(5, 5), safeThrust: 6 });
-    expect(cruiseHexesPerTick(truth, f)).toBe(18); // ST 6: a hot ship loafs faster
-    expect(dashHexesPerTick(truth, f)).toBe(36);
+    expect(cruiseHexesPerTick(truth, f)).toBe(3); // ST 6: a hot ship loafs faster
+    expect(dashHexesPerTick(truth, f)).toBe(6);
     const slow = addFlight(truth, { id: 's', sideId: 'blue', basePos: gp(6, 5), safeThrust: 4 });
-    expect(cruiseHexesPerTick(truth, slow)).toBe(12); // ST 4 = the old doctrinal 12
+    expect(cruiseHexesPerTick(truth, slow)).toBe(2)
     expect(transitFpPerHex(truth, f, 'CRUISE')).toBe(1);
     expect(transitFpPerHex(truth, f, 'DASH')).toBe(2);
   });

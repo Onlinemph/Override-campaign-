@@ -14,7 +14,7 @@ function activate(truth: TruthState, order: Order) {
 
 function dropship(truth: TruthState, id: string, tags: string[]) {
   const f = addMechFormation(truth, { id, sideId: 'blue', pos: gp(2, 2) },
-    1, { class: 'DROPSHIP', tags, safeThrust: 3 });
+    1, { class: 'DROPSHIP', tags, safeThrust: 6 });
   f.air = { phase: 'ENROUTE', speed: 'CRUISE' };
   f.pos = { kind: 'air', gridQ: 0, gridR: 0, band: 'HIGH', altLevel: 6,
             velocity: 2, vectorDeg: 0 };
@@ -47,19 +47,18 @@ describe('spheroids crawl in atmosphere', () => {
       const truth = baseTruth('SPHERE-RACE');
       const ds = dropship(truth, 'ds', tags);
       activate(truth, { ...moveOrder('o1', ds, 'MOVE', []), kind: 'LAND',
-                        targetHex: gp(10, 10), path: [] });
-      // D-037 congruent sky: the LZ's overhead hex is (10,10) — 20 air hexes from the
-      // ship's position at (0,0)
+                        targetHex: gp(3, 3), path: [] });
+      // D-037/D-038: the LZ's overhead hex is (3,3) — 6 air hexes from the ship at (0,0)
       return Campaign.create(truth);
     };
     const wing = mk(['AERODYNE']);
     for (let i = 0; i < 3; i++) wing.step('CONTACT');
-    expect(wing.truth.formations['ds'].pos).toEqual(gp(10, 10)); // ST 3 ⇒ 9 hexes/turn: down in 3
+    expect(wing.truth.formations['ds'].pos).toEqual(gp(3, 3)); // ST 6 ⇒ cruise 3/turn: down in 3
 
     const egg = mk(['SPHEROID']);
     for (let i = 0; i < 3; i++) egg.step('CONTACT');
-    expect(egg.truth.formations['ds'].pos.kind).toBe('air');     // 3 turns: 3 of 20 hexes
-    for (let i = 0; i < 20; i++) egg.step('CONTACT');
-    expect(egg.truth.formations['ds'].pos).toEqual(gp(10, 10));  // two hours later, it lands
+    expect(egg.truth.formations['ds'].pos.kind).toBe('air');     // 3 turns: 3 of 6 hexes
+    for (let i = 0; i < 8; i++) egg.step('CONTACT');
+    expect(egg.truth.formations['ds'].pos).toEqual(gp(3, 3));    // most of an hour later
   });
 });

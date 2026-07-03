@@ -347,23 +347,31 @@ clears it (−1 per 6 pulses).
 
 ## 11. The sky — fuel is the game
 
-Every airborne tick pays the **flight ledger** (FP). **Speeds come off the card**
-(D-037): dash = Safe Thrust × 6 hexes per turn at 2 FP/hex; cruise = half that at
-1 FP/hex — a Safe Thrust 6 interceptor loafs at 18 hexes/turn while a ST 4 bomber
-cruises 12; a hot ship outruns a slow one even off the throttle. Loiter 2 FP/min (lean
-loiter 1 — but your searches roll −1). Conventional fighters pay **half** on transit and
-loiter. Takeoff: 10 FP vertical, 4 with a runway (AIRSTRIP/SPACEPORT). Climbing costs
-2 FP/level.
+Every airborne tick pays the **flight ledger** (FP). **Speeds come off the card, per
+turn** (D-038): dash = **Safe Thrust air hexes per 6-minute turn** at 2 FP/hex; cruise =
+half that at 1 FP/hex. A Safe Thrust 6 Shilone dashes 6 hexes (~1,080 km/h) and cruises
+3; an ST 4 bomber cruises 2 — a hot ship outruns a slow one even off the throttle, and
+crossing a continent is an *operation* (an 80-hex map is ~2½ hours at ST 6 cruise). Fuel
+is charged per hex, so range in hexes is unchanged — endurance in time is what grew.
+Loiter 2 FP/min (lean loiter 1 — but your searches roll −1). Conventional fighters pay
+**half** on transit and loiter. Takeoff: 10 FP vertical, 4 with a runway
+(AIRSTRIP/SPACEPORT). Climbing costs 2 FP/level.
 
 **Position is real** (D-037). You launch into the sky over your own base and fly to the
 mission hex by hex, visible to whatever radar you cross: any ground formation sees the
 HIGH band within **12 air hexes** (~216 km); sensor stations and Mobile HQs reach
-**24**. The gaps between pickets are routes. Warning time is literal — an EW station 24
-hexes out from the target buys the defender four minutes of scramble clock against a
-cruising ST-4 raid, which is exactly what the alert states are for. Your combat radius
-is your tank divided by your route, and joker/bingo are recomputed from your *actual*
-distance home every tick. Basing forward — a captured strip, a grounded carrier —
-extends reach; that's why the enemy will come for it.
+**24**; fighters resolve other aircraft within **6 air hexes** (~108 km), so a chase
+keeps its tally instead of flying into darkness. The gaps between pickets are routes.
+Warning time is literal — a border station 24 hexes out buys the defender over half an
+hour of scramble clock against a dashing ST-4 raid, which is exactly what the alert
+states are for. Your combat radius is your tank divided by your route, and joker/bingo
+are recomputed from your *actual* distance home every tick. Basing forward — a captured
+strip, a grounded carrier — extends reach; that's why the enemy will come for it.
+
+**The lead is only as good as the track** (D-038). A chase plots its intercept ahead of
+the bandit's predicted position — cleanly at **LOCK**, ±1 hex at **CONTACT**, ±2 at
+**SHADOW**. Against a marginal-speed pursuer with a poor track, jinking is a real
+escape; get LOCK before you commit the intercept.
 
 **JOKER / BINGO**, recomputed live from your actual distance home: JOKER (return-at-dash
 × 1.25) is the warning; **BINGO** (return-at-cruise × 1.10) cancels the mission and

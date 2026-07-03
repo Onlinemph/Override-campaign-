@@ -1,21 +1,23 @@
 /**
- * M3 acceptance — reproduce the SKYWATCH §12 worked example tick-for-tick:
- * "One Shilone, One Day" — 400 → 240 → 179 → 159 FP.
+ * M3 acceptance — the SKYWATCH §12 worked example, "One Shilone, One Day", re-based to
+ * the D-038 ruling (speeds are Safe Thrust per 6-minute turn): 400 → 360 → 299 → 279 FP.
  *
  *   0500 (pulse 5)  Talon-2 (Shilone, 400 FP) takes ALERT-15. Fatigue clock starts.
- *   ~0900           the EW station resolves the bandit over the theater: SHADOW.
+ *   ~0900 (t91)     the EW picket resolves the bandit inbound: SHADOW.
  *                   The ATO conditional fires: scramble.
- *   0901 (t91)      runway takeoff (4) + climb to HIGH (12)            → 384
- *   t92–t93         two contact turns of dash at 36 hexes / 72 FP each → 240
- *   the merge       handoff: velocity 6 (dash), Energy 6+6 = 12; fpOnTable 240
- *   the table       9 turns, 61 FP burned, bandit's wing torn off      → 179
- *   RTB             cruise home 18 hexes (18) + runway landing (2)     → 159
- *   hot-pit         farm pays 241 FP = 3.0125 t — "the fuel farm down to 11 tons"
- *   the day's bill  4 pulses of ALERT-15 (2) + the sortie (1)          → Fatigue 3
+ *   0912 (t92)      runway takeoff (4) + climb to HIGH (12)            → 384
+ *   t93–t94         two contact turns of dash at 6 hexes / 12 FP each  → 360
+ *                   (air-to-air radar reaches 6 hexes, so the chase holds LOCK and the
+ *                    lead prediction plots clean — caught 12 hexes out)
+ *   the merge       handoff: velocity 6 (dash), Energy 6+6 = 12; fpOnTable 360
+ *   the table       9 turns, 61 FP burned, bandit's wing torn off      → 299
+ *   RTB             cruise home 18 hexes (18) + runway landing (2)     → 279
+ *   hot-pit         farm pays 121 FP = 1.5125 t — the farm down to ~12 tons
+ *   the day's bill  ALERT-15 pulses (2) + the sortie (1)               → Fatigue 3
  *
- * (§12's own intercept geometry is internally inconsistent — see DECISIONS.md D-010.2 —
- *  so the FP ledger is the contract; the quoted "JOKER was 90" is verified as the
- *  36-hex formula in the module-1 table tests.)
+ * (§12's per-minute speeds are superseded by D-038; its intercept geometry was already
+ *  internally inconsistent — D-010.2. The FP ledger structure is the contract; the
+ *  "JOKER at 36 hexes = 90" formula is verified in the module-1 table tests.)
  */
 import { describe, expect, it } from 'vitest';
 import { Campaign, replay } from '../../src/core/truth.js';
@@ -120,7 +122,7 @@ function runDay(c: Campaign) {
 }
 
 describe('M3 acceptance — the Shilone day (SKYWATCH §12)', () => {
-  it('flies the whole day tick-for-tick: 400 → 240 → 179 → 159 FP, farm to ~11 t, Fatigue 3',
+  it('flies the whole day tick-for-tick: 400 → 360 → 299 → 279 FP, farm to ~12 t, Fatigue 3',
       () => {
     const c = Campaign.create(buildScenario());
     const eng = runDay(c);
@@ -140,20 +142,20 @@ describe('M3 acceptance — the Shilone day (SKYWATCH §12)', () => {
     expect(launched.tick).toBe(shadowTick.tick + 1); // "0900 SHADOW... 0901 takeoff"
     expect(launched.fpPaid).toBe(4 + 12);            // runway takeoff + climb to HIGH
 
-    // ── the ledger to the merge: 400 − 16 − 144 = 240 ──
-    // two contact turns of dash at 36 hexes / 72 FP each
+    // ── the ledger to the merge: 400 − 16 − 24 = 360 ──
+    // two contact turns of dash at 6 hexes / 12 FP each (D-038)
     const dashMoves = c.store.all().filter(l => l.event.type === 'AIR_MOVED' &&
       (l.event as any).formationId === 'talon-2' && (l.event as any).speed === 'DASH');
     expect(dashMoves).toHaveLength(2);
-    for (const m of dashMoves) expect((m.event as any).fpPaid).toBe(72);
-    expect(fpOf(c)).toBe(240);
+    for (const m of dashMoves) expect((m.event as any).fpPaid).toBe(12);
+    expect(fpOf(c)).toBe(360);
 
     // ── the merge: map, vectors, energy, fuel (§7) ──
     const pkg = c.exportHandoff()!;
     expect(pkg.table).toBe('LOW_ALT_ATMO');          // HIGH band ⇒ low-altitude map
     const blue = pkg.perSide.find(p => p.sideId === 'blue')!;
     const red = pkg.perSide.find(p => p.sideId === 'red')!;
-    expect(blue.units[0].fpOnTable).toBe(240);       // ledger rides on 1:1 (D-010.3)
+    expect(blue.units[0].fpOnTable).toBe(360);       // ledger rides on 1:1 (D-010.3)
     expect(blue.units[0].velocity).toBe(6);          // dash ⇒ Safe Thrust
     expect(pkg.specialRules).toContain('ENERGY:blue=12'); // velocity 6 + altitude 6
     expect(pkg.specialRules).toContain('ENERGY:red=10');  // the bandit ran at dash (ST 4)
@@ -165,7 +167,7 @@ describe('M3 acceptance — the Shilone day (SKYWATCH §12)', () => {
       handoffId: pkg.id, victorSideId: 'blue',
       unitOutcomes: [
         { unitId: 'talon-2-1', damage: 'OK', ammoState: 'PARTIAL',
-          fpRemaining: 240 - 61, pilotOutcomes: [] },
+          fpRemaining: 360 - 61, pilotOutcomes: [] },
         { unitId: 'bandit-0', damage: 'DESTROYED', ammoState: 'PARTIAL', pilotOutcomes: [] },
         { unitId: 'bandit-1', damage: 'DESTROYED', ammoState: 'PARTIAL', pilotOutcomes: [] },
       ],
@@ -173,7 +175,7 @@ describe('M3 acceptance — the Shilone day (SKYWATCH §12)', () => {
       turnsElapsed: 9, notes: "bandit's wing torn off at turn 7",
     };
     expect(c.ingestBattleResult(result).ok).toBe(true);
-    expect(fpOf(c)).toBe(179);
+    expect(fpOf(c)).toBe(299);
     expect(Object.values(c.truth.markers).some(m => m.kind === 'DOWNED_CREW')).toBe(true);
     expect(c.truth.formations['bandit'].destroyed).toBe(true);
 
@@ -184,15 +186,15 @@ describe('M3 acceptance — the Shilone day (SKYWATCH §12)', () => {
     expect(c.truth.formations['talon-2'].pos.kind).toBe('ground');
     const landed = c.store.all().filter(l => l.event.type === 'AIR_LANDED').at(-1)!.event as any;
     expect(landed.fpPaid).toBe(2);                   // runway landing
-    expect(fpOf(c)).toBe(159);                       // 179 − 18 (cruise) − 2 (land)
+    expect(fpOf(c)).toBe(279);                       // 299 − 18 (cruise) − 2 (land)
 
-    // ── hot-pit turnaround: the farm pays 241 FP and drops to ~11 tons ──
+    // ── hot-pit turnaround: the farm pays 121 FP and drops to ~12 tons ──
     const turn = c.turnaround('talon-2', 'HOT_PIT');
     expect(turn.ok).toBe(true);
     if (turn.ok) expect(turn.mishap).toBe(false);    // the seed is kind tonight
     expect(fpOf(c)).toBe(400);
-    expect(c.truth.facilities['airbase'].fuelFarmTons).toBeCloseTo(14 - 241 / 80, 5);
-    expect(Math.round(c.truth.facilities['airbase'].fuelFarmTons)).toBe(11); // "down to 11 tons"
+    expect(c.truth.facilities['airbase'].fuelFarmTons).toBeCloseTo(14 - 121 / 80, 5);
+    expect(Math.round(c.truth.facilities['airbase'].fuelFarmTons)).toBe(12); // down to ~12 t
 
     // ── the day's bill: Fatigue 3 (4 pulses of ALERT-15 + the sortie) ──
     expect(c.truth.pilots['talon-2-pilot-1'].fatigue).toBe(3);

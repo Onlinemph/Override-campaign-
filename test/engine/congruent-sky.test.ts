@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { Campaign } from '../../src/core/truth.js';
-import { airHexOver, groundHexUnder, rtbDistance } from '../../src/engine/air.js';
+import { airHexOver, groundHexUnder, predictAirPos, rtbDistance } from '../../src/engine/air.js';
 import { addFlight, baseTruth, gp, mkFacility } from '../helpers.js';
 import type { Order } from '../../src/core/types.js';
 
@@ -50,12 +50,12 @@ describe('the congruent sky (D-037)', () => {
       tags: ['AIRSTRIP'], fuelFarmTons: 10, turnaroundCrews: { total: 1, busyUntil: [] },
     });
     const flt = addFlight(truth, { id: 'flt', sideId: 'blue', basePos: gp(0, 10),
-      homeFacilityId: 'base', fp: 800, safeThrust: 4 }); // cruise 12 hexes/turn
+      homeFacilityId: 'base', fp: 800, safeThrust: 4 }); // D-038: cruise 2 hexes/turn
     flt.alertState = 'ALERT5';
     const c = Campaign.create(truth);
-    // strike station over a target 36 hexes across the map: 3 full turns of transit
+    // strike station over a target 6 hexes across the map: 3 full turns of transit
     c.inject({ type: 'ORDER_ISSUED', order: airOrder('o', 'flt', 'STRIKE_AIR', {
-      station: { kind: 'air', gridQ: 36, gridR: 10, band: 'HIGH', altLevel: 6,
+      station: { kind: 'air', gridQ: 6, gridR: 10, band: 'HIGH', altLevel: 6,
                  velocity: 0, vectorDeg: 0 }, loiterTicks: 1 }) });
     c.step('CONTACT'); // airborne over the base
     const legs: number[] = [];
@@ -64,9 +64,37 @@ describe('the congruent sky (D-037)', () => {
       const p = c.truth.formations['flt'].pos;
       if (p.kind === 'air') legs.push(p.gridQ);
     }
-    expect(legs).toEqual([12, 24, 36]); // hex by hex across the sky, three turns of exposure
-    // and home is 36 hexes of fuel away — range is geography now
-    expect(rtbDistance(c.truth, c.truth.formations['flt'])).toBe(36);
+    expect(legs).toEqual([2, 4, 6]); // hex by hex across the sky, three turns of exposure
+    // and home is 6 hexes of fuel away — range is geography now
+    expect(rtbDistance(c.truth, c.truth.formations['flt'])).toBe(6);
+  });
+
+  it('the lead is only as good as the track (D-038): LOCK plots clean, SHADOW drifts', () => {
+    const truth = baseTruth('LEAD-1', [], 40, 20);
+    const bandit = addFlight(truth, { id: 'bandit', sideId: 'red',
+      airPos: { q: 10, r: 10 }, fp: 4000, safeThrust: 4 });
+    bandit.air = { phase: 'ENROUTE', speed: 'CRUISE' };
+    truth.orders['run'] = { id: 'run', sideId: 'red', formationId: 'bandit',
+      issuedTick: 0, effectiveTick: 0, kind: 'FERRY', airSpeed: 'CRUISE', conditionals: [],
+      path: [{ kind: 'air', gridQ: 200, gridR: 10, band: 'HIGH', altLevel: 6,
+               velocity: 0, vectorDeg: 0 }] };
+    bandit.currentOrderId = 'run';
+
+    let drifted = 0;
+    for (let tick = 0; tick < 24; tick++) {
+      truth.tick = tick;
+      const clean = predictAirPos(truth, bandit, 1, 4)!;   // LOCK
+      expect(clean).toEqual({ q: 12, r: 10 });             // exact plot: cur + cruise 2
+      const shadow = predictAirPos(truth, bandit, 1, 2)!;  // SHADOW: ±2 drift
+      expect(predictAirPos(truth, bandit, 1, 2)).toEqual(shadow); // deterministic (replay)
+      expect(Math.abs(shadow.q - clean.q) + Math.abs(shadow.r - clean.r)).toBeLessThanOrEqual(4);
+      if (shadow.q !== clean.q || shadow.r !== clean.r) drifted++;
+    }
+    expect(drifted).toBeGreaterThan(0);   // a SHADOW-grade lead misses sometimes
+    expect(drifted).toBeLessThan(24);     // ...but not always — it's a smear, not a wall
+    // a parked target needs no lead and takes no error, whatever the track
+    bandit.air = { phase: 'ON_STATION', speed: 'CRUISE' };
+    expect(predictAirPos(truth, bandit, 1, 2)).toEqual({ q: 10, r: 10 });
   });
 
   it('an EW picket line gives warning time; a raid outside it crosses dark', () => {

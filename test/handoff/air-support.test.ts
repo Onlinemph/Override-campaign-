@@ -44,10 +44,9 @@ describe('handoff — off-board air support', () => {
 
   it('a distant STRIKE_AIR flight arrives in later turns; beyond call range is excluded', () => {
     const truth = battlefield();
-    const nearDist = SKYWATCH.CAS_ON_CALL.HEXES_PER_TURN + 2;      // ~2 turns at ST 4
-    // arrival timing reads the card: ST 4 cruises 12 hexes/turn ⇒ 14 hexes = 2 turns
+    // arrival timing reads the card (D-038): ST 4 cruises 2 hexes/turn ⇒ 4 hexes = 2 turns
     // (distances measured from over the battle hex at 5,5 — D-037)
-    addFlight(truth, { id: 'near', sideId: 'blue', airPos: { q: 5 + nearDist, r: 5 }, fp: 300,
+    addFlight(truth, { id: 'near', sideId: 'blue', airPos: { q: 5 + 4, r: 5 }, fp: 300,
                        safeThrust: 4 });
     casOrder(truth, 'o-near', 'near', 'STRIKE_AIR');
     addFlight(truth, { id: 'far', sideId: 'blue',
