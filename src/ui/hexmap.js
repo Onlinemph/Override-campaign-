@@ -219,6 +219,12 @@
     // ── markers ──
     const gM = el('g', {});
     const stack = {};
+    // click-to-select (D-042): ids of selectable markers grouped by hex, so a click
+    // on a stacked LZ can cycle through everything parked there
+    const idsAtHex = {};
+    (model.markers || []).forEach(m => {
+      if (m.id) (idsAtHex[m.q + ',' + m.r] = idsAtHex[m.q + ',' + m.r] || []).push(m.id);
+    });
     (model.markers || []).forEach(m => {
       const key = m.q + ',' + m.r;
       const n = stack[key] = (stack[key] || 0) + 1;
@@ -276,6 +282,13 @@
         fill: '#aeb6c0', 'paint-order': 'stroke', stroke: '#0a0d12', 'stroke-width': 2,
       }, m.sub));
       g.appendChild(el('title', {}, m.title || m.sub || m.label || ''));
+      if (m.id && opts.onMarkerClick) {
+        g.style.cursor = 'pointer';
+        g.addEventListener('click', ev => {
+          ev.stopPropagation(); // the hex underneath must not also plot a waypoint
+          opts.onMarkerClick(idsAtHex[m.q + ',' + m.r] || [m.id], ev.shiftKey);
+        });
+      }
       gM.appendChild(g);
     });
     svg.appendChild(gM);

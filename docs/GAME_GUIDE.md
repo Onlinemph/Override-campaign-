@@ -109,6 +109,11 @@ columns at road pace — and engineers can **drop the bridge**, turning the rive
 into a wall. Generated continents route their road networks through mountain passes
 and over river bridges, so the chokepoints are made by the geography itself.
 
+**🖱 Click to command** (D-042): click one of your unit markers on the map to select
+it (click a stacked hex again to cycle through the stack); **shift-click** more units to
+build a group — one order then goes to all of them, and group moves auto-route each
+formation independently from its own position to the destination.
+
 **✨ Auto-route** (D-041): check the box next to the path field, click a destination,
 and the route plots itself — roads preferred, rail ridden, impassable terrain avoided
 for *your* formation's motion type — with an arrival estimate ("arrives ~Day 4 09:20").

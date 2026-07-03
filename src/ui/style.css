@@ -66,3 +66,7 @@ a { color: var(--accent); }
 .ev.head .msg { color: var(--accent); }
 .ev.big  { margin-top: 5px; }
 .ev.big .msg { color: var(--gold); font-weight: 600; }
+
+/* selection chips (D-042: group orders) */
+.chip { border: 1px solid #33507c; border-radius: 3px; padding: 0 5px; font-size: 11px;
+        background: #16233a; white-space: nowrap; }

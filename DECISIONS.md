@@ -1013,3 +1013,18 @@ which is what a planetary radar site should do.
    the route can be wrong, which is correct). /api/side/:id/route serves it; the player
    order form's ✨ auto-route (default on) plots a click's route and shows
    "arrives ~Day N HH:MM (x.x d march)".
+
+## D-042 ✅ Click-to-select, shift-click groups, group orders
+1. Own-formation markers are clickable in BOTH renderers (they carry the formation id;
+   the SVG marker takes a click handler, the canvas hit-tests its marker list before
+   falling through to the hex): click selects the formation in the order form and rings
+   it; clicking a stacked hex again cycles through everything parked there; shift-click
+   builds a multi-selection shown as chips ("commanding 3: …").
+2. Group orders: with more than one formation selected, the order goes to all of them.
+   For the move family with ✨ auto-route on, each formation routes INDEPENDENTLY from
+   its own position to the plotted destination — a task force converging, not a conga
+   line. The result line reports "✓ MOVE to 3/3" (and names any refusals, e.g. off-net).
+3. The Playwright E2E for this caught a real regression: a duplicate `let lastView`
+   from the D-033 picker work had been breaking the ENTIRE player page script since
+   that commit — every live smoke in between had exercised only the GM screen. Fixed;
+   the E2E now drives the player page on both renderers.

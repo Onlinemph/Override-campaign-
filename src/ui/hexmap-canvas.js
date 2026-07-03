@@ -284,7 +284,8 @@
       const x = c.x + (n > 1 ? off * (n % 2 ? 1 : -1) : 0);
       const y = c.y - (n > 1 ? s * 0.18 : 0);
       if (x < wx0 || x > wx1 || y < wy0 || y > wy1) continue;
-      cnv.__markerPts.push({ x, y, title: m.title || m.sub || m.label || '' });
+      cnv.__markerPts.push({ x, y, title: m.title || m.sub || m.label || '',
+                             id: m.id, q: m.q, r: m.r });
       const col = sideColor(m.side);
       ctx.globalAlpha = m.stale ? Math.max(0.45, 1 - m.stale / 240) : 1;
       ctx.textAlign = 'center';
@@ -415,8 +416,25 @@
       try { cnv.releasePointerCapture(e.pointerId); } catch { /* not captured */ }
       if (wasDrag) return;
       const st = cnv.__state;
-      if (!st || !st.opts.onHexClick) return;
+      if (!st) return;
       const w = toWorld(e);
+      // click-to-select (D-042): a click landing on a selectable marker selects it
+      // (all ids stacked on that hex, so the page can cycle) instead of plotting
+      if (st.opts.onMarkerClick) {
+        let hit = null, hitD = st.s * 0.9;
+        for (const p of cnv.__markerPts || []) {
+          if (!p.id) continue;
+          const d = Math.hypot(p.x - w.x, p.y - w.y);
+          if (d < hitD) { hit = p; hitD = d; }
+        }
+        if (hit) {
+          const ids = (cnv.__markerPts || [])
+            .filter(p => p.id && p.q === hit.q && p.r === hit.r).map(p => p.id);
+          st.opts.onMarkerClick(ids, e.shiftKey);
+          return;
+        }
+      }
+      if (!st.opts.onHexClick) return;
       const { q, r } = hexAt(w.x, w.y, st.s);
       if (q >= 0 && r >= 0 && q < st.model.cols && r < st.model.rows) st.opts.onHexClick(q, r);
     };

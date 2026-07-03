@@ -50,7 +50,10 @@
     </details></div>
     <div class="panel">
       <h2>Order entry</h2>
-      <div class="kv">formation <select id="o-formation" onchange="syncKindPicker()"></select>
+      <div class="kv" id="sel-chips" style="display:none;margin-bottom:4px"></div>
+      <div class="kv">formation <select id="o-formation"
+        onchange="selectedIds=[this.value].filter(Boolean);syncSelection();syncKindPicker();refresh()"></select>
+        <span style="opacity:.6" title="Click your unit on the map to select it; click a stacked hex again to cycle; shift-click to add more for a group order">🖱 click units to select · shift-click for groups</span>
         kind <select id="o-kind" onchange="syncCarrierRow();syncKindHelp()"></select>
         <label class="kv"><input type="checkbox" id="o-allkinds" onchange="syncKindPicker()"> show all</label></div>
       <div class="kv" id="kind-help" style="opacity:.75"></div>
@@ -124,6 +127,55 @@ const sideId = parts[1];
 const token = parts[2] || '';
 const q = `t=${encodeURIComponent(token)}`;
 let plotted = [];
+// click-to-select & group orders (D-042): the formations being commanded. The first
+// entry is the primary (mirrors the dropdown); more arrive by shift-clicking markers.
+let selectedIds = [];
+
+function selectMarker(ids, shift) {
+  if (!ids || !ids.length) return;
+  if (shift) {
+    const id = ids[0];
+    selectedIds = selectedIds.includes(id)
+      ? selectedIds.filter(x => x !== id)
+      : [...selectedIds, id];
+  } else {
+    // plain click: select — clicking a stacked hex again cycles through the stack
+    const cur = selectedIds.length === 1 ? selectedIds[0] : null;
+    const i = ids.indexOf(cur);
+    selectedIds = [ids[(i + 1) % ids.length]];
+  }
+  syncSelection();
+  refresh();
+}
+
+function syncSelection() {
+  const sel = document.getElementById('o-formation');
+  if (selectedIds.length && sel.value !== selectedIds[0]) {
+    sel.value = selectedIds[0];
+    syncKindPicker();
+  }
+  const chips = document.getElementById('sel-chips');
+  if (selectedIds.length > 1) {
+    const name = id => {
+      const f = lastView && (lastView.ownFormations || []).find(x => x.id === id);
+      return f ? f.name : id;
+    };
+    chips.style.display = '';
+    chips.innerHTML = `commanding <b>${selectedIds.length}</b>: ` +
+      selectedIds.map(id => `<span class="chip">${name(id)}</span>`).join(' ') +
+      ` <button onclick="clearSelection()" title="Back to single selection">✕</button>` +
+      ` <span style="opacity:.6">— one order goes to all; moves auto-route each from its own position</span>`;
+  } else {
+    chips.style.display = 'none';
+    chips.innerHTML = '';
+  }
+}
+
+function clearSelection() {
+  selectedIds = selectedIds.slice(0, 1);
+  syncSelection();
+  refresh();
+}
 attachPanZoom(document.getElementById('map'));
 attachPanZoom(document.getElementById('sysmap'));
 
@@ -201,10 +253,14 @@ async function refresh() {
   const model = buildPlayerHexModel(v, curTheater);
   if (model && !document.getElementById('supply-on').checked) model.zones = model.zones.filter(z => z.kind !== 'supply');
   if (model) {
-    // ring the selected formation so you can see what you're commanding, plus the plotted hexes
+    // ring every selected formation so you can see what you're commanding, plus the plotted hexes
     const selFid = document.getElementById('o-formation').value;
     const selMe = (v.ownFormations || []).find(f => f.id === selFid);
-    model.highlight = [...(selMe && selMe.pos ? [{ q: selMe.pos.q, r: selMe.pos.r }] : []), ...plotted];
+    const group = selectedIds.length ? selectedIds : (selFid ? [selFid] : []);
+    const rings = group
+      .map(id => (v.ownFormations || []).find(f => f.id === id))
+      .filter(f => f && f.pos).map(f => ({ q: f.pos.q, r: f.pos.r }));
+    model.highlight = [...rings, ...plotted];
     // hover any hex to read its distance (hexes + km) from the selected formation
     model.distanceFrom = selMe && selMe.pos ? { q: selMe.pos.q, r: selMe.pos.r } : null;
     // committed routes (green, from the model) + the route being plotted now (bright
@@ -217,7 +273,9 @@ async function refresh() {
         { points: routeThrough(start, plotted), color: '#ffd75e' }];
     }
     renderHexMap(document.getElementById('map'), model,
-      { onHexClick: (q, r) => { plotHex(q, r); }, showCoords: true });
+      { onHexClick: (q, r) => { plotHex(q, r); },
+        onMarkerClick: (ids, shift) => { selectMarker(ids, shift); },
+        showCoords: true });
   }
   const sysModel = buildPlayerSysModel(v);
   document.getElementById('sys-panel').style.display = sysModel ? '' : 'none';
@@ -434,7 +492,6 @@ function formationDomains(f) {
   return d;
 }
 
-let lastView = null;
 function syncKindPicker() {
   const sel = document.getElementById('o-kind');
   const all = document.getElementById('o-allkinds').checked;
@@ -464,6 +521,36 @@ function syncCarrierRow() {
 async function sendOrder() {
   const kind = document.getElementById('o-kind').value;
   const path = parsePath(document.getElementById('o-path').value);
+  // group orders (D-042): the same order goes to every selected formation. For the
+  // move family, each formation auto-routes INDEPENDENTLY from its own position to
+  // the plotted destination (a task force converging, not a conga line).
+  const group = selectedIds.length > 1 ? selectedIds
+    : [document.getElementById('o-formation').value];
+  if (group.length > 1) {
+    const dest = path.length ? path[path.length - 1] : null;
+    const moveFamily = ['MOVE', 'FORCED_MARCH', 'MOVE_CAUTIOUS', 'STRIKE'].includes(kind);
+    const auto = document.getElementById('o-autoroute').checked;
+    let ok = 0, fail = [];
+    for (const fid of group) {
+      const b = { formationId: fid, kind, path };
+      if (moveFamily && auto && dest && fid !== group[0]) {
+        const rt = await fetch(`/api/side/${sideId}/route?t=${encodeURIComponent(token)}` +
+            `&formationId=${encodeURIComponent(fid)}&q=${dest.q}&r=${dest.r}`)
+          .then(x => x.json()).catch(() => null);
+        if (rt && rt.path && rt.path.length) b.path = rt.path.map(p => ({ q: p.q, r: p.r }));
+      }
+      const emcon = document.getElementById('o-emcon').value;
+      if (emcon) b.emconOverride = emcon;
+      const r = await (await fetch(`/api/side/${sideId}/order?${q}`, { method: 'POST',
+        headers: { 'content-type': 'application/json' }, body: JSON.stringify(b) })).json();
+      if (r.ok) ok++; else fail.push(`${fid}: ${r.reason}`);
+    }
+    document.getElementById('o-result').textContent =
+      `✓ ${kind} to ${ok}/${group.length} formations` + (fail.length ? ` · ✗ ${fail.join(' · ')}` : '');
+    if (ok) { plotted = []; document.getElementById('o-path').value = ''; }
+    refresh();
+    return;
+  }
   const body = {
     formationId: document.getElementById('o-formation').value,
     kind,

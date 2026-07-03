@@ -77,7 +77,7 @@
       if (f.flight && f.flight.airPos && f.flight.overhead) {
         if (f.flight.overhead.theaterId !== th.id) return;
         markers.push({ q: f.flight.overhead.q, r: f.flight.overhead.r, kind: 'formation',
-          side: v.sideId, label: '✈', sub: f.name,
+          side: v.sideId, label: '✈', sub: f.name, id: f.id,
           title: `${f.name} · ${f.flight.phase} ${f.flight.speed} @ ${f.flight.airPos.band}` +
                  ` · ${f.flight.fpMin} FP (joker ${f.flight.jokerFp} / bingo ${f.flight.bingoFp})` });
         return;
@@ -86,7 +86,7 @@
       const gear = [...new Set((f.units || []).flatMap(u => (u.tags || [])
         .filter(t => ['ECM', 'ANGEL_ECM', 'BEAGLE', 'STEALTH', 'C3M', 'HQ', 'RECON'].includes(t))))];
       markers.push({ q: f.pos.q, r: f.pos.r, kind: 'formation', side: v.sideId,
-        label: classLetter(f.units), sub: f.name, dark: f.emcon === 'DARK',
+        label: classLetter(f.units), sub: f.name, dark: f.emcon === 'DARK', id: f.id,
         title: `${f.name} · RDY ${f.rdy} · ${f.emcon}/${f.posture} · ${f.onNet ? 'ON-NET' : 'OFF-NET'}` +
                (f.sensor ? ` · sensors ${f.sensor.passive}/${f.sensor.active}` : '') +
                (gear.length ? ` · ${gear.join(',')}` : '') });
