@@ -23,6 +23,7 @@ import { generateCampaign } from '../campaign/generate.js';
 import { rollForce, campaignUnitsFromForce } from '../roster/roll.js';
 import { buildMul } from '../handoff/mul.js';
 import { buildBattleRoster } from '../handoff/battle.js';
+import { buildBattlePack } from './print.js';
 import { collectNotifications, postWebhooks, webhookConfigFromEnv } from './notify.js';
 import { buildDiary } from './diary.js';
 import { enrichUnit } from '../roster/apply.js';
@@ -188,7 +189,8 @@ function gmAuthed(req: any): boolean {
   return typeof hdr === 'string' && safeEq(hdr, gmKey);
 }
 const GM_PAGES = new Set(['/', '/gm', '/audit', '/editor']);
-const isGmRoute = (path: string) => GM_PAGES.has(path) || path.startsWith('/api/gm/');
+const isGmRoute = (path: string) =>
+  GM_PAGES.has(path) || path.startsWith('/api/gm/') || path.startsWith('/print/');
 const LOGIN_HTML = `<!doctype html><meta charset="utf-8"><title>OVERRIDE — GM access</title>
 <link rel="stylesheet" href="/ui/style.css"><body style="padding:48px;max-width:420px">
 <h1>OVERRIDE — GM access</h1>
@@ -343,6 +345,21 @@ const server = createServer(async (req, res) => {
       const r = campaign.rewindOneStep();
       if (r) broadcast();
       return json(res, 200, r ? { ok: true, tick: r.tick } : { ok: false, reason: 'nothing to undo' });
+    }
+    // Rewind (D-035): the aimed undo. Preview first, then truncate-and-replay.
+    if (path === '/api/gm/rewind-preview') {
+      const tick = Number(url.searchParams.get('tick'));
+      if (!Number.isFinite(tick)) return json(res, 400, { error: 'tick required' });
+      return json(res, 200, campaign.previewRewind(tick) ?? { dropped: 0, notable: [] });
+    }
+    if (path === '/api/gm/rewind' && req.method === 'POST') {
+      const b = await readBody(req);
+      const tick = Number(b.tick);
+      if (!Number.isFinite(tick)) return json(res, 400, { ok: false, reason: 'tick required' });
+      const r = campaign.rewindToTick(tick);
+      if (r) broadcast();
+      return json(res, 200, r ? { ok: true, ...r }
+        : { ok: false, reason: 'the clock never passed that tick — nothing to rewind' });
     }
     if (path === '/api/gm/campaigns' && req.method === 'GET') {
       return json(res, 200, { campaigns: listCampaigns(), current: fixturePath });
@@ -548,6 +565,15 @@ const server = createServer(async (req, res) => {
       const pkg = campaign.truth.handoffs[decodeURIComponent(battleApi[1])];
       if (!pkg) return json(res, 404, { error: 'no such handoff' });
       return json(res, 200, buildBattleRoster(campaign.truth, pkg));
+    }
+    // The paper bridge (D-034): the same roster as a printable battle pack + result form.
+    const printPack = path.match(/^\/print\/handoff\/([^/]+)$/);
+    if (printPack) {
+      const pkg = campaign.truth.handoffs[decodeURIComponent(printPack[1])];
+      if (!pkg) return json(res, 404, { error: 'no such handoff' });
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+      return res.end(buildBattlePack(buildBattleRoster(campaign.truth, pkg),
+                                     campaign.truth.config.name));
     }
 
     // ── M3: the air board ──

@@ -114,6 +114,19 @@ result to campaign** folds the marked-up cards into a `BattleResult` — damage 
 (DESTROYED vs recoverable SALVAGE), ejected crews, victor — and posts it back, where it
 ingests and unfreezes the campaign (double-ingest is refused).
 
+**Or take it to paper.** Prefer no laptops at the table? **🖨 Battle pack** on the same
+banner prints the whole thing: the briefing and both rosters — with each unit's
+carry-over record-sheet damage spelled out in words, ready to pre-mark on the cards —
+plus a blank one-page result form whose fields mirror `BattleResult` exactly. Fight the
+battle on paper, fill the form, and the after-game data entry is two minutes of
+transcription.
+
+**Advanced too far — or entered the wrong result?** **⏪ Rewind…** on the GM bar rolls
+the whole campaign back to any earlier day and time ("3 14:00"), showing a receipt first
+of everything that gets undone (battles, orders, losses). Event sourcing makes it exact:
+the log is truncated on a whole-step boundary and replayed, so the rewound state is
+byte-identical to the state you actually had at that moment.
+
 **CAS reaches the table.** A flight holding a CAS or STRIKE_AIR mission near the battle
 shows up in the handoff as **off-board air support** — the briefing lists each side's
 flights with arrival timing ("overhead now" vs "first ~turn 2") and fuel state, so the

@@ -864,3 +864,32 @@ Async play: the hosted campaign runs continuously; players drop in whenever, plo
    a phone. Every number is a `<b data-rule="CAREER.REFIT.SP">` span filled live from
    `/api/rules` (a curated slice of rules.ts) — house-rule a constant and the manual
    updates itself; there is no second copy of the rulebook to fall out of date.
+
+## D-034 ✅ The paper bridge (printable battle pack + result form)
+1. `/print/handoff/:id` (GM-gated) renders the battle roster as a print-first page —
+   `server/print.ts` is a pure string builder over the same BattleRoster the tracker
+   eats, so the paper and the screen can never disagree. Page 1 per side: the derived
+   setup (entry edge, deploy order, initiative + turns, hidden/fortified, RDY TN
+   penalty, off-board artillery/air/reinforcements) and the roster with pilots, coarse
+   state, and the persisted record-sheet damage spelled out in words
+   ("boxes: LA 4, CT 2 · engine crit ×1 · ammo spent: LRM 20 ×6") so cards are
+   pre-marked before anyone sits down.
+2. Page 2 is a blank result form whose fields mirror BattleResult one-to-one (outcome /
+   ammo checkboxes, pilot hits, kills, ejected per unit; victor, field holder, turns
+   elapsed, aero fuel, notes) — filling it at the table makes the after-game data entry
+   transcription, not archaeology. 🖨 button lives next to "Open battle tracker" on the
+   frozen-engagement banner.
+
+## D-035 ✅ Rewind — the aimed undo
+1. `Campaign.rewindToTick(t)` generalizes D-015's one-step undo: truncate the log before
+   the first whole step whose CLOCK_ADVANCED passed `t`, replay the prefix. Whole steps
+   only — a target mid-step lands on the boundary below it, never on half-applied state.
+   GM injections (orders, battle results, spawns) after the cut vanish with it, which is
+   the point: a mis-entered result or a rules mistake discovered a day later unwinds
+   cleanly, pendingEngagement and all.
+2. `previewRewind(t)` is the receipt shown before the cut: events dropped, where the
+   clock lands, and the headlines among the dropped (engagements, battle results,
+   losses, spawns, endings, order/report counts). `/api/gm/rewind-preview` +
+   `/api/gm/rewind`; the GM screen's ⏪ Rewind… prompt takes "3", "3 14:00", or "t480"
+   and confirms with the receipt. JSONL persistence already rewrites the file on
+   truncate, and the Discord high-water mark already clamps on shrink — no new state.

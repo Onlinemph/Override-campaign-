@@ -21,6 +21,7 @@
     <button onclick="setPace(0)" title="Stop the automatic clock">■</button>
     <span id="autopace-status" class="kv"></span></span>
   <button onclick="undoStep()" title="Rewind the last step">↶ Undo step</button>
+  <button onclick="rewindTo()" title="Roll the whole campaign back to an earlier day/time — battles, orders, and losses after that moment are undone">⏪ Rewind…</button>
   <span class="kv">belief overlay:
     <select id="belief" onchange="refresh()"><option value="">truth only</option></select></span>
   <span id="vp-bar" class="kv"></span>
@@ -263,6 +264,7 @@ async function refresh() {
     document.getElementById('mul-links').innerHTML = e.handoffId
       ? sides.map(x => `<a href="/api/gm/handoff/${encodeURIComponent(e.handoffId)}/mul/${x}" download="${x}.mul">⤓ ${x}.mul</a>`).join(' · ')
         + ` · <button onclick="openBattle('${encodeURIComponent(e.handoffId)}')">⚔ Open battle tracker</button>`
+        + ` · <a href="/print/handoff/${encodeURIComponent(e.handoffId)}" target="_blank" title="Printable briefing + rosters with carry-over damage + a paper result form">🖨 Battle pack</a>`
       : '';
   } else {
     engDiv.style.display = 'none';
@@ -481,6 +483,29 @@ async function recall(formationId) {
 async function undoStep() {
   const r = await post('/api/gm/undo', {});
   notify(r.ok ? `↶ rewound to ${clock(r.tick).replace('D', 'Day ')}` : `nothing to undo`, r.ok ? '' : 'bad');
+  refresh();
+}
+// Rewind (D-035): time-travel with a receipt. Preview what history disappears, then cut.
+async function rewindTo() {
+  const raw = prompt(
+    'Rewind to when?\n\n' +
+    '  3        → start of Day 3\n' +
+    '  3 14:00  → Day 3, 14:00\n' +
+    '  t480     → exact tick 480\n\n' +
+    'Everything after that moment — steps, orders, battle results, losses — is undone.');
+  if (!raw) return;
+  let tick;
+  const t = raw.trim().match(/^t\s*(\d+)$/i);
+  const d = raw.trim().match(/^(\d+)(?:\s+(\d{1,2}):(\d{2}))?$/);
+  if (t) tick = +t[1];
+  else if (d) tick = (+d[1] - 1) * 240 + (+(d[2] || 0)) * 10 + Math.floor((+(d[3] || 0)) / 6);
+  else return notify('✗ could not read that — try "3", "3 14:00", or "t480"', 'bad');
+  const p = await (await fetch(`/api/gm/rewind-preview?tick=${tick}`)).json();
+  if (!p.dropped) return notify('nothing after that moment to undo', '');
+  const what = (p.notable || []).length ? '\n\nThis undoes: ' + p.notable.join('; ') + '.' : '';
+  if (!confirm(`Rewind to ${clock(p.toTick).replace('D', 'Day ')} — dropping ${p.dropped} events?${what}\n\nThis cannot itself be undone.`)) return;
+  const r = await post('/api/gm/rewind', { tick });
+  notify(r.ok ? `⏪ rewound to ${clock(r.tick).replace('D', 'Day ')} (${r.dropped} events undone)` : `✗ ${r.reason}`, r.ok ? 'good' : 'bad');
   refresh();
 }
 let campaignsLoaded = false;

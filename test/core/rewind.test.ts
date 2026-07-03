@@ -58,6 +58,55 @@ describe('GM time-travel — rewind/undo (D-015)', () => {
     expect(c.rewindOneStep()).toBeNull(); // back at the start again
   });
 
+  it('rewindToTick rolls back to the last state at or before the target (D-035)', () => {
+    const c = Campaign.create(scenario());
+    for (let i = 0; i < 6; i++) c.step('CONTACT'); // 6 single ticks
+    const midTick = c.truth.tick;
+    const midEvents = c.store.length();
+    const midState = JSON.stringify(c.truth);
+    for (let i = 0; i < 6; i++) c.step('CONTACT'); // on to tick 12
+    c.destroyFormation('red-1', 'test loss');
+    expect(c.truth.tick).toBe(12);
+
+    const r = c.rewindToTick(midTick);
+    expect(r).not.toBeNull();
+    expect(r!.tick).toBe(midTick);
+    expect(c.store.length()).toBe(midEvents);
+    // byte-exact: the rewound truth IS the state we had at that moment
+    expect(JSON.stringify(c.truth)).toBe(midState);
+    // the loss entered after the cut is undone
+    expect(c.truth.formations['red-1'].destroyed).toBeFalsy();
+    // and the campaign keeps running from there
+    c.step('CONTACT');
+    expect(c.truth.tick).toBe(midTick + 1);
+  });
+
+  it('rewindToTick lands mid-step targets on the boundary below; refuses futures', () => {
+    const c = Campaign.create(scenario());
+    const ticks: number[] = [];
+    for (let i = 0; i < 3; i++) { c.step(); ticks.push(c.truth.tick); }
+    const r = c.rewindToTick(ticks[1] - 1);        // inside the second step
+    expect(r!.tick).toBe(ticks[0]);                // whole steps only — no half-applied state
+    expect(c.rewindToTick(ticks[0])).toBeNull();   // at the clock: nothing after it
+    expect(c.rewindToTick(99999)).toBeNull();      // the future: nothing to undo
+  });
+
+  it('previewRewind is a receipt, not a cut — and the receipt matches the cut', () => {
+    const c = Campaign.create(scenario());
+    for (let i = 0; i < 4; i++) c.step('CONTACT');
+    c.destroyFormation('red-1', 'test loss');
+    const before = c.store.length();
+    const beforeState = JSON.stringify(c.truth);
+
+    const p = c.previewRewind(2)!;
+    expect(p.toTick).toBe(2);
+    expect(p.dropped).toBeGreaterThan(0);
+    expect(p.notable.join(' ')).toContain('the loss of red-1');
+    expect(c.store.length()).toBe(before);                 // nothing moved
+    expect(JSON.stringify(c.truth)).toBe(beforeState);
+    expect(c.rewindToTick(2)!.dropped).toBe(p.dropped);    // receipt == reality
+  });
+
   it('JSONL store: the rewind is persisted across a restart', () => {
     const path = join(dir, 'rw.jsonl');
     const genesis = scenario();

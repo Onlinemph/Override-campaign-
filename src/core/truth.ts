@@ -116,6 +116,74 @@ export class Campaign {
     return { tick: this.truth.tick };
   }
 
+  /**
+   * The truncation point for a rewind to `targetTick`: the index of the first whole
+   * step whose clock advance passed the target. Everything from there on — including
+   * GM injections (orders, battle results, spawns) entered after that moment — gets
+   * dropped. Null when the clock never passed the target (nothing to rewind).
+   */
+  private rewindCutIndex(targetTick: number): number | null {
+    const all = this.store.all();
+    let lastStepStart = -1;
+    for (let i = 0; i < all.length; i++) {
+      const e = all[i].event;
+      if (e.type === 'STEP_BEGAN') lastStepStart = i;
+      else if (e.type === 'CLOCK_ADVANCED' && e.tick > targetTick) {
+        return lastStepStart >= 0 ? lastStepStart : i;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * GM rewind to a moment (ext, D-035): roll the campaign back to the last state at or
+   * before `targetTick` by truncating the log and replaying — the same machinery as
+   * undo, aimed. Use previewRewind first to show the GM what history disappears.
+   */
+  rewindToTick(targetTick: number): { tick: number; dropped: number } | null {
+    const cut = this.rewindCutIndex(targetTick);
+    if (cut === null) return null;
+    const dropped = this.store.length() - cut;
+    this.rewind(cut);
+    return { tick: this.truth.tick, dropped };
+  }
+
+  /**
+   * What a rewind to `targetTick` would undo, without doing it: how many events drop,
+   * where the clock lands, and the headlines (battles, losses, orders) among them.
+   */
+  previewRewind(targetTick: number):
+      { toTick: number; dropped: number; notable: string[] } | null {
+    const cut = this.rewindCutIndex(targetTick);
+    if (cut === null) return null;
+    const all = this.store.all();
+    // where the clock lands: the last completed step before the cut (or genesis)
+    let toTick = 0;
+    for (let i = cut - 1; i >= 0; i--) {
+      const e = all[i].event;
+      if (e.type === 'CLOCK_ADVANCED') { toTick = e.tick; break; }
+    }
+    const name = (id: Id) => this.truth.formations[id]?.name ?? id;
+    const notable: string[] = [];
+    let orders = 0, reports = 0;
+    for (const { event: e } of all.slice(cut)) {
+      switch (e.type) {
+        case 'ORDER_ISSUED': orders++; break;
+        case 'REPORT_DELIVERED': reports++; break;
+        case 'ENGAGEMENT_TRIGGERED':
+          notable.push(`an engagement (${e.engagement.attackerSideId} vs ${e.engagement.defenderSideId})`);
+          break;
+        case 'BATTLE_RESULT_INGESTED': notable.push('a battle result'); break;
+        case 'FORMATION_DESTROYED': notable.push(`the loss of ${name(e.formationId)}`); break;
+        case 'FORMATION_SPAWNED': notable.push(`the arrival of ${e.formation.name}`); break;
+        case 'CAMPAIGN_ENDED': notable.push('the campaign ending'); break;
+      }
+    }
+    if (orders) notable.push(`${orders} order${orders === 1 ? '' : 's'}`);
+    if (reports) notable.push(`${reports} delivered report${reports === 1 ? '' : 's'}`);
+    return { toTick, dropped: all.length - cut, notable };
+  }
+
   get pendingEngagement() {
     return this.truth.pendingEngagementId
       ? this.truth.engagements[this.truth.pendingEngagementId] : null;
