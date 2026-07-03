@@ -56,12 +56,14 @@ describe.skipIf(!has)('OPERATION DAGGERPOINT — the whole engine in one campaig
     expect(c.truth.formations['blue-assault'].pos).toEqual(
       c.truth.formations['blue-flag'].pos); // the lance rode the whole way in
 
-    // Act II — down the well. DESCEND to the air layer, LAND at the eastern LZ,
-    // and the command lance walks off the ramp. All plotted orders, no GM fiat.
+    // Act II — down the well, the spheroid way (D-037): DESCEND with a targetHex
+    // arrives in the sky DIRECTLY OVER the cold LZ — cross in space, come down on the
+    // spot; no crawling across a continent at 1 hex/turn.
     const t0 = c.truth.tick;
     c.inject({ type: 'ORDER_ISSUED', order: { id: 'o-descend', sideId: 'davion',
       formationId: 'blue-flag', issuedTick: t0, effectiveTick: t0 + 1,
-      kind: 'DESCEND', conditionals: [] } });
+      kind: 'DESCEND', targetHex: { kind: 'ground', theaterId: 'menghao', q: 68, r: 30 },
+      conditionals: [] } });
     steps = 0;
     while (flagPos().kind !== 'air') {
       c.step();
@@ -71,19 +73,19 @@ describe.skipIf(!has)('OPERATION DAGGERPOINT — the whole engine in one campaig
     const t1 = c.truth.tick;
     c.inject({ type: 'ORDER_ISSUED', order: { id: 'o-land', sideId: 'davion',
       formationId: 'blue-flag', issuedTick: t1, effectiveTick: t1 + 1,
-      kind: 'LAND', targetHex: { kind: 'ground', theaterId: 'menghao', q: 21, r: 9 },
+      kind: 'LAND', targetHex: { kind: 'ground', theaterId: 'menghao', q: 68, r: 30 },
       conditionals: [] } });
     steps = 0;
     while (flagPos().kind !== 'ground') {
       c.step();
       if (++steps > 60) throw new Error('never landed');
     }
-    expect(flagPos()).toEqual({ kind: 'ground', theaterId: 'menghao', q: 21, r: 9 });
+    expect(flagPos()).toEqual({ kind: 'ground', theaterId: 'menghao', q: 68, r: 30 });
 
     const t2 = c.truth.tick;
     c.inject({ type: 'ORDER_ISSUED', order: { id: 'o-debark', sideId: 'davion',
       formationId: 'blue-assault', issuedTick: t2, effectiveTick: t2 + 1,
-      kind: 'DISEMBARK', targetHex: { kind: 'ground', theaterId: 'menghao', q: 22, r: 9 },
+      kind: 'DISEMBARK', targetHex: { kind: 'ground', theaterId: 'menghao', q: 69, r: 30 },
       conditionals: [] } });
     steps = 0;
     while (c.truth.formations['blue-assault'].mounted) {
@@ -91,7 +93,7 @@ describe.skipIf(!has)('OPERATION DAGGERPOINT — the whole engine in one campaig
       if (++steps > 20) throw new Error('lance never left the bay');
     }
     expect(c.truth.formations['blue-assault'].pos).toEqual(
-      { kind: 'ground', theaterId: 'menghao', q: 22, r: 9 });
+      { kind: 'ground', theaterId: 'menghao', q: 69, r: 30 });
 
     // the whole invasion so far, byte-exact from the log
     expect(replay(c.store.all())).toEqual(c.truth);

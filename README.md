@@ -84,11 +84,13 @@ descend from orbit directly onto the hex they want.
 
 **Want the full experience?** Run **[OPERATION DAGGERPOINT](docs/OPERATION_DAGGERPOINT.md)**
 — `npm run dev -- demo/assault.json` — a 3067 planetary assault built to exercise **every
-mechanic in the engine**: a Davion task force burns in from the jump point (watched by
-light-lagged sensors), descends under flak, lands a combined-arms battalion from spheroid
-and aerodyne DropShips, and races a 30-day VP clock against a dug-in Capellan garrison
-with stealth mechs, minefields, artillery, decoys, and a fighter wing. The walkthrough
-doc is a complete first game night. And every player screen carries a **📖 War diary** —
+mechanic in the engine**, on a **continental 80×50 map** (1,440 × 900 km): a Davion task
+force burns in from the jump point (watched by light-lagged sensors), drops its spheroid
+Overlord out of orbit directly onto a cold LZ in the radar gap, races the garrison for
+the railhead that moves battalions four times faster than they march, and fights a
+30-day VP clock against a dug-in Capellan garrison with a radar picket line, stealth
+mechs, minefields, artillery, decoys, and a fighter wing. The walkthrough doc is a
+complete first game night. And every player screen carries a **📖 War diary** —
 the campaign as that side lived it, day by day, fog intact.
 
 **The UI explains itself.** The order form only offers what the selected formation can

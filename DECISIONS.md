@@ -957,3 +957,13 @@ call), the sky now maps 1:1 onto the ground:
    drift is a pure hash of (seed, target, tick) — replay stays byte-exact with no new
    events. Parked/on-station targets need no lead and take no error. Escape by jinking
    a marginal pursuer with a poor track is now real; get LOCK before you commit.
+
+## D-032.2 ✅ DAGGERPOINT goes continental (the showcase catches up to the engine)
+Rebuilt demo/assault.json on 80×50 (1,440 × 900 km) so the showcase actually teaches
+the D-037/D-038 game: a trans-continental rail mainline (spaceport → capital → factory
+→ 52 hexes → the Hengshan railhead — the opening race), Northwatch Station's 24-hex
+radar horizon with a deliberate dark corridor through the southern badlands, the cold
+LZ six hexes from the railhead, and the Overlord descending on-target out of orbit
+(DESCEND + targetHex — the spheroid doctrine as one authored order). VP retuned to
+170 over the 13/day full-hold economy (~day-13 clock). The acceptance test plays the
+same opening act at the new scale, byte-exact.

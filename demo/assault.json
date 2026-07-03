@@ -7,60 +7,100 @@
     "weather": "RAIN",
     "airHexByTheater": {
       "menghao": {
-        "q": 12,
-        "r": 9
+        "q": 0,
+        "r": 0
       }
     },
-    "vpThreshold": 100,
+    "vpThreshold": 170,
     "endTick": 7200
   },
   "theaters": [
     {
       "id": "menghao",
-      "name": "Menghao — Jiangxi Lowlands",
-      "width": 26,
-      "height": 18,
+      "name": "Menghao — Jiangxi Continent",
+      "width": 80,
+      "height": 50,
       "defaultTerrain": "CLEAR",
       "overrides": [
         {
-          "q": 1,
+          "q": 7,
           "r": 0,
-          "terrain": "WATER"
+          "terrain": "HILLS"
         },
         {
-          "q": 10,
+          "q": 8,
+          "r": 0,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 9,
+          "r": 0,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 23,
+          "r": 0,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 24,
+          "r": 0,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 27,
+          "r": 0,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 28,
+          "r": 0,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 29,
+          "r": 0,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 36,
+          "r": 0,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 47,
+          "r": 0,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 48,
+          "r": 0,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 49,
+          "r": 0,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 50,
+          "r": 0,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 51,
+          "r": 0,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 70,
+          "r": 0,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 72,
           "r": 0,
           "terrain": "ROUGH"
-        },
-        {
-          "q": 11,
-          "r": 0,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 13,
-          "r": 0,
-          "terrain": "SWAMP"
-        },
-        {
-          "q": 14,
-          "r": 0,
-          "terrain": "SWAMP"
-        },
-        {
-          "q": 15,
-          "r": 0,
-          "terrain": "SWAMP"
-        },
-        {
-          "q": 19,
-          "r": 0,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 20,
-          "r": 0,
-          "terrain": "HILLS"
         },
         {
           "q": 0,
@@ -75,55 +115,145 @@
         {
           "q": 2,
           "r": 1,
-          "terrain": "WATER"
+          "terrain": "ROUGH"
         },
         {
-          "q": 9,
+          "q": 3,
           "r": 1,
           "terrain": "ROUGH"
         },
         {
-          "q": 10,
-          "r": 1,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 11,
+          "q": 7,
           "r": 1,
           "terrain": "HILLS"
         },
         {
-          "q": 13,
-          "r": 1,
-          "terrain": "SWAMP"
-        },
-        {
-          "q": 15,
-          "r": 1,
-          "terrain": "SWAMP"
-        },
-        {
-          "q": 20,
-          "r": 1,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 21,
+          "q": 8,
           "r": 1,
           "terrain": "HILLS"
         },
         {
           "q": 22,
           "r": 1,
-          "terrain": "WATER"
+          "terrain": "WOODS"
+        },
+        {
+          "q": 23,
+          "r": 1,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 24,
+          "r": 1,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 27,
+          "r": 1,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 28,
+          "r": 1,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 29,
+          "r": 1,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 35,
+          "r": 1,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 1,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 40,
+          "r": 1,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 41,
+          "r": 1,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 43,
+          "r": 1,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 45,
+          "r": 1,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 46,
+          "r": 1,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 47,
+          "r": 1,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 50,
+          "r": 1,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 55,
+          "r": 1,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 56,
+          "r": 1,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 58,
+          "r": 1,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 59,
+          "r": 1,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 70,
+          "r": 1,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 71,
+          "r": 1,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 72,
+          "r": 1,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 73,
+          "r": 1,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 74,
+          "r": 1,
+          "terrain": "ROUGH"
         },
         {
           "q": 0,
-          "r": 2,
-          "terrain": "WATER"
-        },
-        {
-          "q": 1,
           "r": 2,
           "terrain": "WATER"
         },
@@ -133,143 +263,1562 @@
           "terrain": "WATER"
         },
         {
-          "q": 7,
-          "r": 2,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 8,
-          "r": 2,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 9,
-          "r": 2,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 10,
-          "r": 2,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 19,
-          "r": 2,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 20,
-          "r": 2,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 0,
-          "r": 3,
-          "terrain": "WATER"
-        },
-        {
-          "q": 1,
-          "r": 3,
-          "terrain": "HILLS"
-        },
-        {
           "q": 6,
-          "r": 3,
-          "terrain": "ROUGH"
+          "r": 2,
+          "terrain": "HILLS"
         },
         {
           "q": 7,
+          "r": 2,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 15,
+          "r": 2,
+          "terrain": "WATER"
+        },
+        {
+          "q": 16,
+          "r": 2,
+          "terrain": "WATER"
+        },
+        {
+          "q": 21,
+          "r": 2,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 22,
+          "r": 2,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 23,
+          "r": 2,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 24,
+          "r": 2,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 26,
+          "r": 2,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 27,
+          "r": 2,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 28,
+          "r": 2,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 32,
+          "r": 2,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 33,
+          "r": 2,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 34,
+          "r": 2,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 2,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 40,
+          "r": 2,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 43,
+          "r": 2,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 44,
+          "r": 2,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 45,
+          "r": 2,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 46,
+          "r": 2,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 50,
+          "r": 2,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 54,
+          "r": 2,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 55,
+          "r": 2,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 56,
+          "r": 2,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 57,
+          "r": 2,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 58,
+          "r": 2,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 59,
+          "r": 2,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 60,
+          "r": 2,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 61,
+          "r": 2,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 70,
+          "r": 2,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 71,
+          "r": 2,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 5,
           "r": 3,
           "terrain": "ROUGH"
         },
         {
-          "q": 10,
-          "r": 3,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 11,
-          "r": 3,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 17,
+          "q": 15,
           "r": 3,
           "terrain": "WATER"
         },
         {
-          "q": 18,
+          "q": 22,
           "r": 3,
-          "terrain": "HILLS"
+          "terrain": "MOUNTAIN"
         },
         {
-          "q": 19,
+          "q": 27,
           "r": 3,
-          "terrain": "HILLS"
+          "terrain": "SWAMP"
         },
         {
-          "q": 20,
+          "q": 28,
           "r": 3,
-          "terrain": "HILLS"
+          "terrain": "SWAMP"
         },
         {
-          "q": 25,
+          "q": 30,
+          "r": 3,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 31,
+          "r": 3,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 32,
+          "r": 3,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 33,
+          "r": 3,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 34,
+          "r": 3,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 35,
+          "r": 3,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 3,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 40,
           "r": 3,
           "terrain": "ROUGH"
         },
         {
-          "q": 0,
-          "r": 4,
+          "q": 41,
+          "r": 3,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 43,
+          "r": 3,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 50,
+          "r": 3,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 52,
+          "r": 3,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 53,
+          "r": 3,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 58,
+          "r": 3,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 59,
+          "r": 3,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 60,
+          "r": 3,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 70,
+          "r": 3,
           "terrain": "HILLS"
         },
         {
-          "q": 1,
-          "r": 4,
+          "q": 71,
+          "r": 3,
           "terrain": "HILLS"
+        },
+        {
+          "q": 78,
+          "r": 3,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 79,
+          "r": 3,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 2,
+          "r": 4,
+          "terrain": "WATER"
+        },
+        {
+          "q": 3,
+          "r": 4,
+          "terrain": "WATER"
         },
         {
           "q": 4,
           "r": 4,
-          "terrain": "MOUNTAIN"
+          "terrain": "WATER"
         },
         {
           "q": 5,
           "r": 4,
-          "terrain": "MOUNTAIN"
+          "terrain": "ROUGH"
         },
         {
-          "q": 6,
+          "q": 13,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 14,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 15,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 19,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 28,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 29,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 30,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 31,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 34,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
           "r": 4,
           "terrain": "ROUGH"
         },
         {
-          "q": 10,
+          "q": 41,
+          "r": 4,
+          "terrain": "WATER"
+        },
+        {
+          "q": 43,
+          "r": 4,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 44,
+          "r": 4,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 45,
+          "r": 4,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 49,
+          "r": 4,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 50,
+          "r": 4,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 51,
+          "r": 4,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 52,
+          "r": 4,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 58,
           "r": 4,
           "terrain": "HILLS"
         },
         {
-          "q": 11,
+          "q": 59,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 60,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 63,
+          "r": 4,
+          "terrain": "WATER"
+        },
+        {
+          "q": 64,
+          "r": 4,
+          "terrain": "URBAN",
+          "infra": [
+            "TOWN",
+            "ROAD"
+          ]
+        },
+        {
+          "q": 69,
           "r": 4,
           "terrain": "HILLS"
         },
         {
-          "q": 12,
+          "q": 73,
           "r": 4,
           "terrain": "WOODS"
         },
         {
-          "q": 16,
+          "q": 74,
           "r": 4,
           "terrain": "WOODS"
         },
         {
-          "q": 17,
+          "q": 78,
           "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 79,
+          "r": 4,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 1,
+          "r": 5,
+          "terrain": "WATER"
+        },
+        {
+          "q": 2,
+          "r": 5,
+          "terrain": "WATER"
+        },
+        {
+          "q": 3,
+          "r": 5,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 4,
+          "r": 5,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 5,
+          "r": 5,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 13,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 14,
+          "r": 5,
           "terrain": "WOODS"
         },
         {
           "q": 18,
-          "r": 4,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 19,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 22,
+          "r": 5,
+          "terrain": "WATER"
+        },
+        {
+          "q": 29,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 41,
+          "r": 5,
+          "terrain": "WATER"
+        },
+        {
+          "q": 43,
+          "r": 5,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 48,
+          "r": 5,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 57,
+          "r": 5,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 58,
+          "r": 5,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 59,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 60,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 61,
+          "r": 5,
+          "terrain": "WATER"
+        },
+        {
+          "q": 62,
+          "r": 5,
+          "terrain": "WATER"
+        },
+        {
+          "q": 64,
+          "r": 5,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 65,
+          "r": 5,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 66,
+          "r": 5,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 71,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 72,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 73,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 74,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 77,
+          "r": 5,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 78,
+          "r": 5,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 2,
+          "r": 6,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 3,
+          "r": 6,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 12,
+          "r": 6,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 17,
+          "r": 6,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 18,
+          "r": 6,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 19,
+          "r": 6,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 6,
+          "terrain": "WATER"
+        },
+        {
+          "q": 22,
+          "r": 6,
+          "terrain": "WATER"
+        },
+        {
+          "q": 23,
+          "r": 6,
+          "terrain": "WATER"
+        },
+        {
+          "q": 37,
+          "r": 6,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 38,
+          "r": 6,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 40,
+          "r": 6,
+          "terrain": "WATER"
+        },
+        {
+          "q": 41,
+          "r": 6,
+          "terrain": "WATER"
+        },
+        {
+          "q": 42,
+          "r": 6,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 47,
+          "r": 6,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 48,
+          "r": 6,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 56,
+          "r": 6,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 58,
+          "r": 6,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 59,
+          "r": 6,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 62,
+          "r": 6,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 65,
+          "r": 6,
+          "terrain": "SWAMP",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 66,
+          "r": 6,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 71,
+          "r": 6,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 72,
+          "r": 6,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 77,
+          "r": 6,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 78,
+          "r": 6,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 1,
+          "r": 7,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 2,
+          "r": 7,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 3,
+          "r": 7,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 11,
+          "r": 7,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 12,
+          "r": 7,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 19,
+          "r": 7,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 20,
+          "r": 7,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 7,
+          "terrain": "WATER"
+        },
+        {
+          "q": 22,
+          "r": 7,
+          "terrain": "WATER"
+        },
+        {
+          "q": 36,
+          "r": 7,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 37,
+          "r": 7,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 40,
+          "r": 7,
+          "terrain": "WATER"
+        },
+        {
+          "q": 47,
+          "r": 7,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 51,
+          "r": 7,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 58,
+          "r": 7,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 59,
+          "r": 7,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 61,
+          "r": 7,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 62,
+          "r": 7,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 63,
+          "r": 7,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 64,
+          "r": 7,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 66,
+          "r": 7,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 67,
+          "r": 7,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 76,
+          "r": 7,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 77,
+          "r": 7,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 0,
+          "r": 8,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 1,
+          "r": 8,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 3,
+          "r": 8,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 12,
+          "r": 8,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 17,
+          "r": 8,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 18,
+          "r": 8,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 19,
+          "r": 8,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 20,
+          "r": 8,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 21,
+          "r": 8,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 22,
+          "r": 8,
+          "terrain": "WATER"
+        },
+        {
+          "q": 47,
+          "r": 8,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 50,
+          "r": 8,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 51,
+          "r": 8,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 54,
+          "r": 8,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 55,
+          "r": 8,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 58,
+          "r": 8,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 60,
+          "r": 8,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 61,
+          "r": 8,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 67,
+          "r": 8,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 68,
+          "r": 8,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 73,
+          "r": 8,
+          "terrain": "WATER"
+        },
+        {
+          "q": 76,
+          "r": 8,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 77,
+          "r": 8,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 78,
+          "r": 8,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 2,
+          "r": 9,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 11,
+          "r": 9,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 12,
+          "r": 9,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 13,
+          "r": 9,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 14,
+          "r": 9,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 15,
+          "r": 9,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 18,
+          "r": 9,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 20,
+          "r": 9,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 21,
+          "r": 9,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 22,
+          "r": 9,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 39,
+          "r": 9,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 40,
+          "r": 9,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 41,
+          "r": 9,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 49,
+          "r": 9,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 50,
+          "r": 9,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 51,
+          "r": 9,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 55,
+          "r": 9,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 60,
+          "r": 9,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 68,
+          "r": 9,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 69,
+          "r": 9,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 72,
+          "r": 9,
+          "terrain": "WATER"
+        },
+        {
+          "q": 73,
+          "r": 9,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 74,
+          "r": 9,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 76,
+          "r": 9,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 1,
+          "r": 10,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 2,
+          "r": 10,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 3,
+          "r": 10,
+          "terrain": "WATER"
+        },
+        {
+          "q": 12,
+          "r": 10,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 13,
+          "r": 10,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 14,
+          "r": 10,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 15,
+          "r": 10,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 16,
+          "r": 10,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 17,
+          "r": 10,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 21,
+          "r": 10,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 22,
+          "r": 10,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 23,
+          "r": 10,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 25,
+          "r": 10,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 26,
+          "r": 10,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 40,
+          "r": 10,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 41,
+          "r": 10,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 48,
+          "r": 10,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 50,
+          "r": 10,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 51,
+          "r": 10,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 55,
+          "r": 10,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 58,
+          "r": 10,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 59,
+          "r": 10,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 69,
+          "r": 10,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 70,
+          "r": 10,
+          "terrain": "ROUGH",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 71,
+          "r": 10,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 72,
+          "r": 10,
+          "terrain": "WATER"
+        },
+        {
+          "q": 73,
+          "r": 10,
+          "terrain": "WATER"
+        },
+        {
+          "q": 74,
+          "r": 10,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 1,
+          "r": 11,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 2,
+          "r": 11,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 3,
+          "r": 11,
+          "terrain": "WATER"
+        },
+        {
+          "q": 4,
+          "r": 11,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 11,
+          "r": 11,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 14,
+          "r": 11,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 15,
+          "r": 11,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 16,
+          "r": 11,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 18,
+          "r": 11,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 11,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 22,
+          "r": 11,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 23,
+          "r": 11,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 24,
+          "r": 11,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 25,
+          "r": 11,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 26,
+          "r": 11,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 27,
+          "r": 11,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 31,
+          "r": 11,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 51,
+          "r": 11,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 54,
+          "r": 11,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 55,
+          "r": 11,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 63,
+          "r": 11,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 64,
+          "r": 11,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 65,
+          "r": 11,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 66,
+          "r": 11,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 70,
+          "r": 11,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 71,
+          "r": 11,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 73,
+          "r": 11,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 74,
+          "r": 11,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 75,
+          "r": 11,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 76,
+          "r": 11,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 1,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 3,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 4,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 5,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 10,
+          "r": 12,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 11,
+          "r": 12,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 17,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 18,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 19,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 12,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 22,
+          "r": 12,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 23,
+          "r": 12,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 24,
+          "r": 12,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 26,
+          "r": 12,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 27,
+          "r": 12,
+          "terrain": "WATER"
+        },
+        {
+          "q": 30,
+          "r": 12,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 31,
+          "r": 12,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 32,
+          "r": 12,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 33,
+          "r": 12,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 46,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 47,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 50,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 51,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 52,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 53,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 54,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 55,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 56,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 62,
+          "r": 12,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 63,
+          "r": 12,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 64,
+          "r": 12,
           "terrain": "CLEAR",
           "objective": {
             "vpPerDay": 2,
@@ -278,148 +1827,6490 @@
           }
         },
         {
-          "q": 19,
-          "r": 4,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 20,
-          "r": 4,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 21,
-          "r": 4,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 22,
-          "r": 4,
+          "q": 65,
+          "r": 12,
           "terrain": "WOODS"
         },
         {
-          "q": 23,
-          "r": 4,
+          "q": 66,
+          "r": 12,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 68,
+          "r": 12,
           "terrain": "ROUGH"
         },
         {
-          "q": 24,
-          "r": 4,
+          "q": 69,
+          "r": 12,
           "terrain": "ROUGH"
         },
         {
-          "q": 0,
-          "r": 5,
-          "terrain": "HILLS"
+          "q": 71,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
         },
         {
-          "q": 1,
-          "r": 5,
-          "terrain": "HILLS"
+          "q": 72,
+          "r": 12,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 73,
+          "r": 12,
+          "terrain": "WATER"
+        },
+        {
+          "q": 74,
+          "r": 12,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 75,
+          "r": 12,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 77,
+          "r": 12,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 78,
+          "r": 12,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 2,
+          "r": 13,
+          "terrain": "WATER"
+        },
+        {
+          "q": 3,
+          "r": 13,
+          "terrain": "WOODS"
         },
         {
           "q": 4,
-          "r": 5,
+          "r": 13,
           "terrain": "MOUNTAIN"
         },
         {
-          "q": 7,
-          "r": 5,
-          "terrain": "ROUGH"
+          "q": 5,
+          "r": 13,
+          "terrain": "WOODS"
         },
         {
           "q": 9,
-          "r": 5,
-          "terrain": "WOODS"
+          "r": 13,
+          "terrain": "ROUGH"
         },
         {
           "q": 10,
-          "r": 5,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 11,
-          "r": 5,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 15,
-          "r": 5,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 16,
-          "r": 5,
-          "terrain": "WOODS"
+          "r": 13,
+          "terrain": "ROUGH"
         },
         {
           "q": 17,
-          "r": 5,
+          "r": 13,
           "terrain": "WOODS"
         },
         {
           "q": 18,
-          "r": 5,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 19,
-          "r": 5,
-          "terrain": "HILLS"
+          "r": 13,
+          "terrain": "WOODS"
         },
         {
           "q": 20,
-          "r": 5,
+          "r": 13,
           "terrain": "HILLS"
         },
         {
           "q": 21,
-          "r": 5,
+          "r": 13,
           "terrain": "HILLS"
         },
         {
           "q": 22,
-          "r": 5,
-          "terrain": "WOODS"
+          "r": 13,
+          "terrain": "MOUNTAIN"
         },
         {
           "q": 23,
-          "r": 5,
-          "terrain": "ROUGH"
+          "r": 13,
+          "terrain": "HILLS"
         },
         {
           "q": 24,
-          "r": 5,
+          "r": 13,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 27,
+          "r": 13,
+          "terrain": "WATER"
+        },
+        {
+          "q": 28,
+          "r": 13,
+          "terrain": "WATER"
+        },
+        {
+          "q": 31,
+          "r": 13,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 32,
+          "r": 13,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 37,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 43,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 44,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 45,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 46,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 47,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 52,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 53,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 60,
+          "r": 13,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 61,
+          "r": 13,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 62,
+          "r": 13,
           "terrain": "ROUGH"
+        },
+        {
+          "q": 63,
+          "r": 13,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 64,
+          "r": 13,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 65,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 68,
+          "r": 13,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 69,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 72,
+          "r": 13,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 73,
+          "r": 13,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 74,
+          "r": 13,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 75,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 76,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 77,
+          "r": 13,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 2,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 3,
+          "r": 14,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 4,
+          "r": 14,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 5,
+          "r": 14,
+          "terrain": "WATER"
+        },
+        {
+          "q": 9,
+          "r": 14,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 12,
+          "r": 14,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 13,
+          "r": 14,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 14,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 15,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 18,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 14,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 22,
+          "r": 14,
+          "terrain": "MOUNTAIN"
         },
         {
           "q": 25,
-          "r": 5,
+          "r": 14,
+          "terrain": "WATER"
+        },
+        {
+          "q": 26,
+          "r": 14,
+          "terrain": "WATER"
+        },
+        {
+          "q": 27,
+          "r": 14,
+          "terrain": "WATER"
+        },
+        {
+          "q": 30,
+          "r": 14,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 31,
+          "r": 14,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 32,
+          "r": 14,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 36,
+          "r": 14,
+          "terrain": "CLEAR",
+          "infra": [
+            "SENSOR_STATION",
+            "ROAD"
+          ]
+        },
+        {
+          "q": 37,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 38,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 41,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 44,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 52,
+          "r": 14,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 53,
+          "r": 14,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 61,
+          "r": 14,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 64,
+          "r": 14,
           "terrain": "ROUGH"
         },
         {
-          "q": 0,
-          "r": 6,
+          "q": 65,
+          "r": 14,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 66,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 67,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 68,
+          "r": 14,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 73,
+          "r": 14,
+          "terrain": "SWAMP",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 74,
+          "r": 14,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 75,
+          "r": 14,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 76,
+          "r": 14,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 78,
+          "r": 14,
           "terrain": "HILLS"
         },
         {
           "q": 1,
-          "r": 6,
-          "terrain": "ROUGH"
+          "r": 15,
+          "terrain": "WOODS"
         },
         {
-          "q": 7,
-          "r": 6,
-          "terrain": "ROUGH"
+          "q": 2,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 3,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 4,
+          "r": 15,
+          "terrain": "WATER"
+        },
+        {
+          "q": 5,
+          "r": 15,
+          "terrain": "WATER"
+        },
+        {
+          "q": 6,
+          "r": 15,
+          "terrain": "WOODS"
         },
         {
           "q": 8,
-          "r": 6,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 11,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 12,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 13,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 14,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 17,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 18,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 19,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 26,
+          "r": 15,
+          "terrain": "WATER"
+        },
+        {
+          "q": 29,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 32,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 36,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 38,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 40,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 48,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 49,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 50,
+          "r": 15,
+          "terrain": "WATER"
+        },
+        {
+          "q": 51,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 52,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 53,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 57,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 65,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 66,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 67,
+          "r": 15,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 73,
+          "r": 15,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 74,
+          "r": 15,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 75,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 76,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 77,
+          "r": 15,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 4,
+          "r": 16,
+          "terrain": "WATER"
+        },
+        {
+          "q": 5,
+          "r": 16,
+          "terrain": "WATER"
+        },
+        {
+          "q": 6,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 7,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 8,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 10,
+          "r": 16,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 11,
+          "r": 16,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 13,
+          "r": 16,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 14,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 15,
+          "r": 16,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 17,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 19,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 20,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 25,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 26,
+          "r": 16,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 27,
+          "r": 16,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 29,
+          "r": 16,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 30,
+          "r": 16,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 31,
+          "r": 16,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 34,
+          "r": 16,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 35,
+          "r": 16,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 36,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 37,
+          "r": 16,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 38,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 40,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 47,
+          "r": 16,
+          "terrain": "WATER"
+        },
+        {
+          "q": 48,
+          "r": 16,
+          "terrain": "WATER"
+        },
+        {
+          "q": 49,
+          "r": 16,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 50,
+          "r": 16,
+          "terrain": "WATER"
+        },
+        {
+          "q": 51,
+          "r": 16,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 52,
+          "r": 16,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 55,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 56,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 65,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 66,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 67,
+          "r": 16,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 73,
+          "r": 16,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 3,
+          "r": 17,
+          "terrain": "WATER"
+        },
+        {
+          "q": 4,
+          "r": 17,
+          "terrain": "WATER"
+        },
+        {
+          "q": 8,
+          "r": 17,
           "terrain": "HILLS"
         },
         {
           "q": 9,
-          "r": 6,
+          "r": 17,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 12,
+          "r": 17,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 13,
+          "r": 17,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 15,
+          "r": 17,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 16,
+          "r": 17,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 19,
+          "r": 17,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 20,
+          "r": 17,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 17,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 26,
+          "r": 17,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 30,
+          "r": 17,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 33,
+          "r": 17,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 34,
+          "r": 17,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 35,
+          "r": 17,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 36,
+          "r": 17,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 37,
+          "r": 17,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 39,
+          "r": 17,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 46,
+          "r": 17,
+          "terrain": "WATER"
+        },
+        {
+          "q": 48,
+          "r": 17,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 49,
+          "r": 17,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 50,
+          "r": 17,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 51,
+          "r": 17,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 52,
+          "r": 17,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 53,
+          "r": 17,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 54,
+          "r": 17,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 58,
+          "r": 17,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 65,
+          "r": 17,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 67,
+          "r": 17,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 68,
+          "r": 17,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 69,
+          "r": 17,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 73,
+          "r": 17,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 78,
+          "r": 17,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 79,
+          "r": 17,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 3,
+          "r": 18,
+          "terrain": "WATER"
+        },
+        {
+          "q": 4,
+          "r": 18,
+          "terrain": "WATER"
+        },
+        {
+          "q": 6,
+          "r": 18,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 7,
+          "r": 18,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 8,
+          "r": 18,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 14,
+          "r": 18,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 15,
+          "r": 18,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 16,
+          "r": 18,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 17,
+          "r": 18,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 20,
+          "r": 18,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 21,
+          "r": 18,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 26,
+          "r": 18,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 27,
+          "r": 18,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 28,
+          "r": 18,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 31,
+          "r": 18,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 32,
+          "r": 18,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 33,
+          "r": 18,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 34,
+          "r": 18,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 35,
+          "r": 18,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 37,
+          "r": 18,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 38,
+          "r": 18,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 18,
+          "terrain": "WATER"
+        },
+        {
+          "q": 49,
+          "r": 18,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 50,
+          "r": 18,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 51,
+          "r": 18,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 52,
+          "r": 18,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 55,
+          "r": 18,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 56,
+          "r": 18,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 57,
+          "r": 18,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 58,
+          "r": 18,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 73,
+          "r": 18,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 12,
+          "r": 19,
+          "terrain": "WATER"
+        },
+        {
+          "q": 14,
+          "r": 19,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 16,
+          "r": 19,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 17,
+          "r": 19,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 18,
+          "r": 19,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 19,
+          "r": 19,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 20,
+          "r": 19,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 21,
+          "r": 19,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 24,
+          "r": 19,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 25,
+          "r": 19,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 27,
+          "r": 19,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 28,
+          "r": 19,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 36,
+          "r": 19,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 37,
+          "r": 19,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 38,
+          "r": 19,
+          "terrain": "WATER"
+        },
+        {
+          "q": 39,
+          "r": 19,
+          "terrain": "WATER"
+        },
+        {
+          "q": 50,
+          "r": 19,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 51,
+          "r": 19,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 52,
+          "r": 19,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 54,
+          "r": 19,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 55,
+          "r": 19,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 58,
+          "r": 19,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 59,
+          "r": 19,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 70,
+          "r": 19,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 73,
+          "r": 19,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 2,
+          "r": 20,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 3,
+          "r": 20,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 5,
+          "r": 20,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 6,
+          "r": 20,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 11,
+          "r": 20,
+          "terrain": "WATER"
+        },
+        {
+          "q": 12,
+          "r": 20,
+          "terrain": "WATER"
+        },
+        {
+          "q": 16,
+          "r": 20,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 17,
+          "r": 20,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 18,
+          "r": 20,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 19,
+          "r": 20,
+          "terrain": "WATER"
+        },
+        {
+          "q": 20,
+          "r": 20,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 24,
+          "r": 20,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 27,
+          "r": 20,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 28,
+          "r": 20,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 36,
+          "r": 20,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 37,
+          "r": 20,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 38,
+          "r": 20,
+          "terrain": "WATER"
+        },
+        {
+          "q": 50,
+          "r": 20,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 53,
+          "r": 20,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 54,
+          "r": 20,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 55,
+          "r": 20,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 56,
+          "r": 20,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 57,
+          "r": 20,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 60,
+          "r": 20,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 69,
+          "r": 20,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 70,
+          "r": 20,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 71,
+          "r": 20,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 72,
+          "r": 20,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 73,
+          "r": 20,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 3,
+          "r": 21,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 4,
+          "r": 21,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 5,
+          "r": 21,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 11,
+          "r": 21,
+          "terrain": "WATER"
+        },
+        {
+          "q": 12,
+          "r": 21,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 35,
+          "r": 21,
+          "terrain": "WATER"
+        },
+        {
+          "q": 36,
+          "r": 21,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 42,
+          "r": 21,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 46,
+          "r": 21,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 51,
+          "r": 21,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 55,
+          "r": 21,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 56,
+          "r": 21,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 60,
+          "r": 21,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 61,
+          "r": 21,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 69,
+          "r": 21,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 72,
+          "r": 21,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 73,
+          "r": 21,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 4,
+          "r": 22,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 10,
+          "r": 22,
+          "terrain": "WATER"
+        },
+        {
+          "q": 11,
+          "r": 22,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 12,
+          "r": 22,
+          "terrain": "CLEAR",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 13,
+          "r": 22,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 24,
+          "r": 22,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 34,
+          "r": 22,
+          "terrain": "WATER"
+        },
+        {
+          "q": 35,
+          "r": 22,
+          "terrain": "WATER"
+        },
+        {
+          "q": 36,
+          "r": 22,
+          "terrain": "WATER"
+        },
+        {
+          "q": 42,
+          "r": 22,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 43,
+          "r": 22,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 45,
+          "r": 22,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 46,
+          "r": 22,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 50,
+          "r": 22,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 51,
+          "r": 22,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 56,
+          "r": 22,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 57,
+          "r": 22,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 58,
+          "r": 22,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 59,
+          "r": 22,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 60,
+          "r": 22,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 61,
+          "r": 22,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 62,
+          "r": 22,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 66,
+          "r": 22,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 67,
+          "r": 22,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 69,
+          "r": 22,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 70,
+          "r": 22,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 71,
+          "r": 22,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 72,
+          "r": 22,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 73,
+          "r": 22,
+          "terrain": "WOODS",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 3,
+          "r": 23,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 11,
+          "r": 23,
+          "terrain": "WATER"
+        },
+        {
+          "q": 13,
+          "r": 23,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 14,
+          "r": 23,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 18,
+          "r": 23,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 19,
+          "r": 23,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 23,
+          "r": 23,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 24,
+          "r": 23,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 32,
+          "r": 23,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 34,
+          "r": 23,
+          "terrain": "WATER"
+        },
+        {
+          "q": 39,
+          "r": 23,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 42,
+          "r": 23,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 45,
+          "r": 23,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 46,
+          "r": 23,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 49,
+          "r": 23,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 50,
+          "r": 23,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 51,
+          "r": 23,
+          "terrain": "WATER"
+        },
+        {
+          "q": 55,
+          "r": 23,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 57,
+          "r": 23,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 58,
+          "r": 23,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 64,
+          "r": 23,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 65,
+          "r": 23,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 66,
+          "r": 23,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 67,
+          "r": 23,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 69,
+          "r": 23,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 70,
+          "r": 23,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 71,
+          "r": 23,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 72,
+          "r": 23,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 73,
+          "r": 23,
+          "terrain": "HILLS",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 74,
+          "r": 23,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 75,
+          "r": 23,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 13,
+          "r": 24,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 14,
+          "r": 24,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 18,
+          "r": 24,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 19,
+          "r": 24,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 22,
+          "r": 24,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 23,
+          "r": 24,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 24,
+          "r": 24,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 25,
+          "r": 24,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 26,
+          "r": 24,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 32,
+          "r": 24,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 33,
+          "r": 24,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 24,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 49,
+          "r": 24,
+          "terrain": "WATER"
+        },
+        {
+          "q": 50,
+          "r": 24,
+          "terrain": "WATER"
+        },
+        {
+          "q": 54,
+          "r": 24,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 56,
+          "r": 24,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 57,
+          "r": 24,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 58,
+          "r": 24,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 60,
+          "r": 24,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 61,
+          "r": 24,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 62,
+          "r": 24,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 64,
+          "r": 24,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 65,
+          "r": 24,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 69,
+          "r": 24,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 70,
+          "r": 24,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 73,
+          "r": 24,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 74,
+          "r": 24,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 75,
+          "r": 24,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 76,
+          "r": 24,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 12,
+          "r": 25,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 13,
+          "r": 25,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 14,
+          "r": 25,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 15,
+          "r": 25,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 16,
+          "r": 25,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 17,
+          "r": 25,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 18,
+          "r": 25,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 19,
+          "r": 25,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 22,
+          "r": 25,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 23,
+          "r": 25,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 24,
+          "r": 25,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 25,
+          "r": 25,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 26,
+          "r": 25,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 27,
+          "r": 25,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 31,
+          "r": 25,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 32,
+          "r": 25,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 49,
+          "r": 25,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 50,
+          "r": 25,
+          "terrain": "WATER"
+        },
+        {
+          "q": 51,
+          "r": 25,
+          "terrain": "WATER"
+        },
+        {
+          "q": 56,
+          "r": 25,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 57,
+          "r": 25,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 60,
+          "r": 25,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 61,
+          "r": 25,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 64,
+          "r": 25,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 65,
+          "r": 25,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 73,
+          "r": 25,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 74,
+          "r": 25,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 76,
+          "r": 25,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 79,
+          "r": 25,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 11,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 14,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "CITY",
+            "RAIL",
+            "ROAD"
+          ],
+          "objective": {
+            "vpPerDay": 3,
+            "ownerSideId": "liao"
+          }
+        },
+        {
+          "q": 15,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 16,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 17,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 18,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "FACTORY",
+            "RAIL",
+            "ROAD"
+          ],
+          "objective": {
+            "vpPerDay": 2,
+            "ownerSideId": "liao"
+          }
+        },
+        {
+          "q": 20,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 21,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 23,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 24,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 25,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 36,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 40,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 47,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 48,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 49,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 50,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 54,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 55,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 57,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 59,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 61,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 62,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "TOWN",
+            "RAIL",
+            "ROAD"
+          ],
+          "objective": {
+            "vpPerDay": 1,
+            "ownerSideId": "liao"
+          }
+        },
+        {
+          "q": 73,
+          "r": 26,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 74,
+          "r": 26,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 75,
+          "r": 26,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 76,
+          "r": 26,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 78,
+          "r": 26,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 13,
+          "r": 27,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 14,
+          "r": 27,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 17,
+          "r": 27,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 18,
+          "r": 27,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 19,
+          "r": 27,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 20,
+          "r": 27,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 27,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 22,
+          "r": 27,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 23,
+          "r": 27,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 36,
+          "r": 27,
+          "terrain": "WATER"
+        },
+        {
+          "q": 39,
+          "r": 27,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 40,
+          "r": 27,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 48,
+          "r": 27,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 54,
+          "r": 27,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 55,
+          "r": 27,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 56,
+          "r": 27,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 61,
+          "r": 27,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 62,
+          "r": 27,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 63,
+          "r": 27,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 64,
+          "r": 27,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 73,
+          "r": 27,
+          "terrain": "ROUGH",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 74,
+          "r": 27,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 76,
+          "r": 27,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 78,
+          "r": 27,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 8,
+          "r": 28,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 9,
+          "r": 28,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 10,
+          "r": 28,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 13,
+          "r": 28,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 14,
+          "r": 28,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 16,
+          "r": 28,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 17,
+          "r": 28,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 18,
+          "r": 28,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 21,
+          "r": 28,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 22,
+          "r": 28,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 23,
+          "r": 28,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 24,
+          "r": 28,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 36,
+          "r": 28,
+          "terrain": "WATER"
+        },
+        {
+          "q": 37,
+          "r": 28,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 28,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 42,
+          "r": 28,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 48,
+          "r": 28,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 49,
+          "r": 28,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 50,
+          "r": 28,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 51,
+          "r": 28,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 52,
+          "r": 28,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 53,
+          "r": 28,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 60,
+          "r": 28,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 61,
+          "r": 28,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 62,
+          "r": 28,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 63,
+          "r": 28,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 64,
+          "r": 28,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 67,
+          "r": 28,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 72,
+          "r": 28,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 73,
+          "r": 28,
+          "terrain": "ROUGH",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 6,
+          "r": 29,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 7,
+          "r": 29,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 8,
+          "r": 29,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 9,
+          "r": 29,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 21,
+          "r": 29,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 22,
+          "r": 29,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 23,
+          "r": 29,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 24,
+          "r": 29,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 36,
+          "r": 29,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 37,
+          "r": 29,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 38,
+          "r": 29,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 39,
+          "r": 29,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 42,
+          "r": 29,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 49,
+          "r": 29,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 50,
+          "r": 29,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 57,
+          "r": 29,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 58,
+          "r": 29,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 59,
+          "r": 29,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 60,
+          "r": 29,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 61,
+          "r": 29,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 62,
+          "r": 29,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 63,
+          "r": 29,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 66,
+          "r": 29,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 70,
+          "r": 29,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 71,
+          "r": 29,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 72,
+          "r": 29,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 73,
+          "r": 29,
+          "terrain": "HILLS",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 0,
+          "r": 30,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 1,
+          "r": 30,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 3,
+          "r": 30,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 7,
+          "r": 30,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 18,
+          "r": 30,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 30,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 22,
+          "r": 30,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 23,
+          "r": 30,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 24,
+          "r": 30,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 33,
+          "r": 30,
+          "terrain": "WATER"
+        },
+        {
+          "q": 35,
+          "r": 30,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 36,
+          "r": 30,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 37,
+          "r": 30,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 38,
+          "r": 30,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 39,
+          "r": 30,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 42,
+          "r": 30,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 45,
+          "r": 30,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 46,
+          "r": 30,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 48,
+          "r": 30,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 50,
+          "r": 30,
+          "terrain": "WATER"
+        },
+        {
+          "q": 53,
+          "r": 30,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 54,
+          "r": 30,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 58,
+          "r": 30,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 59,
+          "r": 30,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 60,
+          "r": 30,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 61,
+          "r": 30,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 62,
+          "r": 30,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 63,
+          "r": 30,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 64,
+          "r": 30,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 65,
+          "r": 30,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 69,
+          "r": 30,
+          "terrain": "CLEAR"
+        },
+        {
+          "q": 70,
+          "r": 30,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 71,
+          "r": 30,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 72,
+          "r": 30,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 73,
+          "r": 30,
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 3,
+          "r": 31,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 4,
+          "r": 31,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 17,
+          "r": 31,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 18,
+          "r": 31,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 31,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 23,
+          "r": 31,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 28,
+          "r": 31,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 29,
+          "r": 31,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 32,
+          "r": 31,
+          "terrain": "WATER"
+        },
+        {
+          "q": 33,
+          "r": 31,
+          "terrain": "WATER"
+        },
+        {
+          "q": 34,
+          "r": 31,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 35,
+          "r": 31,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 37,
+          "r": 31,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 38,
+          "r": 31,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 41,
+          "r": 31,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 42,
+          "r": 31,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 45,
+          "r": 31,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 47,
+          "r": 31,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 48,
+          "r": 31,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 49,
+          "r": 31,
+          "terrain": "WATER"
+        },
+        {
+          "q": 50,
+          "r": 31,
+          "terrain": "WATER"
+        },
+        {
+          "q": 53,
+          "r": 31,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 58,
+          "r": 31,
+          "terrain": "WATER"
+        },
+        {
+          "q": 61,
+          "r": 31,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 62,
+          "r": 31,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 63,
+          "r": 31,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 64,
+          "r": 31,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 65,
+          "r": 31,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 68,
+          "r": 31,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 69,
+          "r": 31,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 71,
+          "r": 31,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 73,
+          "r": 31,
+          "terrain": "URBAN",
+          "infra": [
+            "TOWN",
+            "ROAD"
+          ]
+        },
+        {
+          "q": 77,
+          "r": 31,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 78,
+          "r": 31,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 79,
+          "r": 31,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 4,
+          "r": 32,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 5,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 10,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 11,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 15,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 16,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 17,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 18,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 21,
+          "r": 32,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 22,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 23,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 24,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 27,
+          "r": 32,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 28,
+          "r": 32,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 31,
+          "r": 32,
+          "terrain": "WATER"
+        },
+        {
+          "q": 33,
+          "r": 32,
+          "terrain": "WATER"
+        },
+        {
+          "q": 40,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 41,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 42,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 43,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 48,
+          "r": 32,
+          "terrain": "WATER"
+        },
+        {
+          "q": 49,
+          "r": 32,
+          "terrain": "WATER"
+        },
+        {
+          "q": 58,
+          "r": 32,
+          "terrain": "WATER"
+        },
+        {
+          "q": 61,
+          "r": 32,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 62,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 63,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 67,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 68,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 70,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 71,
+          "r": 32,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 73,
+          "r": 32,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 77,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 78,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 79,
+          "r": 32,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 5,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 6,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 7,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 8,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 9,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 10,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 11,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 17,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 18,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 20,
+          "r": 33,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 21,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 22,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 23,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 24,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 28,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 29,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 33,
+          "r": 33,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 34,
+          "r": 33,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 35,
+          "r": 33,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 38,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 40,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 41,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 42,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 43,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 47,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 48,
+          "r": 33,
+          "terrain": "WATER"
+        },
+        {
+          "q": 49,
+          "r": 33,
+          "terrain": "WATER"
+        },
+        {
+          "q": 58,
+          "r": 33,
+          "terrain": "WATER"
+        },
+        {
+          "q": 61,
+          "r": 33,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 62,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 67,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 68,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 69,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 72,
+          "r": 33,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 73,
+          "r": 33,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 78,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 79,
+          "r": 33,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 4,
+          "r": 34,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 5,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 6,
+          "r": 34,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 8,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 9,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 13,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 15,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 16,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 17,
+          "r": 34,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 18,
+          "r": 34,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 21,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 22,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 23,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 24,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 25,
+          "r": 34,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 27,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 28,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 29,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 30,
+          "r": 34,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 31,
+          "r": 34,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 32,
+          "r": 34,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 33,
+          "r": 34,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 34,
+          "r": 34,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 35,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 42,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 45,
+          "r": 34,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 46,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 47,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 56,
+          "r": 34,
+          "terrain": "WATER"
+        },
+        {
+          "q": 57,
+          "r": 34,
+          "terrain": "WATER"
+        },
+        {
+          "q": 58,
+          "r": 34,
+          "terrain": "WATER"
+        },
+        {
+          "q": 59,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 60,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 61,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 62,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 66,
+          "r": 34,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 67,
+          "r": 34,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 68,
+          "r": 34,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 69,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 72,
+          "r": 34,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 78,
+          "r": 34,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 79,
+          "r": 34,
+          "terrain": "WATER"
+        },
+        {
+          "q": 2,
+          "r": 35,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 3,
+          "r": 35,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 4,
+          "r": 35,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 5,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 6,
+          "r": 35,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 7,
+          "r": 35,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 8,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 9,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 13,
+          "r": 35,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 14,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 15,
+          "r": 35,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 16,
+          "r": 35,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 17,
+          "r": 35,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 18,
+          "r": 35,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 19,
+          "r": 35,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 21,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 22,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 23,
+          "r": 35,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 24,
+          "r": 35,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 25,
+          "r": 35,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 27,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 28,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 29,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 30,
+          "r": 35,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 31,
+          "r": 35,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 32,
+          "r": 35,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 33,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 37,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 38,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 44,
+          "r": 35,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 45,
+          "r": 35,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 46,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 47,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 56,
+          "r": 35,
+          "terrain": "WATER"
+        },
+        {
+          "q": 59,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 60,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 61,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 65,
+          "r": 35,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 66,
+          "r": 35,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 67,
+          "r": 35,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 68,
+          "r": 35,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 71,
+          "r": 35,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 78,
+          "r": 35,
+          "terrain": "WATER"
+        },
+        {
+          "q": 79,
+          "r": 35,
+          "terrain": "WATER"
+        },
+        {
+          "q": 1,
+          "r": 36,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 2,
+          "r": 36,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 5,
+          "r": 36,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 6,
+          "r": 36,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 7,
+          "r": 36,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 8,
+          "r": 36,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 13,
+          "r": 36,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 14,
+          "r": 36,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 18,
+          "r": 36,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 19,
+          "r": 36,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 20,
+          "r": 36,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 22,
+          "r": 36,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 23,
+          "r": 36,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 24,
+          "r": 36,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 25,
+          "r": 36,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 27,
+          "r": 36,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 28,
+          "r": 36,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 29,
+          "r": 36,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 30,
+          "r": 36,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 31,
+          "r": 36,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 32,
+          "r": 36,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 33,
+          "r": 36,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 34,
+          "r": 36,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 35,
+          "r": 36,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 36,
+          "r": 36,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 37,
+          "r": 36,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 38,
+          "r": 36,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 36,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 40,
+          "r": 36,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 44,
+          "r": 36,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 45,
+          "r": 36,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 46,
+          "r": 36,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 47,
+          "r": 36,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 64,
+          "r": 36,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 65,
+          "r": 36,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 71,
+          "r": 36,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 76,
+          "r": 36,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 77,
+          "r": 36,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 78,
+          "r": 36,
+          "terrain": "WATER"
+        },
+        {
+          "q": 79,
+          "r": 36,
+          "terrain": "WATER"
+        },
+        {
+          "q": 1,
+          "r": 37,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 5,
+          "r": 37,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 6,
+          "r": 37,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 13,
+          "r": 37,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 14,
+          "r": 37,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 17,
+          "r": 37,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 21,
+          "r": 37,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 22,
+          "r": 37,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 23,
+          "r": 37,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 28,
+          "r": 37,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 29,
+          "r": 37,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 30,
+          "r": 37,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 31,
+          "r": 37,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 32,
+          "r": 37,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 33,
+          "r": 37,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 35,
+          "r": 37,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 36,
+          "r": 37,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 37,
+          "r": 37,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 38,
+          "r": 37,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 37,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 40,
+          "r": 37,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 43,
+          "r": 37,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 44,
+          "r": 37,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 45,
+          "r": 37,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 46,
+          "r": 37,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 53,
+          "r": 37,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 55,
+          "r": 37,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 56,
+          "r": 37,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 57,
+          "r": 37,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 58,
+          "r": 37,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 59,
+          "r": 37,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 61,
+          "r": 37,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 65,
+          "r": 37,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 75,
+          "r": 37,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 76,
+          "r": 37,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 77,
+          "r": 37,
+          "terrain": "WATER"
+        },
+        {
+          "q": 0,
+          "r": 38,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 1,
+          "r": 38,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 3,
+          "r": 38,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 4,
+          "r": 38,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 13,
+          "r": 38,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 18,
+          "r": 38,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 19,
+          "r": 38,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 20,
+          "r": 38,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 21,
+          "r": 38,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 27,
+          "r": 38,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 28,
+          "r": 38,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 29,
+          "r": 38,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 30,
+          "r": 38,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 32,
+          "r": 38,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 33,
+          "r": 38,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 34,
+          "r": 38,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 36,
+          "r": 38,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 38,
+          "r": 38,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 38,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 40,
+          "r": 38,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 43,
+          "r": 38,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 44,
+          "r": 38,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 45,
+          "r": 38,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 46,
+          "r": 38,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 51,
+          "r": 38,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 52,
+          "r": 38,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 54,
+          "r": 38,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 55,
+          "r": 38,
+          "terrain": "WOODS",
+          "objective": {
+            "vpPerDay": 2,
+            "ownerSideId": "liao",
+            "hidden": true
+          }
+        },
+        {
+          "q": 56,
+          "r": 38,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 57,
+          "r": 38,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 59,
+          "r": 38,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 60,
+          "r": 38,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 64,
+          "r": 38,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 65,
+          "r": 38,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 70,
+          "r": 38,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 75,
+          "r": 38,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 76,
+          "r": 38,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 77,
+          "r": 38,
+          "terrain": "WATER"
+        },
+        {
+          "q": 0,
+          "r": 39,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 1,
+          "r": 39,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 12,
+          "r": 39,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 13,
+          "r": 39,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 14,
+          "r": 39,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 20,
+          "r": 39,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 25,
+          "r": 39,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 26,
+          "r": 39,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 29,
+          "r": 39,
+          "terrain": "WATER"
+        },
+        {
+          "q": 30,
+          "r": 39,
+          "terrain": "WATER"
+        },
+        {
+          "q": 31,
+          "r": 39,
+          "terrain": "WATER"
+        },
+        {
+          "q": 43,
+          "r": 39,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 44,
+          "r": 39,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 45,
+          "r": 39,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 50,
+          "r": 39,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 51,
+          "r": 39,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 54,
+          "r": 39,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 57,
+          "r": 39,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 59,
+          "r": 39,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 60,
+          "r": 39,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 63,
+          "r": 39,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 64,
+          "r": 39,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 65,
+          "r": 39,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 68,
+          "r": 39,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 69,
+          "r": 39,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 70,
+          "r": 39,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 73,
+          "r": 39,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 75,
+          "r": 39,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 76,
+          "r": 39,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 0,
+          "r": 40,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 12,
+          "r": 40,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 13,
+          "r": 40,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 14,
+          "r": 40,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 16,
+          "r": 40,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 24,
+          "r": 40,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 25,
+          "r": 40,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 26,
+          "r": 40,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 29,
+          "r": 40,
+          "terrain": "WATER"
+        },
+        {
+          "q": 42,
+          "r": 40,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 43,
+          "r": 40,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 44,
+          "r": 40,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 53,
+          "r": 40,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 58,
+          "r": 40,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 59,
+          "r": 40,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 63,
+          "r": 40,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 64,
+          "r": 40,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 65,
+          "r": 40,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 67,
+          "r": 40,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 68,
+          "r": 40,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 69,
+          "r": 40,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 72,
+          "r": 40,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 73,
+          "r": 40,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 74,
+          "r": 40,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 75,
+          "r": 40,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 76,
+          "r": 40,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 3,
+          "r": 41,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 13,
+          "r": 41,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 16,
+          "r": 41,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 22,
+          "r": 41,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 23,
+          "r": 41,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 24,
+          "r": 41,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 25,
+          "r": 41,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 32,
+          "r": 41,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 40,
+          "r": 41,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 41,
+          "r": 41,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 47,
+          "r": 41,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 53,
+          "r": 41,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 57,
+          "r": 41,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 58,
+          "r": 41,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 59,
+          "r": 41,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 60,
+          "r": 41,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 61,
+          "r": 41,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 62,
+          "r": 41,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 63,
+          "r": 41,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 66,
+          "r": 41,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 67,
+          "r": 41,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 68,
+          "r": 41,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 69,
+          "r": 41,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 71,
+          "r": 41,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 72,
+          "r": 41,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 74,
+          "r": 41,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 75,
+          "r": 41,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 2,
+          "r": 42,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 3,
+          "r": 42,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 15,
+          "r": 42,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 16,
+          "r": 42,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 20,
+          "r": 42,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 21,
+          "r": 42,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 22,
+          "r": 42,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 24,
+          "r": 42,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 25,
+          "r": 42,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 31,
+          "r": 42,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 40,
+          "r": 42,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 41,
+          "r": 42,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 42,
+          "r": 42,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 46,
+          "r": 42,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 52,
+          "r": 42,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 57,
+          "r": 42,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 58,
+          "r": 42,
+          "terrain": "WATER"
+        },
+        {
+          "q": 59,
+          "r": 42,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 60,
+          "r": 42,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 61,
+          "r": 42,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 62,
+          "r": 42,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 66,
+          "r": 42,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 67,
+          "r": 42,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 71,
+          "r": 42,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 72,
+          "r": 42,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 75,
+          "r": 42,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 2,
+          "r": 43,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 3,
+          "r": 43,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 4,
+          "r": 43,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 5,
+          "r": 43,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 6,
+          "r": 43,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 14,
+          "r": 43,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 20,
+          "r": 43,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 25,
+          "r": 43,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 30,
+          "r": 43,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 33,
+          "r": 43,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 34,
+          "r": 43,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 37,
+          "r": 43,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 39,
+          "r": 43,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 40,
+          "r": 43,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 41,
+          "r": 43,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 43,
+          "r": 43,
+          "terrain": "WATER"
+        },
+        {
+          "q": 45,
+          "r": 43,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 46,
+          "r": 43,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 51,
+          "r": 43,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 56,
+          "r": 43,
+          "terrain": "WATER"
+        },
+        {
+          "q": 57,
+          "r": 43,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 58,
+          "r": 43,
+          "terrain": "WATER"
+        },
+        {
+          "q": 62,
+          "r": 43,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 65,
+          "r": 43,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 66,
+          "r": 43,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 67,
+          "r": 43,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 68,
+          "r": 43,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 70,
+          "r": 43,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 71,
+          "r": 43,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 72,
+          "r": 43,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 75,
+          "r": 43,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 79,
+          "r": 43,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 2,
+          "r": 44,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 3,
+          "r": 44,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 4,
+          "r": 44,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 5,
+          "r": 44,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 23,
+          "r": 44,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 25,
+          "r": 44,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 26,
+          "r": 44,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 32,
+          "r": 44,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 37,
+          "r": 44,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 38,
+          "r": 44,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 44,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 40,
+          "r": 44,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 41,
+          "r": 44,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 42,
+          "r": 44,
+          "terrain": "WATER"
+        },
+        {
+          "q": 43,
+          "r": 44,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 47,
+          "r": 44,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 48,
+          "r": 44,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 49,
+          "r": 44,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 50,
+          "r": 44,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 55,
+          "r": 44,
+          "terrain": "WATER"
+        },
+        {
+          "q": 56,
+          "r": 44,
+          "terrain": "WATER"
+        },
+        {
+          "q": 57,
+          "r": 44,
+          "terrain": "WATER"
+        },
+        {
+          "q": 60,
+          "r": 44,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 61,
+          "r": 44,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 67,
+          "r": 44,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 68,
+          "r": 44,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 74,
+          "r": 44,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 75,
+          "r": 44,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 78,
+          "r": 44,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 79,
+          "r": 44,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 1,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 2,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 3,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 4,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 5,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 6,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 7,
+          "r": 45,
+          "terrain": "WATER"
+        },
+        {
+          "q": 17,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 18,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 19,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 23,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 24,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 25,
+          "r": 45,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 37,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 38,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 39,
+          "r": 45,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 41,
+          "r": 45,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 42,
+          "r": 45,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 43,
+          "r": 45,
+          "terrain": "WATER"
+        },
+        {
+          "q": 47,
+          "r": 45,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 48,
+          "r": 45,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 49,
+          "r": 45,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 55,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 56,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 57,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 59,
+          "r": 45,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 60,
+          "r": 45,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 62,
+          "r": 45,
+          "terrain": "WATER"
+        },
+        {
+          "q": 68,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 73,
+          "r": 45,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 74,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 75,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 76,
+          "r": 45,
+          "terrain": "WATER"
+        },
+        {
+          "q": 78,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 79,
+          "r": 45,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 0,
+          "r": 46,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 1,
+          "r": 46,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 2,
+          "r": 46,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 3,
+          "r": 46,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 5,
+          "r": 46,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 6,
+          "r": 46,
+          "terrain": "WATER"
+        },
+        {
+          "q": 7,
+          "r": 46,
+          "terrain": "WATER"
+        },
+        {
+          "q": 8,
+          "r": 46,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 18,
+          "r": 46,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 23,
+          "r": 46,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 25,
+          "r": 46,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 33,
+          "r": 46,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 37,
+          "r": 46,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 38,
+          "r": 46,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 46,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 40,
+          "r": 46,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 42,
+          "r": 46,
+          "terrain": "WATER"
+        },
+        {
+          "q": 43,
+          "r": 46,
+          "terrain": "WATER"
+        },
+        {
+          "q": 46,
+          "r": 46,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 47,
+          "r": 46,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 48,
+          "r": 46,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 49,
+          "r": 46,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 55,
+          "r": 46,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 59,
+          "r": 46,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 60,
+          "r": 46,
+          "terrain": "WATER"
+        },
+        {
+          "q": 61,
+          "r": 46,
+          "terrain": "WATER"
+        },
+        {
+          "q": 62,
+          "r": 46,
+          "terrain": "WATER"
+        },
+        {
+          "q": 63,
+          "r": 46,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 64,
+          "r": 46,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 66,
+          "r": 46,
+          "terrain": "WATER"
+        },
+        {
+          "q": 67,
+          "r": 46,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 68,
+          "r": 46,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 73,
+          "r": 46,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 74,
+          "r": 46,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 78,
+          "r": 46,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 79,
+          "r": 46,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 1,
+          "r": 47,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 2,
+          "r": 47,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 6,
+          "r": 47,
+          "terrain": "WATER"
+        },
+        {
+          "q": 7,
+          "r": 47,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 10,
+          "r": 47,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 17,
+          "r": 47,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 25,
+          "r": 47,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 26,
+          "r": 47,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 30,
+          "r": 47,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 31,
+          "r": 47,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 32,
+          "r": 47,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 33,
+          "r": 47,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 34,
+          "r": 47,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 37,
+          "r": 47,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 39,
+          "r": 47,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 41,
+          "r": 47,
+          "terrain": "WATER"
+        },
+        {
+          "q": 42,
+          "r": 47,
+          "terrain": "WATER"
+        },
+        {
+          "q": 46,
+          "r": 47,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 47,
+          "r": 47,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 48,
+          "r": 47,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 55,
+          "r": 47,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 58,
+          "r": 47,
+          "terrain": "WATER"
+        },
+        {
+          "q": 59,
+          "r": 47,
+          "terrain": "WATER"
+        },
+        {
+          "q": 61,
+          "r": 47,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 62,
+          "r": 47,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 63,
+          "r": 47,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 64,
+          "r": 47,
+          "terrain": "WATER"
+        },
+        {
+          "q": 65,
+          "r": 47,
+          "terrain": "WATER"
+        },
+        {
+          "q": 66,
+          "r": 47,
+          "terrain": "WATER"
+        },
+        {
+          "q": 67,
+          "r": 47,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 68,
+          "r": 47,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 73,
+          "r": 47,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 74,
+          "r": 47,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 75,
+          "r": 47,
+          "terrain": "WATER"
+        },
+        {
+          "q": 76,
+          "r": 47,
+          "terrain": "WATER"
+        },
+        {
+          "q": 77,
+          "r": 47,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 1,
+          "r": 48,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 2,
+          "r": 48,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 3,
+          "r": 48,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 4,
+          "r": 48,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 6,
+          "r": 48,
+          "terrain": "WATER"
+        },
+        {
+          "q": 10,
+          "r": 48,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 12,
+          "r": 48,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 13,
+          "r": 48,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 16,
+          "r": 48,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 17,
+          "r": 48,
+          "terrain": "MOUNTAIN"
+        },
+        {
+          "q": 23,
+          "r": 48,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 24,
+          "r": 48,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 25,
+          "r": 48,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 29,
+          "r": 48,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 30,
+          "r": 48,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 31,
+          "r": 48,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 32,
+          "r": 48,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 33,
+          "r": 48,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 36,
+          "r": 48,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 37,
+          "r": 48,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 38,
+          "r": 48,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 39,
+          "r": 48,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 46,
+          "r": 48,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 47,
+          "r": 48,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 48,
+          "r": 48,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 49,
+          "r": 48,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 55,
+          "r": 48,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 56,
+          "r": 48,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 57,
+          "r": 48,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 58,
+          "r": 48,
+          "terrain": "WATER"
+        },
+        {
+          "q": 59,
+          "r": 48,
+          "terrain": "WATER"
+        },
+        {
+          "q": 60,
+          "r": 48,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 61,
+          "r": 48,
+          "terrain": "WATER"
+        },
+        {
+          "q": 62,
+          "r": 48,
+          "terrain": "WATER"
+        },
+        {
+          "q": 65,
+          "r": 48,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 66,
+          "r": 48,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 68,
+          "r": 48,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 73,
+          "r": 48,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 76,
+          "r": 48,
+          "terrain": "WATER"
+        },
+        {
+          "q": 77,
+          "r": 48,
+          "terrain": "WATER"
+        },
+        {
+          "q": 78,
+          "r": 48,
+          "terrain": "WATER"
+        },
+        {
+          "q": 2,
+          "r": 49,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 3,
+          "r": 49,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 6,
+          "r": 49,
+          "terrain": "WATER"
+        },
+        {
+          "q": 22,
+          "r": 49,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 23,
+          "r": 49,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 24,
+          "r": 49,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 25,
+          "r": 49,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 29,
+          "r": 49,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 30,
+          "r": 49,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 31,
+          "r": 49,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 32,
+          "r": 49,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 37,
+          "r": 49,
+          "terrain": "WOODS"
+        },
+        {
+          "q": 47,
+          "r": 49,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 48,
+          "r": 49,
+          "terrain": "SWAMP"
+        },
+        {
+          "q": 55,
+          "r": 49,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 56,
+          "r": 49,
+          "terrain": "ROUGH"
+        },
+        {
+          "q": 57,
+          "r": 49,
+          "terrain": "WATER"
+        },
+        {
+          "q": 58,
+          "r": 49,
+          "terrain": "WATER"
+        },
+        {
+          "q": 59,
+          "r": 49,
+          "terrain": "WATER"
+        },
+        {
+          "q": 60,
+          "r": 49,
+          "terrain": "WATER"
+        },
+        {
+          "q": 61,
+          "r": 49,
+          "terrain": "WATER"
+        },
+        {
+          "q": 62,
+          "r": 49,
+          "terrain": "WATER"
+        },
+        {
+          "q": 63,
+          "r": 49,
+          "terrain": "WATER"
+        },
+        {
+          "q": 68,
+          "r": 49,
+          "terrain": "HILLS"
+        },
+        {
+          "q": 75,
+          "r": 49,
+          "terrain": "WATER"
+        },
+        {
+          "q": 76,
+          "r": 49,
+          "terrain": "WATER"
+        },
+        {
+          "q": 77,
+          "r": 49,
+          "terrain": "WATER"
+        },
+        {
+          "q": 78,
+          "r": 49,
+          "terrain": "WATER"
+        },
+        {
+          "q": 10,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "SPACEPORT",
+            "RAIL",
+            "ROAD"
+          ],
+          "objective": {
+            "vpPerDay": 3,
+            "ownerSideId": "liao"
+          }
+        },
+        {
+          "q": 12,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 13,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 19,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 22,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 26,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 27,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 28,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 29,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 30,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 31,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 32,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 33,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 34,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 35,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 37,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 38,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 39,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 41,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 42,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 43,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 44,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 45,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 46,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 51,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 52,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 53,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 56,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 58,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 60,
+          "r": 26,
+          "terrain": "CLEAR",
+          "infra": [
+            "RAIL"
+          ]
+        },
+        {
+          "q": 13,
+          "r": 18,
           "terrain": "CLEAR",
           "infra": [
             "AIRSTRIP",
@@ -431,572 +8322,8 @@
           }
         },
         {
-          "q": 10,
-          "r": 6,
-          "terrain": "HILLS"
-        },
-        {
           "q": 11,
-          "r": 6,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 14,
-          "r": 6,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 15,
-          "r": 6,
-          "terrain": "SWAMP"
-        },
-        {
-          "q": 16,
-          "r": 6,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 17,
-          "r": 6,
-          "terrain": "WATER"
-        },
-        {
-          "q": 18,
-          "r": 6,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 20,
-          "r": 6,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 21,
-          "r": 6,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 22,
-          "r": 6,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 0,
-          "r": 7,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 1,
-          "r": 7,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 6,
-          "r": 7,
-          "terrain": "URBAN",
-          "infra": [
-            "TOWN",
-            "ROAD"
-          ]
-        },
-        {
-          "q": 7,
-          "r": 7,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 8,
-          "r": 7,
-          "terrain": "CLEAR",
-          "infra": [
-            "ROAD"
-          ]
-        },
-        {
-          "q": 9,
-          "r": 7,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 13,
-          "r": 7,
-          "terrain": "SWAMP"
-        },
-        {
-          "q": 14,
-          "r": 7,
-          "terrain": "SWAMP"
-        },
-        {
-          "q": 17,
-          "r": 7,
-          "terrain": "WATER"
-        },
-        {
-          "q": 4,
-          "r": 8,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 5,
-          "r": 8,
-          "terrain": "SWAMP"
-        },
-        {
-          "q": 6,
-          "r": 8,
-          "terrain": "SWAMP",
-          "infra": [
-            "ROAD"
-          ]
-        },
-        {
-          "q": 7,
-          "r": 8,
-          "infra": [
-            "ROAD"
-          ]
-        },
-        {
-          "q": 3,
-          "r": 9,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 4,
-          "r": 9,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 5,
-          "r": 9,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 6,
-          "r": 9,
-          "terrain": "CLEAR",
-          "infra": [
-            "SPACEPORT",
-            "ROAD"
-          ],
-          "objective": {
-            "vpPerDay": 3,
-            "ownerSideId": "liao"
-          }
-        },
-        {
-          "q": 7,
-          "r": 9,
-          "infra": [
-            "ROAD"
-          ],
-          "terrain": "CLEAR"
-        },
-        {
-          "q": 8,
-          "r": 9,
-          "terrain": "MOUNTAIN",
-          "infra": [
-            "ROAD"
-          ]
-        },
-        {
-          "q": 9,
-          "r": 9,
-          "infra": [
-            "ROAD"
-          ]
-        },
-        {
-          "q": 10,
-          "r": 9,
-          "infra": [
-            "ROAD"
-          ]
-        },
-        {
-          "q": 11,
-          "r": 9,
-          "infra": [
-            "ROAD"
-          ]
-        },
-        {
-          "q": 12,
-          "r": 9,
-          "terrain": "URBAN",
-          "infra": [
-            "TOWN",
-            "ROAD"
-          ]
-        },
-        {
-          "q": 25,
-          "r": 9,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 5,
-          "r": 10,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 7,
-          "r": 10,
-          "terrain": "MOUNTAIN"
-        },
-        {
-          "q": 8,
-          "r": 10,
-          "terrain": "MOUNTAIN"
-        },
-        {
-          "q": 9,
-          "r": 10,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 20,
-          "r": 10,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 21,
-          "r": 10,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 24,
-          "r": 10,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 25,
-          "r": 10,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 6,
-          "r": 11,
-          "terrain": "CLEAR",
-          "infra": [
-            "ROAD"
-          ]
-        },
-        {
-          "q": 7,
-          "r": 11,
-          "terrain": "MOUNTAIN"
-        },
-        {
-          "q": 8,
-          "r": 11,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 9,
-          "r": 11,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 13,
-          "r": 11,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 14,
-          "r": 11,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 15,
-          "r": 11,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 20,
-          "r": 11,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 21,
-          "r": 11,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 24,
-          "r": 11,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 25,
-          "r": 11,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 11,
-          "r": 12,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 12,
-          "r": 12,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 13,
-          "r": 12,
-          "terrain": "SWAMP"
-        },
-        {
-          "q": 14,
-          "r": 12,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 15,
-          "r": 12,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 24,
-          "r": 12,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 10,
-          "r": 13,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 11,
-          "r": 13,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 12,
-          "r": 13,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 13,
-          "r": 13,
-          "terrain": "SWAMP"
-        },
-        {
-          "q": 14,
-          "r": 13,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 15,
-          "r": 13,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 16,
-          "r": 13,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 7,
-          "r": 14,
-          "terrain": "SWAMP"
-        },
-        {
-          "q": 9,
-          "r": 14,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 10,
-          "r": 14,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 11,
-          "r": 14,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 12,
-          "r": 14,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 13,
-          "r": 14,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 14,
-          "r": 14,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 15,
-          "r": 14,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 5,
-          "r": 15,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 6,
-          "r": 15,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 7,
-          "r": 15,
-          "terrain": "SWAMP"
-        },
-        {
-          "q": 9,
-          "r": 15,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 10,
-          "r": 15,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 11,
-          "r": 15,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 12,
-          "r": 15,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 13,
-          "r": 15,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 14,
-          "r": 15,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 17,
-          "r": 15,
-          "terrain": "WATER"
-        },
-        {
-          "q": 22,
-          "r": 15,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 23,
-          "r": 15,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 4,
-          "r": 16,
-          "terrain": "HILLS"
-        },
-        {
-          "q": 9,
-          "r": 16,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 10,
-          "r": 16,
-          "terrain": "ROUGH"
-        },
-        {
-          "q": 14,
-          "r": 16,
-          "terrain": "WATER"
-        },
-        {
-          "q": 15,
-          "r": 16,
-          "terrain": "WATER"
-        },
-        {
-          "q": 16,
-          "r": 16,
-          "terrain": "WATER"
-        },
-        {
-          "q": 17,
-          "r": 16,
-          "terrain": "WATER"
-        },
-        {
-          "q": 18,
-          "r": 16,
-          "terrain": "MOUNTAIN"
-        },
-        {
-          "q": 20,
-          "r": 16,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 21,
-          "r": 16,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 22,
-          "r": 16,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 23,
-          "r": 16,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 9,
-          "r": 17,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 14,
-          "r": 17,
-          "terrain": "WATER"
-        },
-        {
-          "q": 15,
-          "r": 17,
-          "terrain": "WATER"
-        },
-        {
-          "q": 16,
-          "r": 17,
-          "terrain": "WATER"
-        },
-        {
-          "q": 18,
-          "r": 17,
-          "terrain": "MOUNTAIN"
-        },
-        {
-          "q": 20,
-          "r": 17,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 21,
-          "r": 17,
-          "terrain": "WOODS"
-        },
-        {
-          "q": 5,
-          "r": 12,
+          "r": 30,
           "terrain": "CLEAR",
           "infra": [
             "DEPOT",
@@ -1004,56 +8331,62 @@
           ]
         },
         {
-          "q": 8,
-          "r": 12,
-          "terrain": "CLEAR",
-          "infra": [
-            "FACTORY",
-            "ROAD"
-          ],
-          "objective": {
-            "vpPerDay": 2,
-            "ownerSideId": "liao"
-          }
-        },
-        {
-          "q": 8,
-          "r": 8,
+          "q": 12,
+          "r": 24,
           "terrain": "CLEAR",
           "infra": [
             "ROAD"
           ]
         },
         {
-          "q": 7,
-          "r": 12,
+          "q": 13,
+          "r": 20,
           "terrain": "CLEAR",
           "infra": [
             "ROAD"
           ]
         },
         {
-          "q": 6,
-          "r": 10,
+          "q": 13,
+          "r": 19,
           "terrain": "CLEAR",
           "infra": [
             "ROAD"
           ]
         },
         {
-          "q": 20,
-          "r": 12,
-          "terrain": "WOODS",
-          "objective": {
-            "vpPerDay": 2,
-            "ownerSideId": "liao",
-            "hidden": true
-          }
+          "q": 11,
+          "r": 27,
+          "terrain": "CLEAR",
+          "infra": [
+            "ROAD"
+          ]
         },
         {
-          "q": 21,
-          "r": 9,
+          "q": 11,
+          "r": 28,
+          "terrain": "CLEAR",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 11,
+          "r": 29,
+          "terrain": "CLEAR",
+          "infra": [
+            "ROAD"
+          ]
+        },
+        {
+          "q": 68,
+          "r": 30,
           "terrain": "CLEAR"
+        },
+        {
+          "q": 65,
+          "r": 28,
+          "terrain": "WOODS"
         }
       ]
     }
@@ -1076,8 +8409,8 @@
       "sideId": "liao",
       "name": "Port Menghao",
       "theaterId": "menghao",
-      "q": 6,
-      "r": 9,
+      "q": 10,
+      "r": 26,
       "tags": [
         "SPACEPORT",
         "DEPOT"
@@ -1096,8 +8429,8 @@
       "sideId": "liao",
       "name": "Chiang Airfield",
       "theaterId": "menghao",
-      "q": 9,
-      "r": 6,
+      "q": 13,
+      "r": 18,
       "tags": [
         "AIRSTRIP"
       ],
@@ -1110,8 +8443,8 @@
       "sideId": "liao",
       "name": "Prefecture Depot",
       "theaterId": "menghao",
-      "q": 5,
-      "r": 12,
+      "q": 11,
+      "r": 30,
       "tags": [
         "DEPOT"
       ],
@@ -1122,12 +8455,28 @@
       "sideId": "liao",
       "name": "Jiangxi Works",
       "theaterId": "menghao",
-      "q": 8,
-      "r": 12,
+      "q": 18,
+      "r": 26,
       "tags": [
         "FACTORY"
       ],
       "supplyPoints": 10
+    },
+    {
+      "id": "red-northwatch",
+      "sideId": "liao",
+      "name": "Northwatch Station",
+      "theaterId": "menghao",
+      "q": 36,
+      "r": 14,
+      "tags": [
+        "SENSOR_STATION"
+      ],
+      "sensorStation": {
+        "passive": 6,
+        "active": 12
+      },
+      "activeSweep": true
     }
   ],
   "satellites": [
@@ -1139,11 +8488,11 @@
       "corridor": [
         {
           "q": 0,
-          "r": 9
+          "r": 26
         },
         {
-          "q": 25,
-          "r": 9
+          "q": 79,
+          "r": 26
         }
       ],
       "periodPulses": 4,
@@ -1155,16 +8504,16 @@
       "id": "mine-1",
       "kind": "MINEFIELD",
       "theaterId": "menghao",
-      "q": 11,
-      "r": 9,
+      "q": 22,
+      "r": 26,
       "sideId": "liao"
     },
     {
       "id": "mine-2",
       "kind": "MINEFIELD",
       "theaterId": "menghao",
-      "q": 12,
-      "r": 8,
+      "q": 23,
+      "r": 25,
       "sideId": "liao"
     }
   ],
@@ -1231,8 +8580,8 @@
       "sideId": "liao",
       "name": "Prefecture Command",
       "theaterId": "menghao",
-      "q": 6,
-      "r": 9,
+      "q": 10,
+      "r": 26,
       "sigBase": 7,
       "posture": "DUG_IN",
       "_commandNode": true,
@@ -1254,8 +8603,8 @@
       "sideId": "liao",
       "name": "Ti Ts’ang Lance",
       "theaterId": "menghao",
-      "q": 7,
-      "r": 9,
+      "q": 14,
+      "r": 26,
       "sigBase": 7,
       "units": [
         {
@@ -1290,8 +8639,8 @@
       "sideId": "liao",
       "name": "Raven Scout Lance",
       "theaterId": "menghao",
-      "q": 14,
-      "r": 8,
+      "q": 42,
+      "r": 24,
       "sigBase": 7,
       "emcon": "PASSIVE",
       "units": [
@@ -1318,8 +8667,8 @@
       "sideId": "liao",
       "name": "Shadow Lance",
       "theaterId": "menghao",
-      "q": 14,
-      "r": 11,
+      "q": 58,
+      "r": 27,
       "sigBase": 7,
       "posture": "HIDE",
       "emcon": "DARK",
@@ -1341,8 +8690,8 @@
       "sideId": "liao",
       "name": "Po Company",
       "theaterId": "menghao",
-      "q": 8,
-      "r": 10,
+      "q": 16,
+      "r": 26,
       "sigBase": 6,
       "units": [
         {
@@ -1372,8 +8721,8 @@
       "sideId": "liao",
       "name": "Spaceport Flak Battery",
       "theaterId": "menghao",
-      "q": 6,
-      "r": 9,
+      "q": 10,
+      "r": 26,
       "sigBase": 7,
       "posture": "DUG_IN",
       "units": [
@@ -1400,8 +8749,8 @@
       "sideId": "liao",
       "name": "Airbase Flak Battery",
       "theaterId": "menghao",
-      "q": 9,
-      "r": 6,
+      "q": 13,
+      "r": 18,
       "sigBase": 7,
       "posture": "DUG_IN",
       "units": [
@@ -1428,8 +8777,8 @@
       "sideId": "liao",
       "name": "Home Guard Infantry",
       "theaterId": "menghao",
-      "q": 8,
-      "r": 12,
+      "q": 18,
+      "r": 26,
       "sigBase": 10,
       "posture": "DUG_IN",
       "units": [
@@ -1450,8 +8799,8 @@
       "sideId": "liao",
       "name": "Menghao Fire Support",
       "theaterId": "menghao",
-      "q": 5,
-      "r": 10,
+      "q": 13,
+      "r": 25,
       "sigBase": 7,
       "posture": "DUG_IN",
       "units": [
@@ -1467,8 +8816,8 @@
       "sideId": "liao",
       "name": "Field Hospital",
       "theaterId": "menghao",
-      "q": 5,
-      "r": 12,
+      "q": 11,
+      "r": 30,
       "sigBase": 8,
       "units": [
         {
@@ -1483,8 +8832,8 @@
       "sideId": "liao",
       "name": "48th Combat Engineers",
       "theaterId": "menghao",
-      "q": 7,
-      "r": 11,
+      "q": 14,
+      "r": 27,
       "sigBase": 8,
       "units": [
         {
@@ -1502,8 +8851,8 @@
       "sideId": "liao",
       "name": "Supply Column",
       "theaterId": "menghao",
-      "q": 5,
-      "r": 12,
+      "q": 11,
+      "r": 30,
       "sigBase": 6,
       "carriedSp": 12,
       "units": [
@@ -1524,8 +8873,8 @@
       "sideId": "liao",
       "name": "Radar Site Garrison",
       "theaterId": "menghao",
-      "q": 18,
-      "r": 4,
+      "q": 64,
+      "r": 12,
       "sigBase": 6,
       "emcon": "ACTIVE",
       "units": [
@@ -1544,8 +8893,8 @@
       "sideId": "liao",
       "name": "Dianwei Flight",
       "theaterId": "menghao",
-      "q": 9,
-      "r": 6,
+      "q": 13,
+      "r": 18,
       "sigBase": 8,
       "alertState": "ALERT15",
       "flight": {
@@ -1573,8 +8922,8 @@
       "sideId": "liao",
       "name": "DropShip Zhanshi",
       "theaterId": "menghao",
-      "q": 6,
-      "r": 9,
+      "q": 10,
+      "r": 26,
       "sigBase": 8,
       "flight": {},
       "carrier": {
@@ -1599,8 +8948,8 @@
       "sideId": "liao",
       "name": "Sting Flight",
       "theaterId": "menghao",
-      "q": 6,
-      "r": 9,
+      "q": 10,
+      "r": 26,
       "sigBase": 9,
       "mountedOn": "red-carrier",
       "units": [
@@ -1762,8 +9111,8 @@
       "sideId": "davion",
       "name": "Kerr’s Command Lance",
       "theaterId": "menghao",
-      "q": 21,
-      "r": 9,
+      "q": 68,
+      "r": 30,
       "sigBase": 7,
       "mountedOn": "blue-flag",
       "units": [
@@ -1801,8 +9150,8 @@
       "sideId": "davion",
       "name": "Cavalry Lance",
       "theaterId": "menghao",
-      "q": 21,
-      "r": 9,
+      "q": 68,
+      "r": 30,
       "sigBase": 7,
       "mountedOn": "blue-flag",
       "units": [
@@ -1833,8 +9182,8 @@
       "sideId": "davion",
       "name": "Thumper Battery",
       "theaterId": "menghao",
-      "q": 21,
-      "r": 9,
+      "q": 68,
+      "r": 30,
       "sigBase": 7,
       "mountedOn": "blue-flag",
       "units": [
@@ -1855,8 +9204,8 @@
       "sideId": "davion",
       "name": "Umbrella Battery",
       "theaterId": "menghao",
-      "q": 21,
-      "r": 9,
+      "q": 68,
+      "r": 30,
       "sigBase": 7,
       "mountedOn": "blue-flag",
       "units": [
@@ -1883,8 +9232,8 @@
       "sideId": "davion",
       "name": "Bulldog Troop",
       "theaterId": "menghao",
-      "q": 21,
-      "r": 9,
+      "q": 68,
+      "r": 30,
       "sigBase": 7,
       "mountedOn": "blue-union",
       "units": [
@@ -1915,8 +9264,8 @@
       "sideId": "davion",
       "name": "Savannah Screen",
       "theaterId": "menghao",
-      "q": 21,
-      "r": 9,
+      "q": 68,
+      "r": 30,
       "sigBase": 7,
       "mountedOn": "blue-union",
       "units": [
@@ -1942,8 +9291,8 @@
       "sideId": "davion",
       "name": "Task Force Trains",
       "theaterId": "menghao",
-      "q": 21,
-      "r": 9,
+      "q": 68,
+      "r": 30,
       "sigBase": 6,
       "mountedOn": "blue-union",
       "carriedSp": 20,
@@ -1976,8 +9325,8 @@
       "sideId": "davion",
       "name": "Pioneer Platoon",
       "theaterId": "menghao",
-      "q": 21,
-      "r": 9,
+      "q": 68,
+      "r": 30,
       "sigBase": 8,
       "mountedOn": "blue-union",
       "units": [
@@ -1996,8 +9345,8 @@
       "sideId": "davion",
       "name": "Corsair Flight",
       "theaterId": "menghao",
-      "q": 21,
-      "r": 9,
+      "q": 68,
+      "r": 30,
       "sigBase": 9,
       "mountedOn": "blue-cv",
       "units": [
@@ -2022,8 +9371,8 @@
       "sideId": "davion",
       "name": "Stuka Flight",
       "theaterId": "menghao",
-      "q": 21,
-      "r": 9,
+      "q": 68,
+      "r": 30,
       "sigBase": 9,
       "mountedOn": "blue-cv",
       "units": [
@@ -2048,8 +9397,8 @@
       "sideId": "davion",
       "name": "Cavalier Squad",
       "theaterId": "menghao",
-      "q": 21,
-      "r": 9,
+      "q": 68,
+      "r": 30,
       "sigBase": 10,
       "mountedOn": "blue-qship",
       "units": [
@@ -2129,20 +9478,20 @@
       "effectiveTick": 0,
       "path": [
         {
-          "q": 17,
-          "r": 7
+          "q": 48,
+          "r": 20
         },
         {
-          "q": 19,
-          "r": 10
+          "q": 54,
+          "r": 28
         },
         {
-          "q": 15,
-          "r": 12
+          "q": 44,
+          "r": 32
         },
         {
-          "q": 14,
-          "r": 8
+          "q": 42,
+          "r": 24
         }
       ],
       "conditionals": [
@@ -2155,8 +9504,8 @@
             "kind": "MOVE",
             "path": [
               {
-                "q": 10,
-                "r": 9
+                "q": 24,
+                "r": 26
               }
             ]
           }
