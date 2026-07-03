@@ -416,9 +416,9 @@ const server = createServer(async (req, res) => {
       const b = await readBody(req);
       const camp = generateCampaign({
         name: b.name, seed: b.seed,
-        // continental maps (D-037): up to 120 hexes (2,160 km) across
-        width: Math.max(4, Math.min(120, Number(b.width) || 20)),
-        height: Math.max(4, Math.min(120, Number(b.height) || 14)),
+        // continental maps (D-037/D-040): the canvas renderer carries up to 300×300
+        width: Math.max(4, Math.min(300, Number(b.width) || 20)),
+        height: Math.max(4, Math.min(300, Number(b.height) || 14)),
         sides: Array.isArray(b.sides) ? b.sides : undefined,
       });
       return json(res, 200, { campaign: camp });

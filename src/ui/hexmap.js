@@ -55,6 +55,13 @@
 
   window.renderHexMap = function (svg, model, opts) {
     opts = opts || {};
+    // continental maps (D-040): past ~6k hexes one-DOM-node-per-hex drowns the
+    // browser — hand off to the canvas renderer (same model/opts, its own camera)
+    const threshold = window.HEXMAP_CANVAS_THRESHOLD ?? 6000;
+    if (model.cols * model.rows > threshold && window.renderHexMapCanvas) {
+      return window.renderHexMapCanvas(svg, model, opts);
+    }
+    if (svg.__cnv) { svg.__cnv.style.display = 'none'; svg.style.display = ''; }
     const s = opts.size || 17;
     svg.innerHTML = '';
     const w = Math.sqrt(3) * s * (model.cols + model.rows / 2) + s * 4;

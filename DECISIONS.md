@@ -967,3 +967,21 @@ LZ six hexes from the railhead, and the Overlord descending on-target out of orb
 (DESCEND + targetHex — the spheroid doctrine as one authored order). VP retuned to
 170 over the 13/day full-hold economy (~day-13 clock). The acceptance test plays the
 same opening act at the new scale, byte-exact.
+
+## D-040 ✅ The canvas map: continental theaters without melting the browser
+1. The SVG renderer is one DOM node per hex — ideal to ~6k hexes, then the browser
+   drowns. `renderHexMap` now dispatches to a canvas renderer (`hexmap-canvas.js`) past
+   that threshold: same model/opts contract, same picture (terrain, roads/rail, infra
+   glyphs, objectives, zones, corridors, plotted paths, all marker kinds, coords), so
+   the four map pages needed only a script tag. Small maps keep the battle-tested SVG.
+2. The canvas carries its own camera (wheel-zoom to cursor, drag pan with a click
+   threshold so click-to-plot still works, double-click reset) and redraws as vectors —
+   crisp at any zoom, where CSS-transforming a canvas would rasterize. Hover tooltips
+   ride the native title attribute (nearest marker, else the hex).
+3. Performance is viewport culling + level-of-detail: hexes under ~4 px draw as
+   fillRects (a single 30k-subpath fill stalls canvas for seconds — found by the
+   Playwright smoke, 5.5 s → 36 ms), path fills are chunked, decor/labels gate on
+   on-screen hex size, and markers floor their screen size so counters stay legible
+   zoomed out. Measured in Chromium: 30k hexes 36 ms at fit zoom; 90k hexes 154 ms at
+   fit, 31 ms zoomed in. Generator/editor caps raised to 300×300 (engine steps a 90k-hex
+   state in ~0.5 s — fine for autopace).

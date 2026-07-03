@@ -78,9 +78,11 @@ the GM toolkit. The in-app 📘 `/manual` is its player-facing summary with live
 their own base, cross the map at their record sheet's real speed, and thread the gaps
 between radar pickets (ground units see high traffic 12 hexes out, sensor stations 24).
 Warning time, combat radius, and forward basing are all geography. Maps scale to
-continental size (up to 120 hexes / 2,160 km — pan and zoom included), where **rail
-lines** move ground battalions four times faster than they march and spheroid DropShips
-descend from orbit directly onto the hex they want.
+continental size — past ~6,000 hexes the map switches to a **canvas renderer** with
+viewport culling, so even a 300×300 theater (90,000 hexes, 5,400 km — most of a
+hemisphere) pans, zooms, and redraws in well under a frame's budget. At that scale
+**rail lines** move ground battalions four times faster than they march and spheroid
+DropShips descend from orbit directly onto the hex they want.
 
 **Want the full experience?** Run **[OPERATION DAGGERPOINT](docs/OPERATION_DAGGERPOINT.md)**
 — `npm run dev -- demo/assault.json` — a 3067 planetary assault built to exercise **every

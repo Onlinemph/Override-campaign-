@@ -36,7 +36,8 @@ replace it.
 ## 2. The three maps
 
 - **Ground theaters** — hex maps at 18 km/hex. Formations, facilities, terrain, roads,
-  rail. Maps run up to 120 hexes (2,160 km) across — continental scale.
+  rail. Maps run up to 300 hexes (5,400 km) across — continental to hemispheric scale
+  (big maps render on canvas with viewport culling; small ones stay SVG).
 - **The air layer** — **congruent with the ground map**: every ground hex has an air hex
   directly above it (D-037). Position in the sky is real: launches climb over their own
   base, a raid crosses the map hex by hex, a CAP covers a radius, and radar coverage is
