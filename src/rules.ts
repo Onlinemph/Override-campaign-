@@ -397,15 +397,16 @@ export const SKYWATCH = {
   AIR_SIG: { FLIGHT_3_6: 6, PAIR: 8, SINGLE: 9, DROPSHIP_THRUST: 3, SKYEYE: 5 },
   AIR_SIG_MODS: { DASH_OR_CLIMB: -2, LEAN_LOITER: 1, BALLISTIC_GLIDE: 3 },
   // D-037 (congruent sky): the air grid maps 1:1 onto the ground map, so radar horizons
-  // are real radii. A ground formation sees the HIGH band ~216 km out; a sensor station
-  // or Mobile HQ doubles that. Radar coverage becomes geography you can route around.
+  // are real radii. D-038.3 (user ruling, ×4 for continental maps): a ground formation
+  // sees the HIGH band ~860 km out; a sensor station or Mobile HQ doubles that (~1,700
+  // km). Radar coverage is geography you route around — at continental scale.
   RADAR_HORIZON: {
-    HIGH_BAND_AIR_HEXES: 12,        // any ground formation: HIGH band within 12 air hexes
-    STATION_HQ_BONUS_AIR_HEXES: 12, // sensor stations & Mobile HQs reach 24
+    HIGH_BAND_AIR_HEXES: 48,        // any ground formation: HIGH band within 48 air hexes
+    STATION_HQ_BONUS_AIR_HEXES: 48, // sensor stations & Mobile HQs reach 96
     LOW_BAND_OP_HEXES: 6,           // under-the-radar: LOW band only within 6 hexes
   },
-  AIR_TO_AIR_DETECT_AIR_HEXES: 12,  // D-038.2: fighter radar reaches ~216 km — two turns of
-                                    // closure against a dashing ST-6 raid, not one
+  AIR_TO_AIR_DETECT_AIR_HEXES: 24,  // D-038.3 (×2): fighter radar reaches ~430 km — four
+                                    // turns of closure against a dashing ST-6 raid
   // D-038: the intercept predictor's lead error by track level — LOCK plots clean,
   // CONTACT is ±1 hex, SHADOW ±2. Escape by jinking is real below a full picture.
   INTERCEPT_LEAD_ERROR_HEXES: { 4: 0, 3: 1, 2: 2 } as Record<number, number>,

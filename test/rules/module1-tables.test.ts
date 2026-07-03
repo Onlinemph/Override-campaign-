@@ -104,9 +104,9 @@ describe('M1-tables — seeing the sky (SKYWATCH §5, appendix)', () => {
     expect(SKYWATCH.AIR_SIG_MODS).toEqual(
       { DASH_OR_CLIMB: -2, LEAN_LOITER: 1, BALLISTIC_GLIDE: 3 });
   });
-  it('radar horizon (D-037 congruent sky): ground 12 air hexes, stations/HQ 24; LOW within 6', () => {
-    expect(SKYWATCH.RADAR_HORIZON.HIGH_BAND_AIR_HEXES).toBe(12);
-    expect(SKYWATCH.RADAR_HORIZON.STATION_HQ_BONUS_AIR_HEXES).toBe(12);
+  it('radar horizon (D-038.3): ground 48 air hexes, stations/HQ 96; LOW within 6', () => {
+    expect(SKYWATCH.RADAR_HORIZON.HIGH_BAND_AIR_HEXES).toBe(48);
+    expect(SKYWATCH.RADAR_HORIZON.STATION_HQ_BONUS_AIR_HEXES).toBe(48);
     expect(SKYWATCH.RADAR_HORIZON.LOW_BAND_OP_HEXES).toBe(6);
     expect(SKYWATCH.MIN_PLOT_INTERCEPT_LEVEL).toBe(2); // never plot vs < SHADOW
   });

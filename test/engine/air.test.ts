@@ -204,38 +204,38 @@ describe('M3 — air detection & SIG', () => {
     expect(computeAirSig(truth, pair, false, false).tn).toBe(9);   // lean loiter +1
   });
 
-  it('radar horizon (D-037): stations reach 24 air hexes, plain ground 12, beyond is quiet', () => {
+  it('radar horizon (D-038.3): stations reach 96 air hexes, plain ground 48, beyond is quiet', () => {
     const truth = baseTruth('AIR-EW');
     truth.facilities['st'] = mkFacility({
       id: 'st', sideId: 'blue', name: 'EW Station', pos: gp(5, 5),
       tags: ['SENSOR_STATION'], sensorStation: { passive: 6, active: 12 },
       activeSweep: true,
     });
-    // congruent sky: the station searches from over its own hex (5,5); 20 hexes out is
-    // inside its 24-hex horizon
+    // congruent sky: the station searches from over its own hex (5,5); 80 hexes out is
+    // inside its 96-hex horizon
     const bandit = addFlight(truth, { id: 'bandit', sideId: 'red', count: 4,
-                                      airPos: { q: 25, r: 5 } });
+                                      airPos: { q: 85, r: 5 } });
     bandit.sigBase = 6;
     const c = Campaign.create(truth);
     c.step();
     expect(c.store.all().some(l => l.event.type === 'DIE_ROLLED' &&
       (l.event as any).roll.purpose.includes('EW Station'))).toBe(true);
 
-    // 30 air hexes out: over the horizon, no roll
+    // 110 air hexes out: over the horizon, no roll
     const truth2 = baseTruth('AIR-EW2');
     truth2.facilities['st'] = truth.facilities['st'];
-    addFlight(truth2, { id: 'bandit', sideId: 'red', count: 4, airPos: { q: 35, r: 5 } });
+    addFlight(truth2, { id: 'bandit', sideId: 'red', count: 4, airPos: { q: 115, r: 5 } });
     const c2 = Campaign.create(truth2);
     c2.step();
     expect(c2.store.all().some(l => l.event.type === 'DIE_ROLLED' &&
       (l.event as any).roll.purpose.includes('air detection'))).toBe(false);
 
-    // a plain ground formation reaches 12 — half the station's line
+    // a plain ground formation reaches 48 — half the station's line
     const truth3 = baseTruth('AIR-EW3');
     addMechFormation(truth3, { id: 'watchers', sideId: 'blue', pos: gp(5, 5) });
-    addFlight(truth3, { id: 'near', sideId: 'red', count: 4, airPos: { q: 15, r: 5 } })
-      .sigBase = 6;                                             // 10 out: seen
-    addFlight(truth3, { id: 'far', sideId: 'red', count: 4, airPos: { q: 25, r: 5 } });
+    addFlight(truth3, { id: 'near', sideId: 'red', count: 4, airPos: { q: 45, r: 5 } })
+      .sigBase = 6;                                             // 40 out: seen
+    addFlight(truth3, { id: 'far', sideId: 'red', count: 4, airPos: { q: 60, r: 5 } });
     const c3 = Campaign.create(truth3);
     c3.step();
     const rolls = c3.store.all().filter(l => l.event.type === 'DIE_ROLLED' &&

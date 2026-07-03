@@ -358,15 +358,15 @@ Loiter 2 FP/min (lean loiter 1 — but your searches roll −1). Conventional fi
 **half** on transit and loiter. Takeoff: 10 FP vertical, 4 with a runway
 (AIRSTRIP/SPACEPORT). Climbing costs 2 FP/level.
 
-**Position is real** (D-037). You launch into the sky over your own base and fly to the
-mission hex by hex, visible to whatever radar you cross: any ground formation sees the
-HIGH band within **12 air hexes** (~216 km); sensor stations and Mobile HQs reach
-**24**; fighters resolve other aircraft within **12 air hexes** (~216 km — two turns of
-closure against a dashing ST-6 raid), so a chase keeps its tally instead of flying into
-darkness. The gaps between pickets are routes.
-Warning time is literal — a border station 24 hexes out buys the defender over half an
-hour of scramble clock against a dashing ST-4 raid, which is exactly what the alert
-states are for. Your combat radius is your tank divided by your route, and joker/bingo
+**Position is real** (D-037/D-038.3). You launch into the sky over your own base and fly
+to the mission hex by hex, visible to whatever radar you cross: any ground formation
+sees the HIGH band within **48 air hexes** (~860 km); sensor stations and Mobile HQs
+reach **96** (~1,700 km); fighters resolve other aircraft within **24 air hexes**
+(~430 km — four turns of closure against a dashing ST-6 raid), so a chase keeps its
+tally instead of flying into darkness. On a continental map the gaps between pickets
+are still routes — and behind a mountain range is still dark.
+Warning time is literal — a border station sees a dashing ST-4 raid coming for
+**2+ hours** of scramble clock, which is exactly what the alert states are for. Your combat radius is your tank divided by your route, and joker/bingo
 are recomputed from your *actual* distance home every tick. Basing forward — a captured
 strip, a grounded carrier — extends reach; that's why the enemy will come for it.
 

@@ -104,7 +104,7 @@ describe('the congruent sky (D-037)', () => {
       tags: ['SENSOR_STATION'], sensorStation: { passive: 6, active: 12 },
       activeSweep: true,
     });
-    // a raid inside the picket's 24-hex horizon draws detection rolls...
+    // a raid inside the picket's 96-hex horizon draws detection rolls...
     addFlight(truth, { id: 'raid', sideId: 'red', count: 4, airPos: { q: 12, r: 10 } })
       .sigBase = 6;
     const c = Campaign.create(truth);
@@ -112,10 +112,10 @@ describe('the congruent sky (D-037)', () => {
     expect(c.store.all().some(l => l.event.type === 'DIE_ROLLED' &&
       (l.event as any).roll.purpose.includes('Border Radar'))).toBe(true);
 
-    // ...while the same raid routed through the far corner stays off the scope
+    // ...while the same raid routed far beyond the horizon stays off the scope
     const truth2 = baseTruth('SKY-5', [], 40, 20);
     truth2.facilities['ew'] = truth.facilities['ew'];
-    addFlight(truth2, { id: 'raid', sideId: 'red', count: 4, airPos: { q: 2, r: 0 } });
+    addFlight(truth2, { id: 'raid', sideId: 'red', count: 4, airPos: { q: 140, r: 10 } });
     const c2 = Campaign.create(truth2);
     c2.step();
     expect(c2.store.all().some(l => l.event.type === 'DIE_ROLLED' &&

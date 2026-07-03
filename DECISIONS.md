@@ -985,3 +985,10 @@ same opening act at the new scale, byte-exact.
    zoomed out. Measured in Chromium: 30k hexes 36 ms at fit zoom; 90k hexes 154 ms at
    fit, 31 ms zoomed in. Generator/editor caps raised to 300×300 (engine steps a 90k-hex
    state in ~0.5 s — fine for autopace).
+
+## D-038.3 ✅ Detection ranges scaled for the continent (user ruling)
+Radar horizons ×4 (ground formations 48 air hexes ≈ 860 km; sensor stations & Mobile
+HQs 96 ≈ 1,700 km) and air-to-air ×2 (24 air hexes ≈ 430 km — four turns of closure
+against a dashing ST-6 raid). On 200-300-hex continental maps the picket-gap game
+survives at the new radii; on small maps a sensor station now simply owns the sky,
+which is what a planetary radar site should do.
