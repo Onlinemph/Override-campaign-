@@ -74,6 +74,72 @@ describe('B5 — movement', () => {
     expect(hexEntryCost(truth, f, truth.theaters[T].hexes['7,5'])).toBeNull();
   });
 
+  it('motion families: VTOLs overfly everything, hover skims water, naval stays in it', () => {
+    const truth = baseTruth('MOVE-SEED', [
+      { q: 6, r: 5, terrain: 'MOUNTAIN' }, { q: 7, r: 5, terrain: 'WATER' },
+      { q: 8, r: 5, terrain: 'SWAMP' },
+    ]);
+    const mountain = truth.theaters[T].hexes['6,5'];
+    const water = truth.theaters[T].hexes['7,5'];
+    const swamp = truth.theaters[T].hexes['8,5'];
+    const clear = truth.theaters[T].hexes['9,5'];
+
+    // a VTOL wing: every hex is one flat point — mountains and lakes included
+    const vtol = addMechFormation(truth, { id: 'v1', sideId: 'blue', pos: gp(5, 5), omp: 8 },
+      2, { class: 'VTOL' });
+    for (const h of [mountain, water, swamp, clear]) expect(hexEntryCost(truth, vtol, h)).toBe(1);
+
+    // hovercraft: water & swamp at 1 (skimming), mountains are a wall
+    const hover = addMechFormation(truth, { id: 'h1', sideId: 'blue', pos: gp(5, 6), omp: 8 },
+      2, { class: 'VEHICLE', tags: ['HOVER'] });
+    expect(hexEntryCost(truth, hover, water)).toBe(1);
+    expect(hexEntryCost(truth, hover, swamp)).toBe(1);
+    expect(hexEntryCost(truth, hover, mountain)).toBeNull();
+    expect(hexEntryCost(truth, hover, clear)).toBe(1);
+
+    // naval: water only
+    const naval = addMechFormation(truth, { id: 'n1', sideId: 'blue', pos: gp(7, 5) },
+      1, { class: 'NAVAL' });
+    expect(hexEntryCost(truth, naval, water)).toBe(1);
+    expect(hexEntryCost(truth, naval, clear)).toBeNull();
+
+    // tracked tanks: mountains bar ALL vehicles, not just wheeled (core §5.2)
+    const tracked = addMechFormation(truth, { id: 't1', sideId: 'blue', pos: gp(5, 7) },
+      2, { class: 'VEHICLE' });
+    expect(hexEntryCost(truth, tracked, mountain)).toBeNull();
+    // mechs still climb them at 3
+    const mechs = addMechFormation(truth, { id: 'k1', sideId: 'blue', pos: gp(5, 8) });
+    expect(hexEntryCost(truth, mechs, mountain)).toBe(3);
+    // a mixed mech+tank column moves like its most restrictive member
+    const mixed = addMechFormation(truth, { id: 'x1', sideId: 'blue', pos: gp(5, 9) }, 2);
+    truth.units[mixed.unitIds[1]].class = 'VEHICLE';
+    expect(hexEntryCost(truth, mixed, mountain)).toBeNull();
+    expect(hexEntryCost(truth, mixed, water)).toBeNull();
+  });
+
+  it('a VTOL wing crosses a lake at ×2 OMP while the tank column stalls on the shore', () => {
+    const truth = baseTruth('MOVE-SEED', [
+      { q: 6, r: 5, terrain: 'WATER' }, { q: 7, r: 5, terrain: 'WATER' },
+      { q: 6, r: 8, terrain: 'WATER' },
+    ]);
+    truth.clockMode = 'CONTACT';
+    // omp 10 ⇒ VTOL budget 10×2/10 = 2/turn ⇒ two water hexes per contact turn
+    const vtol = addMechFormation(truth, { id: 'v1', sideId: 'blue', pos: gp(5, 5), omp: 10 },
+      2, { class: 'VTOL' });
+    activate(truth, moveOrder('ov', vtol, 'MOVE', [gp(6, 5), gp(7, 5), gp(8, 5)]));
+    const tanks = addMechFormation(truth, { id: 't1', sideId: 'blue', pos: gp(5, 8), omp: 10 },
+      2, { class: 'VEHICLE' });
+    activate(truth, moveOrder('ot', tanks, 'MOVE', [gp(6, 8), gp(7, 8)]));
+
+    run(truth, 1);
+    expect(posOf(truth, 'v1')).toEqual(gp(7, 5));   // two hexes over open water
+    expect(posOf(truth, 't1')).toEqual(gp(5, 8));   // parked on the shoreline
+    run(truth, 1);
+    expect(posOf(truth, 'v1')).toEqual(gp(8, 5));   // across and ashore
+    expect(truth.orders['ov'].completed).toBe(true);
+    expect(truth.orders['ot'].completed).toBeUndefined(); // still stalled
+  });
+
   it('water is impassable to ground formations: path stalls, no movement events', () => {
     const truth = baseTruth('MOVE-SEED', [{ q: 6, r: 5, terrain: 'WATER' }]);
     truth.clockMode = 'CONTACT';

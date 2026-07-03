@@ -68,6 +68,12 @@ the **tokenized player links** to hand out; they also print to the console at bo
 (e.g. `/player/blue/<token>`). Player screens show own forces, contacts with staleness,
 the report inbox, and click-to-plot order entry. All maps scroll-to-zoom and drag-to-pan.
 
+**Want to know how everything works?** **[The Complete Game Guide](docs/GAME_GUIDE.md)**
+covers every mechanic and unit type in one place — the terrain × motion matrix (yes,
+VTOLs cross mountains and lakes; hovercraft skim water; tanks do neither), every order
+with what it actually does, detection math, the career loop, carriers, flak, space, and
+the GM toolkit. The in-app 📘 `/manual` is its player-facing summary with live numbers.
+
 **Want the full experience?** Run **[OPERATION DAGGERPOINT](docs/OPERATION_DAGGERPOINT.md)**
 — `npm run dev -- demo/assault.json` — a 3067 planetary assault built to exercise **every
 mechanic in the engine**: a Davion task force burns in from the jump point (watched by

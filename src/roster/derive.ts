@@ -82,6 +82,7 @@ export function extractTags(text: string, motionType?: string): string[] {
   if (has(/mobile\s*(hq|headquarters)|command\s*console/i)) tags.add('HQ');
 
   if ((motionType ?? '').toLowerCase().includes('wheeled')) tags.add('WHEELED');
+  if (/hover|wige/.test((motionType ?? '').toLowerCase())) tags.add('HOVER');
 
   // hull shape (DropShips/small craft): the flying egg vs the lifting body — spheroids
   // crawl in atmosphere (SKYWATCH SPHEROID_ATMO_HEX_PER_TICK); the fast lane is orbit

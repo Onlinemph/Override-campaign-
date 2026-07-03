@@ -893,3 +893,20 @@ Async play: the hosted campaign runs continuously; players drop in whenever, plo
    `/api/gm/rewind`; the GM screen's ⏪ Rewind… prompt takes "3", "3 14:00", or "t480"
    and confirms with the receipt. JSONL persistence already rewrites the file on
    truncate, and the Discord high-water mark already clamps on shrink — no new state.
+
+## D-036 ✅ Motion families: the terrain matrix finally means what it says
+1. rules.ts always declared hover/VTOL terrain behavior (`TERRAIN.hoverCost`,
+   `MOVEMENT.VTOL_OMP_MULT`, MOUNTAIN `mechInfantryOnly`) but `hexEntryCost` never read
+   it — a VTOL stopped at a lake shore and a tracked tank climbed mountains. Now
+   `motionFamily()` classifies a formation (VTOL / NAVAL / HOVER / GROUND; a special
+   family only when EVERY unit shares it — mixed columns move like their most
+   restrictive member, the same slowest-common-denominator rule OMP uses):
+   VTOLs overfly everything at flat cost 1 and ×2 OMP with no road bonus or road
+   signature (a flight line is already straight); hover skims water/swamp at 1 and is
+   walled by mountains; naval is water-only; MOUNTAIN now bars ALL ground vehicles
+   (VEHICLE/SUPPORT/NAVAL), not just wheeled.
+2. `extractTags` derives a HOVER tag from the record sheet's motion type (hover/WiGE),
+   so library hovercraft skim out of the box; authored units opt in with tags:['HOVER'].
+3. stall.ts routes its impassable-ahead check through hexEntryCost, so the ⏳ reason is
+   motion-aware too — water stalls a tank column, not a VTOL wing. Written up (with the
+   full terrain × motion matrix) in docs/GAME_GUIDE.md, the new complete-mechanics guide.

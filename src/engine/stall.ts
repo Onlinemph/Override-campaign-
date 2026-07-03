@@ -10,7 +10,7 @@ import { CAREER, SKYWATCH, SUPPLY, TERRAIN } from '../rules.js';
 import type { Formation, GroundPos, TruthState } from '../core/types.js';
 import { hexKey } from '../core/types.js';
 import { hexDistance } from '../hex/axial.js';
-import { strikeTargetHex } from './movement.js';
+import { hexEntryCost, strikeTargetHex } from './movement.js';
 
 function repairSourceHere(s: TruthState, f: Formation): 'facility' | 'carrier' | null {
   if (f.pos.kind === 'ground') {
@@ -112,14 +112,15 @@ export function stallReason(s: TruthState, f: Formation): string | undefined {
       return undefined;
     }
     default: {
-      // move-family: an impassable hex directly ahead stalls the column silently
+      // move-family: an impassable hex directly ahead stalls the column silently.
+      // hexEntryCost knows the motion family — water stops a tank column, not a VTOL wing.
       if (f.pos.kind === 'ground' && ['MOVE', 'FORCED_MARCH', 'MOVE_CAUTIOUS'].includes(order.kind)) {
         const wps = (order.path ?? []).filter((p): p is GroundPos => p.kind === 'ground');
         const next = wps[f.pathIndex ?? 0];
         if (next) {
           const hex = s.theaters[next.theaterId]?.hexes[hexKey(next.q, next.r)];
-          if (hex && TERRAIN[hex.terrain]?.ompCost === null) {
-            return `stalled — ${hex.terrain.toLowerCase()} ahead is impassable; re-plot the route`;
+          if (hex && hexEntryCost(s, f, hex) === null) {
+            return `stalled — ${hex.terrain.toLowerCase()} ahead is impassable for this formation; re-plot the route`;
           }
         }
       }

@@ -42,6 +42,29 @@ export function isWheeled(s: TruthState, f: Formation): boolean {
     f.unitIds.every(id => s.units[id]?.tags.includes('WHEELED'));
 }
 
+/**
+ * How a formation crosses the map (core §5.3). A formation gets a special motion
+ * family only when EVERY unit shares it — mixed columns move like their most
+ * restrictive member, the same slowest-common-denominator rule OMP uses for speed.
+ */
+export type MotionFamily = 'VTOL' | 'NAVAL' | 'HOVER' | 'GROUND';
+export function motionFamily(s: TruthState, f: Formation): MotionFamily {
+  const units = f.unitIds.map(id => s.units[id]).filter(Boolean);
+  if (units.length === 0) return 'GROUND';
+  if (units.every(u => u.class === 'VTOL')) return 'VTOL';
+  if (units.every(u => u.class === 'NAVAL')) return 'NAVAL';
+  if (units.every(u => u.tags.includes('HOVER'))) return 'HOVER';
+  return 'GROUND';
+}
+
+/** Vehicles of any stripe — what MOUNTAIN's mech/infantry-only rule keeps out. */
+function hasGroundVehicles(s: TruthState, f: Formation): boolean {
+  return f.unitIds.some(id => {
+    const u = s.units[id];
+    return u && (u.class === 'VEHICLE' || u.class === 'SUPPORT' || u.class === 'NAVAL');
+  });
+}
+
 function getHex(s: TruthState, pos: GroundPos): Hex | undefined {
   return s.theaters[pos.theaterId]?.hexes[hexKey(pos.q, pos.r)];
 }
@@ -50,9 +73,16 @@ function getHex(s: TruthState, pos: GroundPos): Hex | undefined {
 export function hexEntryCost(s: TruthState, f: Formation, hex: Hex): number | null {
   const row = TERRAIN[hex.terrain];
   if (!row) return null;
-  let cost = row.ompCost;
+  const family = motionFamily(s, f);
+  // VTOLs overfly the map: every hex at flat cost, roads and rivers alike (core §5.3)
+  if (family === 'VTOL') return 1;
+  // naval stays in the water
+  if (family === 'NAVAL') return hex.terrain === 'WATER' ? 1 : null;
+  // hover skims: water & swamp at 1, mountains are a wall (TERRAIN.hoverCost)
+  let cost = family === 'HOVER' && row.hoverCost !== undefined ? row.hoverCost : row.ompCost;
   if (cost === null) return null;
-  if (row.mechInfantryOnly && isWheeled(s, f)) return null;
+  // mountains take mechs and infantry only — no vehicle of any kind (core §5.2)
+  if (row.mechInfantryOnly && hasGroundVehicles(s, f)) return null;
   if (hex.infra.includes('ROAD') || hex.infra.includes('RAIL')) {
     return Math.max(ROAD_MIN_COST, cost * ROAD_COST_FACTOR);
   }
@@ -164,7 +194,10 @@ export function movementPass(
     }
 
     let progress = f.moveProgress ?? 0;
-    const mult = speedMult(order.kind);
+    // VTOLs cruise above the ground clutter at ×2 OMP (core §5.3) and take no road
+    // bonus — a flight line is already the shortest predictable path.
+    const flies = motionFamily(s, f) === 'VTOL';
+    const mult = speedMult(order.kind) * (flies ? MOVEMENT.VTOL_OMP_MULT : 1);
 
     // Available budget for this step:
     //  CONTACT mode: OMP points (1 contact turn's worth × dt ticks)
@@ -189,7 +222,9 @@ export function movementPass(
 
       const hex = getHex(s, next);
       if (!hex) break;
-      const onRoad = hex.infra.includes('ROAD') || hex.infra.includes('RAIL');
+      // a VTOL overflying a road is not "on the road" — no speed bonus, no
+      // predictable-column signature penalty for the detection pass
+      const onRoad = !flies && (hex.infra.includes('ROAD') || hex.infra.includes('RAIL'));
 
       const c = hexEntryCost(s, f, hex);
       if (c === null) break; // impassable: order stalls, GM sees the stuck counter
