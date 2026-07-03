@@ -360,8 +360,9 @@ Loiter 2 FP/min (lean loiter 1 — but your searches roll −1). Conventional fi
 **Position is real** (D-037). You launch into the sky over your own base and fly to the
 mission hex by hex, visible to whatever radar you cross: any ground formation sees the
 HIGH band within **12 air hexes** (~216 km); sensor stations and Mobile HQs reach
-**24**; fighters resolve other aircraft within **6 air hexes** (~108 km), so a chase
-keeps its tally instead of flying into darkness. The gaps between pickets are routes.
+**24**; fighters resolve other aircraft within **12 air hexes** (~216 km — two turns of
+closure against a dashing ST-6 raid), so a chase keeps its tally instead of flying into
+darkness. The gaps between pickets are routes.
 Warning time is literal — a border station 24 hexes out buys the defender over half an
 hour of scramble clock against a dashing ST-4 raid, which is exactly what the alert
 states are for. Your combat radius is your tank divided by your route, and joker/bingo

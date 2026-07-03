@@ -948,9 +948,10 @@ call), the sky now maps 1:1 onto the ground:
    per hex, so range in hexes is untouched; endurance in time grows 6×. The §12 worked
    day re-based: 400 → 360 → 299 → 279 FP (same ledger structure, new legs); its
    per-minute speeds are superseded.
-2. **Air-to-air radar reaches 6 air hexes** (~108 km, was 1): at the slower speeds a
-   chase keeps its tally instead of flying into darkness every turn. CAS call range
-   rescaled to 12 air hexes (~half an hour's cruise from over the battle hex).
+2. **Air-to-air radar reaches 12 air hexes** (~216 km; was 1, briefly 6 — doubled the
+   same day, D-038.2: fighters should see two turns of closure ahead, not one). A chase
+   keeps its tally instead of flying into darkness every turn. CAS call range rescaled
+   to 12 air hexes (~half an hour's cruise from over the battle hex).
 3. **The lead is only as good as the track**: the intercept predictor plots clean at
    LOCK, drifts ±1 hex at CONTACT and ±2 at SHADOW (INTERCEPT_LEAD_ERROR_HEXES). The
    drift is a pure hash of (seed, target, tick) — replay stays byte-exact with no new

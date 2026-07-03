@@ -404,7 +404,8 @@ export const SKYWATCH = {
     STATION_HQ_BONUS_AIR_HEXES: 12, // sensor stations & Mobile HQs reach 24
     LOW_BAND_OP_HEXES: 6,           // under-the-radar: LOW band only within 6 hexes
   },
-  AIR_TO_AIR_DETECT_AIR_HEXES: 6,   // D-038: fighter radar reaches ~108 km — a chase keeps its tally
+  AIR_TO_AIR_DETECT_AIR_HEXES: 12,  // D-038.2: fighter radar reaches ~216 km — two turns of
+                                    // closure against a dashing ST-6 raid, not one
   // D-038: the intercept predictor's lead error by track level — LOCK plots clean,
   // CONTACT is ±1 hex, SHADOW ±2. Escape by jinking is real below a full picture.
   INTERCEPT_LEAD_ERROR_HEXES: { 4: 0, 3: 1, 2: 2 } as Record<number, number>,
