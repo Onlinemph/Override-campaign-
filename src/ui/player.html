@@ -19,7 +19,7 @@
           <label class="kv" title="Tint the ground your depots/convoys can supply"><input type="checkbox" id="supply-on" onchange="refresh()"> supply</label>
           <select id="theater-sel" onchange="curTheater=this.value;refresh()" style="display:none"></select></span></h2>
       <div class="mapwrap"><svg id="map" class="map"></svg></div>
-      <div class="maphint">scroll to zoom · drag to pan · double-click to reset · click a hex to plot</div>
+      <div class="maphint">scroll to zoom · drag to pan · double-click to reset · click your units to select (shift-click for groups) · click ground to plot</div>
       <div class="legend">
         <b>◯</b> your formations (dashed ring = EMCON DARK) · <b>▢</b> facilities ·
         <b>◇</b> contacts <b>G/S/C/L</b> (dimmer = staler; dashed circle = ±1) ·
@@ -476,7 +476,7 @@ const ORDER_META = [
   ['LIFT_OFF',      'launch and hold at altitude until the next order', ['flight', 'carrier']],
   ['LAND',          'put down on the last map click (any open ground)', ['flight', 'carrier']],
   ['ASCEND',        'climb from the air (or ground) to the orbit node — the long burn', ['flight', 'carrier']],
-  ['DESCEND',       're-enter from orbit into this planet’s sky', ['vessel']],
+  ['DESCEND',       're-enter from orbit — arrives in the sky directly over your last map click', ['vessel']],
 ];
 
 function formationDomains(f) {
@@ -533,6 +533,10 @@ async function sendOrder() {
     let ok = 0, fail = [];
     for (const fid of group) {
       const b = { formationId: fid, kind, path };
+      if (['LAND', 'DISEMBARK', 'DESCEND'].includes(kind) && path.length) {
+        b.targetHex = path[path.length - 1];
+        b.path = [];
+      }
       if (moveFamily && auto && dest && fid !== group[0]) {
         const rt = await fetch(`/api/side/${sideId}/route?t=${encodeURIComponent(token)}` +
             `&formationId=${encodeURIComponent(fid)}&q=${dest.q}&r=${dest.r}`)
@@ -556,9 +560,10 @@ async function sendOrder() {
     kind,
     path,
   };
-  // carrier ops: EMBARK names its ship; LAND/DISEMBARK take the last plotted hex
+  // carrier ops: EMBARK names its ship; LAND/DISEMBARK/DESCEND take the last plotted
+  // hex (DESCEND: you arrive in the sky directly over it — the spheroid doctrine)
   if (kind === 'EMBARK') body.targetFormationId = document.getElementById('o-carrier').value;
-  if ((kind === 'LAND' || kind === 'DISEMBARK') && path.length) {
+  if (['LAND', 'DISEMBARK', 'DESCEND'].includes(kind) && path.length) {
     body.targetHex = path[path.length - 1];
     body.path = [];
   }
@@ -601,7 +606,7 @@ function quickOrder(kind) {
   if (!fid) return;
   postOrder({ formationId: fid, kind, path: [] });
 }
-function fallBack() {
+async function fallBack() {
   const fid = document.getElementById('o-formation').value;
   const me = lastView && (lastView.ownFormations || []).find(f => f.id === fid);
   if (!me || !me.pos) return;
@@ -610,7 +615,13 @@ function fallBack() {
   const hd = (a, b) => { const dq = a.q - b.q, dr = a.r - b.r; return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2; };
   let best = nodes[0], bd = hd(me.pos, nodes[0]);
   for (const n of nodes) { const d = hd(me.pos, n); if (d < bd) { bd = d; best = n; } }
-  postOrder({ formationId: fid, kind: 'MOVE', path: [{ q: best.q, r: best.r }] });
+  // D-043: fall back along a real route (fog-aware), not a straight line into the hills
+  const rt = await fetch(`/api/side/${sideId}/route?t=${encodeURIComponent(token)}` +
+      `&formationId=${encodeURIComponent(fid)}&q=${best.q}&r=${best.r}`)
+    .then(x => x.json()).catch(() => null);
+  const path = rt && rt.path && rt.path.length
+    ? rt.path.map(p => ({ q: p.q, r: p.r })) : [{ q: best.q, r: best.r }];
+  postOrder({ formationId: fid, kind: 'MOVE', path });
 }
 
 for (const id of ['o-formation', 'o-kind', 'o-path', 'o-emcon', 'o-target',

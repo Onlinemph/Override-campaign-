@@ -1028,3 +1028,19 @@ which is what a planetary radar site should do.
    from the D-033 picker work had been breaking the ENTIRE player page script since
    that commit — every live smoke in between had exercised only the GM screen. Fixed;
    the E2E now drives the player page on both renderers.
+
+## D-043 ✅ The continental fix pack: no more beelines, no more stale words
+1. Every pursuit march now ROUTES (findRoute) instead of drawing a straight hex line:
+   the STRIKE order's approach to its contact estimate, the SHADOW tail, the EMBARK
+   march to the carrier's ramp, the GM's recall courier, and the player's fall-back
+   button (fog-aware via the route API). On blob maps beelines were harmless; on a
+   continent they parked columns against mountainsides with a stall reason the player
+   could not fix (pursuit re-paths itself). An unreachable target now simply holds.
+   movement.ts ↔ route.ts import each other (call-time only — safe).
+2. DESCEND takes the last map click as its targetHex from the player order form (both
+   single and group submits) — the spheroid doctrine was engine-supported but not
+   plottable from the UI without hand-editing.
+3. Words caught up with the game: the map hint teaches click-to-select; the DESCEND
+   picker description sells descend-on-target; the field manual's ground section learned
+   rail, bridges, auto-route, and click-to-command; CAMPAIGN_FORMAT documents
+   airHexByTheater as the air-region ORIGIN (D-037), not "the hex over the theater".

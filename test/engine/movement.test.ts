@@ -170,6 +170,34 @@ describe('B5 — movement', () => {
     expect(posOf(truth, 'xc')).toEqual(gp(4, 10));
   });
 
+  it('pursuit routes (D-043): a STRIKE column threads the pass instead of parking on the wall', () => {
+    // a north-south mountain wall at q=5 with a single pass at r=0
+    const wall = Array.from({ length: 9 }, (_, r) =>
+      ({ q: 5, r: r + 1, terrain: 'MOUNTAIN' as const }));
+    const truth = baseTruth('PURSUE-1', wall, 12, 10);
+    truth.clockMode = 'PULSE';
+    const tanks = addMechFormation(truth, { id: 't1', sideId: 'blue', pos: gp(2, 5), omp: 6 },
+      2, { class: 'VEHICLE' });
+    activate(truth, { ...moveOrder('os', tanks, 'MOVE', []), kind: 'STRIKE',
+                      targetHex: gp(8, 5), path: [] });
+    // before D-043 the column beelined into the mountainside at q=5 and sat there
+    for (let i = 0; i < 8; i++) run(truth, 10);
+    const at = posOf(truth, 't1');
+    expect(at.q).toBeGreaterThan(5);           // it crossed the wall...
+    const crossed = truth.theaters[T].hexes[`5,${at.r}`];
+    expect(at).toEqual(gp(8, 5));              // ...and reached the strike hex
+    expect(crossed).toBeDefined();
+    // and an unreachable target just holds (no half-march into a dead end)
+    const truth2 = baseTruth('PURSUE-2',
+      Array.from({ length: 10 }, (_, r) => ({ q: 5, r, terrain: 'WATER' as const })), 12, 10);
+    truth2.clockMode = 'PULSE';
+    const stuck = addMechFormation(truth2, { id: 's1', sideId: 'blue', pos: gp(2, 5) });
+    activate(truth2, { ...moveOrder('o2', stuck, 'MOVE', []), kind: 'STRIKE',
+                       targetHex: gp(8, 5), path: [] });
+    run(truth2, 10);
+    expect(posOf(truth2, 's1')).toEqual(gp(2, 5)); // river uncrossed, column holding
+  });
+
   it('rail (D-037): a marching battalion rides the line at RAIL_OMP hexes/hour', () => {
     const railHexes = Array.from({ length: 14 }, (_, i) =>
       ({ q: i, r: 5, infra: ['RAIL' as const] }));

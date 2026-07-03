@@ -9,6 +9,7 @@
  * Fractional progress toward the next hex is carried on the formation between steps.
  */
 import { CLOCK, MOVEMENT, RECON_TRICKS, ROAD_MIN_COST, ROAD_COST_FACTOR, TERRAIN } from '../rules.js';
+import { findRoute } from './route.js';
 import type { Formation, GroundPos, Hex, Order, TruthState } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
 import { headingDeg, hexDistance, hexLine } from '../hex/axial.js';
@@ -162,17 +163,31 @@ export function movementPass(
         continue; // blind or close enough: hold and watch
       }
     }
+    // D-043: pursuit orders ROUTE like everyone else — a strike column on a continent
+    // threads the pass and crosses at the bridge instead of parking against the
+    // mountainside. No route (as the terrain truly is) ⇒ the column holds.
+    const pursuitPath = (target: GroundPos): GroundPos[] | null => {
+      if (hexDistance(cur0, target) <= 1) return [target];
+      const r = findRoute(s, f, target);
+      return r && r.path.length ? r.path : null;
+    };
     let wps: GroundPos[];
     if (isStrike) {
       const target = strikeTargetHex(s, order);
       if (!target || hexDistance(cur0, target) === 0) continue; // arrived or blind: hold
-      wps = [target];
+      const routed = pursuitPath(target);
+      if (!routed) continue; // unreachable for this formation: hold
+      wps = routed;
     } else if (isShadow) {
-      wps = [shadowTarget!];
+      const routed = pursuitPath(shadowTarget!);
+      if (!routed) continue;
+      wps = routed;
     } else if (isEmbark) {
       // re-path toward the carrier's current hex every step (own force: always known)
       const carrier = s.formations[order.targetFormationId!];
-      wps = [{ ...(carrier.pos as GroundPos) }];
+      const routed = pursuitPath({ ...(carrier.pos as GroundPos) });
+      if (!routed) continue; // no way to the ramp from here: wait
+      wps = routed;
     } else {
       if (!order.path) continue;
       wps = order.path.filter((p): p is GroundPos => p.kind === 'ground');

@@ -45,7 +45,7 @@ Coordinates are axial hex `q,r` (0-based). Time is in **ticks** (1 tick = 6 min;
 | weather | | CLEAR | `CLEAR` · `RAIN` · `STORM` (rain +1 to detection) |
 | vpThreshold | | — | first side to this many VP wins (core §12.2) |
 | endTick | | — | campaign ends here; highest VP wins, tie = draw |
-| airHexByTheater | | `{}` | `{ "theaterId": {"q":0,"r":0} }` — which high-altitude hex sits over each theater (SKYWATCH) |
+| airHexByTheater | | `{}` | `{ "theaterId": {"q":0,"r":0} }` — the ORIGIN of the theater's air region on the global air grid (D-037: the sky is congruent — air hex origin+(q,r) sits directly over ground hex (q,r)); `{q:0,r:0}` makes air and ground coordinates identical |
 
 ## `theaters[]` — the ground maps
 

@@ -334,9 +334,13 @@ const server = createServer(async (req, res) => {
       const hd = (a: GroundPos, c: GroundPos) => { const dq = a.q - c.q, dr = a.r - c.r; return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2; };
       let best = nodes[0];
       for (const n of nodes) if (hd(here, n.pos) < hd(here, best.pos)) best = n;
+      // D-043: the courier ROUTES home — around the range, over the bridge — instead of
+      // marching a straight line into whatever terrain is in the way
+      const route = findRoute(campaign.truth, f, { q: best.pos.q, r: best.pos.r });
+      if (!route) return json(res, 200, { ok: false, reason: 'no route back to the net for this formation' });
       const order: Order = {
         id: `recall:${b.formationId}:${t.tick}`, sideId: f.sideId, formationId: b.formationId,
-        kind: 'MOVE', path: [{ kind: 'ground', theaterId: best.pos.theaterId, q: best.pos.q, r: best.pos.r }],
+        kind: 'MOVE', path: route.path,
         emconOverride: 'PASSIVE', conditionals: [], issuedTick: t.tick, effectiveTick: t.tick + 1,
       };
       campaign.inject({ type: 'ORDER_ISSUED', order });
