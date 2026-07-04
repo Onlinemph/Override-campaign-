@@ -206,6 +206,53 @@ const screenLoop = [screenBase];
   }
 }
 
+// relay masts (D-048): the Guard's command line to its bridgeheads runs along the
+// road net — a mast every 20 road-steps from the capital toward each crossing, so
+// the chain (capital HQ → mast → mast → the bridgehead's own listening post) keeps
+// every guard commandable. Each mast is also a target: drop one and the line dies.
+const masts = [];
+{
+  const roadKeys = new Set(overrides.filter(o => o.infra?.includes('ROAD'))
+    .map(o => `${o.q},${o.r}`));
+  const roadStart = findNear(capital, p => roadKeys.has(`${p.q},${p.r}`));
+  const roadPathTo = (goal) => { // BFS along the road graph
+    const seen = new Map([[`${roadStart.q},${roadStart.r}`, null]]);
+    let ring = [roadStart];
+    while (ring.length) {
+      const next = [];
+      for (const p of ring) {
+        if (p.q === goal.q && p.r === goal.r) {
+          const path = [];
+          let k = `${p.q},${p.r}`;
+          while (k) {
+            const [q, r] = k.split(',').map(Number);
+            path.unshift({ q, r });
+            k = seen.get(k);
+          }
+          return path;
+        }
+        for (const [dq, dr] of DIRS) {
+          const q = p.q + dq, r = p.r + dr, k = `${q},${r}`;
+          if (roadKeys.has(k) && !seen.has(k)) { seen.set(k, `${p.q},${p.r}`); next.push({ q, r }); }
+        }
+      }
+      ring = next;
+    }
+    return null;
+  };
+  for (const c of crossings) {
+    const path = roadPathTo(c.near);
+    if (!path) continue;
+    for (let i = 20; i < path.length - 4; i += 20) {
+      const p = path[i];
+      if (dist(p, capital) <= 12) continue;              // the capital already covers it
+      if (masts.some(m => dist(m, p) <= 8)) continue;    // corridors share trunk masts
+      if (dist(p, riverwatch) <= 8) continue;            // Riverwatch doubles as a relay
+      masts.push(p);
+    }
+  }
+}
+
 // ── 3. objectives on the found geography ────────────────────────────────────
 site(capital.q, capital.r, { objective: { vpPerDay: 3, ownerSideId: 'marik' } });
 // each crossing's prize is its BRIDGEHEAD — the capital-bank approach. Holding it
@@ -393,8 +440,14 @@ const campaign = {
     { id: 'red-factory', sideId: 'marik', name: 'Verdigris Works', theaterId: T,
       q: factory.q, r: factory.r, tags: ['FACTORY'], supplyPoints: 10 },
     { id: 'red-riverwatch', sideId: 'marik', name: 'Riverwatch Station', theaterId: T,
-      q: riverwatch.q, r: riverwatch.r, tags: ['SENSOR_STATION'],
+      q: riverwatch.q, r: riverwatch.r, tags: ['SENSOR_STATION', 'COMM_RELAY'],
       sensorStation: { passive: 6, active: 12 }, activeSweep: true },
+    // the Verdigris command line (D-048): masts strung down the road net keep the
+    // bridgehead guards on the net — and give the invader a line to cut
+    ...masts.map((m, i) => ({
+      id: `red-mast-${i}`, sideId: 'marik', name: `Relay Mast ${i + 1}`, theaterId: T,
+      q: m.q, r: m.r, tags: ['COMM_RELAY'],
+    })),
     { id: 'blue-beachhead', sideId: 'skye', name: 'Beachhead Dump', theaterId: T,
       q: lz.q, r: lz.r, tags: ['DEPOT'], supplyPoints: 30, fuelFarmTons: 30,
       turnaroundCrews: 2 },
@@ -474,3 +527,4 @@ console.log(`  towns: near ${nearTowns.map(t => `${t.q},${t.r}`).join(' ') || '�
 console.log(`  airbase ${airbase.q},${airbase.r} · riverwatch ${riverwatch.q},${riverwatch.r}` +
   ` · arty ${arty.q},${arty.r} · reserve ${reserve.q},${reserve.r}` +
   (op ? ` · hidden OP ${op.q},${op.r}` : ''));
+console.log(`  relay masts: ${masts.map(m => `${m.q},${m.r}`).join(' ') || '—'}`);

@@ -16264,13 +16264,124 @@
       "q": 48,
       "r": 21,
       "tags": [
-        "SENSOR_STATION"
+        "SENSOR_STATION",
+        "COMM_RELAY"
       ],
       "sensorStation": {
         "passive": 6,
         "active": 12
       },
       "activeSweep": true
+    },
+    {
+      "id": "red-mast-0",
+      "sideId": "marik",
+      "name": "Relay Mast 1",
+      "theaterId": "cascara",
+      "q": 13,
+      "r": 25,
+      "tags": [
+        "COMM_RELAY"
+      ]
+    },
+    {
+      "id": "red-mast-1",
+      "sideId": "marik",
+      "name": "Relay Mast 2",
+      "theaterId": "cascara",
+      "q": 29,
+      "r": 2,
+      "tags": [
+        "COMM_RELAY"
+      ]
+    },
+    {
+      "id": "red-mast-2",
+      "sideId": "marik",
+      "name": "Relay Mast 3",
+      "theaterId": "cascara",
+      "q": 49,
+      "r": 2,
+      "tags": [
+        "COMM_RELAY"
+      ]
+    },
+    {
+      "id": "red-mast-3",
+      "sideId": "marik",
+      "name": "Relay Mast 4",
+      "theaterId": "cascara",
+      "q": 69,
+      "r": 2,
+      "tags": [
+        "COMM_RELAY"
+      ]
+    },
+    {
+      "id": "red-mast-4",
+      "sideId": "marik",
+      "name": "Relay Mast 5",
+      "theaterId": "cascara",
+      "q": 71,
+      "r": 12,
+      "tags": [
+        "COMM_RELAY"
+      ]
+    },
+    {
+      "id": "red-mast-5",
+      "sideId": "marik",
+      "name": "Relay Mast 6",
+      "theaterId": "cascara",
+      "q": 21,
+      "r": 37,
+      "tags": [
+        "COMM_RELAY"
+      ]
+    },
+    {
+      "id": "red-mast-6",
+      "sideId": "marik",
+      "name": "Relay Mast 7",
+      "theaterId": "cascara",
+      "q": 22,
+      "r": 56,
+      "tags": [
+        "COMM_RELAY"
+      ]
+    },
+    {
+      "id": "red-mast-7",
+      "sideId": "marik",
+      "name": "Relay Mast 8",
+      "theaterId": "cascara",
+      "q": 35,
+      "r": 63,
+      "tags": [
+        "COMM_RELAY"
+      ]
+    },
+    {
+      "id": "red-mast-8",
+      "sideId": "marik",
+      "name": "Relay Mast 9",
+      "theaterId": "cascara",
+      "q": 50,
+      "r": 68,
+      "tags": [
+        "COMM_RELAY"
+      ]
+    },
+    {
+      "id": "red-mast-9",
+      "sideId": "marik",
+      "name": "Relay Mast 10",
+      "theaterId": "cascara",
+      "q": 70,
+      "r": 68,
+      "tags": [
+        "COMM_RELAY"
+      ]
     },
     {
       "id": "blue-beachhead",

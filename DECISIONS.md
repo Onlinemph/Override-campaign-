@@ -1125,3 +1125,29 @@ on the capital, the satellite tips off the guard, the span blows IN THE COLUMN'S
 order explains itself, the pioneers march up and BUILD_BRIDGE the gap, the standing
 MOVE resumes over the new span, and the campaign freezes into a battle at the held
 bridgehead — byte-exact replay throughout.
+
+## D-048 ✅ Command relays: the net is a map object now
+1. **The net CHAINS.** Any formation with an HQ-tagged unit (Mobile HQ, command console
+   — derived from the record sheet, so Brownings work out of the box) and any facility
+   tagged COMM_RELAY is a relay. A relay is chained when within NET.RELAY_LINK_HEXES
+   (24) of a command node or another chained relay; a chained relay nets formations at
+   the normal ground-node radius (12). Backbone hops are long (directional dishes), the
+   local umbrella is not. The chain is derived from live positions every netPass — no
+   new state, nothing to desync, replay untouched.
+2. **Fragile on purpose.** A DARK relay relays nothing; hostile ECM parked on a relay
+   cuts it from the chain without a shot; a dead mid-chain relay drops everything
+   downstream at once (the D-008.2 one-pulse re-net applies when the line is restored
+   through a different path). And a chained relay is a big radio: SIG_MODS.RELAYING −1,
+   because direction-finding the enemy's net is now a real recon mission.
+3. **Surfaced everywhere it matters**: relays draw their own net-coverage rings on the
+   player map (netNodes now carries them, flagged), COMM_RELAY facilities render as 📡,
+   the GM overlay and the recall courier treat chained relays as valid net entries, the
+   off-net order rejection teaches the fix ("extend the net with a relay"), /api/rules
+   feeds the field manual the live numbers.
+4. **RIVERWARD retrofit**: the Guard's command line now physically exists — relay masts
+   strung every 20 road-steps from the capital toward each crossing (deduped where
+   corridors share a trunk; Riverwatch doubles as a relay). Every bridge guard and demo
+   team starts commandable, each via a named mast — and the acceptance test cuts one
+   mast and watches the Argent bridgehead go dark, orders bouncing with the relay hint.
+   Motivation on the record: before this, the whole river line was off-net and the red
+   players could not re-order their own bridge guards at all.

@@ -117,7 +117,7 @@ export interface ViewState {
   system?: SystemView;
   ownFacilities: OwnFacilityView[];
   ownSatellites: OwnSatelliteView[];
-  netNodes: Array<{ q: number; r: number; theaterId: Id; radius: number }>;
+  netNodes: Array<{ q: number; r: number; theaterId: Id; radius: number; relay?: boolean }>;
   netTheaterWide: boolean;
   supplyHexes: Array<{ q: number; r: number; theaterId: Id }>;
   theaters: TheaterBoundsView[];

@@ -16,7 +16,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { Campaign, replay } from '../core/truth.js';
 import { JsonlEventStore, MemoryEventStore } from '../core/log.js';
 import { project } from '../projection/project.js';
-import { commandNodesOf } from '../engine/net.js';
+import { netNodesOf } from '../engine/net.js';
 import { supplyEnvelope } from '../engine/logistics.js';
 import { loadCampaignFixture, buildFormationEntities, buildCampaign } from '../demo.js';
 import { generateCampaign } from '../campaign/generate.js';
@@ -31,7 +31,7 @@ import { enrichUnit } from '../roster/apply.js';
 import { searchLibrary } from '../roster/library.js';
 import { hashPick } from '../core/rng.js';
 import {
-  ATMO, CAREER, CLOCK, COMBAT_DROP, FLAK, LADDER, RDY, RECON_TRICKS, SKYWATCH, SUPPLY,
+  ATMO, CAREER, CLOCK, COMBAT_DROP, FLAK, LADDER, NET, RDY, RECON_TRICKS, SKYWATCH, SUPPLY,
 } from '../rules.js';
 import {
   validateCampaign, TERRAINS, INFRA, NODE_TYPES, UNIT_CLASSES, EMCONS, POSTURES,
@@ -137,7 +137,7 @@ function gmState() {
     webhooks: { gm: !!webhookCfg.gm, sides: Object.keys(webhookCfg.sides) },
     campaignName: campaign.truth.config.name,
     netNodesBySide: Object.fromEntries(sides.map(s => [s,
-      commandNodesOf(campaign.truth, s).filter(n => !n.theaterWide)
+      netNodesOf(campaign.truth, s).filter(n => !n.theaterWide)
         .map(n => ({ q: n.pos.q, r: n.pos.r, theaterId: n.pos.theaterId, radius: n.radius }))])),
     supplyHexesBySide: Object.fromEntries(sides.map(s => [s,
       Object.keys(campaign.truth.theaters).flatMap(th => supplyEnvelope(campaign.truth, s, th)
@@ -269,7 +269,7 @@ const server = createServer(async (req, res) => {
     if (path === '/api/rules') {
       // read-only game constants for the manual (numbers stay true to rules.ts)
       return json(res, 200, {
-        CLOCK, LADDER, RDY, SUPPLY, CAREER, FLAK, ATMO, RECON_TRICKS, COMBAT_DROP,
+        CLOCK, LADDER, RDY, SUPPLY, CAREER, FLAK, ATMO, RECON_TRICKS, COMBAT_DROP, NET,
         SKYWATCH: { TURNAROUND_PULSES: SKYWATCH.TURNAROUND_PULSES,
                     HOT_PIT_PULSES: SKYWATCH.HOT_PIT_PULSES,
                     SPHEROID_ATMO_HEX_PER_TICK: SKYWATCH.SPHEROID_ATMO_HEX_PER_TICK,
@@ -328,7 +328,7 @@ const server = createServer(async (req, res) => {
       const f = t.formations[b.formationId];
       if (!f || f.destroyed || f.pos.kind !== 'ground') return json(res, 200, { ok: false, reason: 'no such ground formation' });
       const here = f.pos as GroundPos;
-      const nodes = commandNodesOf(t, f.sideId)
+      const nodes = netNodesOf(t, f.sideId)
         .filter(n => !n.theaterWide && n.pos.theaterId === here.theaterId && n.id !== f.id);
       if (!nodes.length) return json(res, 200, { ok: false, reason: 'no command node to recall toward' });
       const hd = (a: GroundPos, c: GroundPos) => { const dq = a.q - c.q, dr = a.r - c.r; return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2; };

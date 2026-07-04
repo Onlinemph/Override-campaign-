@@ -48,6 +48,7 @@ export const SIG_MODS = {
   SPRINT: -2,
   JUMP_JETS: -2,
   FIRED_THIS_TURN: -3,    // artillery: automatic reveal of firing hex (core §9.2)
+  RELAYING: -1,           // D-048: a chained relay is a big radio — easier to DF
   HIDE: 2,
   // D-006 (GM ruling): cautious movement keeps Hide's concealment bonus while moving
   // at half pulse speed, and suppresses the MOVING −1.
@@ -146,6 +147,12 @@ export const NET = {
   COMM_SAT_THEATER_WIDE: true,
   RENET_PULSES: 1,              // per formation, after losing its node (D-008.2)
   ECM_NET_CUT_RADIUS: 0,        // D-008.1: hostile ECM cuts net in its own op-hex
+  // D-048: command relays. A relay (any formation with an HQ-tagged unit, or a
+  // facility tagged COMM_RELAY) is CHAINED when within the link range of a command
+  // node or another chained relay; a chained relay nets formations at the normal
+  // ground-node radius. Backbone hops are long (directional dishes); the local
+  // umbrella is not. Kill a mid-chain relay and everything downstream goes dark.
+  RELAY_LINK_HEXES: 24,
 } as const;
 
 // ── Contact ladder (core §6.4; spec §2.5/§4) ────────────────────────────────

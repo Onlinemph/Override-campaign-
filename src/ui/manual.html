@@ -50,9 +50,15 @@ Sharing a hex with the enemy is an automatic mutual LOCK.</p>
 
 <h2 id="net">The command net</h2>
 <p>Orders only reach formations <b>on the net</b> — within reach of a command node (your
-HQ, key facilities). Off-net units run on their standing orders and conditionals until
-someone physically reaches them; their reports come home when <i>they</i> do. Losing the
-HQ hurts more than losing a lance.</p>
+HQ, key facilities). The net <b>chains</b>: any Mobile HQ vehicle and any 📡 relay mast
+within <b data-rule="NET.RELAY_LINK_HEXES">24</b> hexes of a node (or another chained
+relay) extends the umbrella another
+<b data-rule="NET.GROUND_NODE_RADIUS">12</b> hexes — drive a relay truck forward and the
+net follows your advance. The chain is fragile on purpose: a relay that goes dark, gets
+jammed by ECM, or dies drops <i>everything downstream</i> off the net, and relaying
+makes you easier to spot. Off-net units run on their standing orders and conditionals
+until someone physically reaches them; their reports come home when <i>they</i> do.
+Losing the HQ hurts more than losing a lance.</p>
 
 <h2 id="ground">Ground operations</h2>
 <p>March speed is set by your slowest machine, from its real record sheet. Roads are

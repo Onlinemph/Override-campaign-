@@ -94,7 +94,8 @@
     (v.ownFacilities || []).forEach(fc => {
       markers.push({ q: fc.pos.q, r: fc.pos.r, kind: 'facility', side: v.sideId,
         label: fc.tags.includes('AIRSTRIP') ? 'A' : fc.tags.includes('SPACEPORT') ? 'P'
-             : fc.tags.includes('SENSOR_STATION') ? '⌖' : 'F',
+             : fc.tags.includes('SENSOR_STATION') ? '⌖'
+             : fc.tags.includes('COMM_RELAY') ? '📡' : 'F',
         title: `${fc.name}${fc.fuelFarmTons ? ' · farm ' + fc.fuelFarmTons.toFixed(1) + 't' : ''}` +
                `${fc.supplyPoints ? ' · ' + fc.supplyPoints + ' SP' : ''}` });
     });
@@ -190,7 +191,8 @@
       if (fc.pos.kind !== 'ground' || fc.pos.theaterId !== th.id) return;
       markers.push({ q: fc.pos.q, r: fc.pos.r, kind: 'facility', side: fc.sideId,
         label: fc.tags.includes('AIRSTRIP') ? 'A' : fc.tags.includes('SPACEPORT') ? 'P'
-             : fc.tags.includes('SENSOR_STATION') ? '⌖' : 'F',
+             : fc.tags.includes('SENSOR_STATION') ? '⌖'
+             : fc.tags.includes('COMM_RELAY') ? '📡' : 'F',
         title: `${fc.name} [${fc.sideId}]` });
     });
     Object.values(t.markers || {}).forEach(m => {
@@ -281,7 +283,8 @@
       const tags = fc.tags || [];
       markers.push({ q: fc.q, r: fc.r, kind: 'facility', side: sideOf(fc.sideId),
         label: tags.includes('AIRSTRIP') ? 'A' : tags.includes('SPACEPORT') ? 'P'
-          : tags.includes('SENSOR_STATION') ? '⌖' : 'F', title: `${fc.name} [${fc.sideId}]` });
+          : tags.includes('SENSOR_STATION') ? '⌖'
+          : tags.includes('COMM_RELAY') ? '📡' : 'F', title: `${fc.name} [${fc.sideId}]` });
     });
     return { cols: t.width, rows: t.height, hexes, markers };
   };

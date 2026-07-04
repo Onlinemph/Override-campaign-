@@ -96,7 +96,13 @@ Formations within net range of one of these are on-net (orders/reports flow live
 
 `sensorStation` makes it an early-warning radar; `activeSweep: true` runs it hot
 (detects more, but a picket on ACTIVE is itself loud). `turnaroundCrews` is the count
-of flights it can rearm/refuel at once.
+of flights it can rearm/refuel at once. A `COMM_RELAY` tag makes the facility a
+**relay mast** (D-048): chained back to a command node (≤ 24 hexes per hop, relays
+included), it nets formations at the normal 12-hex radius — the authored way to keep a
+distant garrison commandable, and an authored weak point for the enemy to cut.
+Formations relay too: any unit with an `HQ` tag (Mobile HQs derive it from the sheet)
+chains the same way while its formation is not EMCON DARK, not jammed, and not aboard
+a carrier.
 
 ## `satellites[]`
 

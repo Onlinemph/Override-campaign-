@@ -11,7 +11,7 @@
 import type { GroundPos, Id, Tick, TruthState } from '../core/types.js';
 import { DEEPSKY, LADDER_NAMES } from '../rules.js';
 import { isNight } from '../engine/clock.js';
-import { commandNodesOf } from '../engine/net.js';
+import { netNodesOf } from '../engine/net.js';
 import { supplyEnvelope } from '../engine/logistics.js';
 import { formationSensors } from '../engine/detection.js';
 import { groundHexUnder, isFlight, jokerBingo, minFp } from '../engine/air.js';
@@ -195,11 +195,13 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
                  corridor: s.corridor.map(c => ({ ...c })),
                  periodPulses: s.periodPulses, nextPassTick: s.nextPassTick,
                  alive: s.alive }));
-  // own command-net coverage, so the player can see where their forces stay on-net
-  const netNodes = commandNodesOf(truth, sideId)
+  // own command-net coverage — nodes AND chained relays (D-048) — so the player
+  // can see where their forces stay on-net, and which links carry the line
+  const netNodes = netNodesOf(truth, sideId)
     .filter(n => !n.theaterWide)
-    .map(n => ({ q: n.pos.q, r: n.pos.r, theaterId: n.pos.theaterId, radius: n.radius }));
-  const netTheaterWide = commandNodesOf(truth, sideId).some(n => n.theaterWide);
+    .map(n => ({ q: n.pos.q, r: n.pos.r, theaterId: n.pos.theaterId, radius: n.radius,
+                 ...(n.relay ? { relay: true } : {}) }));
+  const netTheaterWide = netNodesOf(truth, sideId).some(n => n.theaterWide);
   // own supply envelope per theater (where a stocked depot/convoy can reach)
   const supplyHexes = Object.keys(truth.theaters).flatMap(thId =>
     supplyEnvelope(truth, sideId, thId).map(k => {

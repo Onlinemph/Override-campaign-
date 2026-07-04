@@ -76,6 +76,33 @@ describe.skipIf(!has)('OPERATION RIVERWARD — the bridge war on a generated con
     expect(wiredSpans.some(w => w.q === span.q && w.r === span.r)).toBe(true);
   });
 
+  it('the Verdigris command line (D-048): masts chain every bridgehead onto the net — and cutting one drops the line', () => {
+    const c = Campaign.create(loadCampaignFixture(path));
+    c.step(); // netPass runs
+    // every bridge guard and demo team is commandable through the relay chain
+    for (const i of [0, 1, 2]) {
+      expect(c.truth.formations[`red-guard-${i}`].onNet).toBe(true);
+      expect(c.truth.formations[`red-sap-${i}`].onNet).toBe(true);
+    }
+    const r = c.issueOrder({ id: 'o-test', sideId: 'marik', formationId: 'red-guard-0',
+      kind: 'REST', issuedTick: c.truth.tick, effectiveTick: c.truth.tick + 1,
+      conditionals: [], path: [] });
+    expect(r.ok).toBe(true);
+
+    // cut the line: drop the mast the Argent guard nets through, and the whole
+    // bridgehead goes dark (orders bounce with the relay hint)
+    const mastId = c.truth.formations['red-guard-0'].netNodeId!;
+    expect(mastId).toMatch(/mast/);
+    delete c.truth.facilities[mastId]; // demolished (test surgery — no facility-kill event yet)
+    c.step();
+    expect(c.truth.formations['red-guard-0'].onNet).toBe(false);
+    const dark = c.issueOrder({ id: 'o-dark', sideId: 'marik', formationId: 'red-guard-0',
+      kind: 'REST', issuedTick: c.truth.tick, effectiveTick: c.truth.tick + 1,
+      conditionals: [], path: [] });
+    expect(dark.ok).toBe(false);
+    if (!dark.ok) expect(dark.reason).toMatch(/relay/);
+  });
+
   it('plays the crossing: the span blows in their face, the pioneers answer, battle at the bridgehead', () => {
     const c = Campaign.create(loadCampaignFixture(path));
     const span = contestedSpan(c.truth);

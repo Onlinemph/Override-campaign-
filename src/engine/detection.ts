@@ -15,7 +15,7 @@ import type { GameEvent } from '../core/events.js';
 import { rollDice, hashPick } from '../core/rng.js';
 import { AXIAL_DIRECTIONS, distanceToPath, hexDistance, hexLine } from '../hex/axial.js';
 import { isNight } from './clock.js';
-import { isFormationOnNet } from './net.js';
+import { isChainRelay, isFormationOnNet } from './net.js';
 
 // ── Searchers ────────────────────────────────────────────────────────────────
 
@@ -117,6 +117,8 @@ export function computeDetectionTN(
   // EMCON
   if (target.emcon === 'DARK') add('EMCON dark', SIG_MODS.EMCON_DARK);
   if (target.emcon === 'ACTIVE') add('EMCON active', SIG_MODS.EMCON_ACTIVE);
+  // D-048: a chained relay is a big radio — direction-finding loves it
+  if (isChainRelay(s, target)) add('relaying', SIG_MODS.RELAYING);
 
   // terrain
   if (hex) {

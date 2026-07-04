@@ -41,6 +41,10 @@ new bridges, new LZ — and every formation is still standing at the right kind 
   conditional opens the registered mission the moment a battle erupts within 20 hexes.
 - **The Po reserve company sits on the rail trunk**: 12 hexes/hour to either end of the
   line while everyone else walks.
+- **The Verdigris command line** (D-048): 📡 relay masts strung down the road net —
+  plus Riverwatch doubling as a relay — chain every bridgehead onto the capital's net,
+  so the Guard can actually re-order its guards. Every mast is a target: drop one and
+  everything downstream goes dark, running on standing orders and conditionals alone.
 - A hover screen patrols the far bank; two mech lances anchor the capital and the near
   town; a hidden observation post overlooks the invaders' likely staging ground.
 
@@ -64,6 +68,10 @@ bridge, or not at all. Your tools:
    BUILD_BRIDGE from the shore (4 pulses). The span goes exactly where you click.
 3. **Ignore the bridges** — hovers and VTOLs screen across the water while the mechs
    pin a bridgehead; or land the DropShips themselves on the far bank (flak permitting).
+4. **Cut the command line** — the 📡 mast chain is how the Guard re-orders its
+   bridgeheads. Drop a mast (or park ECM on it) and everything downstream goes dark:
+   the demo teams are alone with their standing orders, and the reserve never gets the
+   call. Relays radiate (SIG −1) — direction-finding the line is a recon mission.
 
 ## What this campaign showcases
 
@@ -74,6 +82,7 @@ bridge, or not at all. Your tools:
 | Engineer toolkit as player orders (D-045) | DEMOLISH / BUILD_BRIDGE from the picker |
 | Demolition from the bank | demo teams beside their spans, charges on a click |
 | Conditionals off-net (D-046) | the wired spans fire without a command net |
+| Command relays (D-048) | the mast line to the bridges — hold it, jam it, or cut it |
 | Movement to contact (D-046) | columns check their stride at the outpost line |
 | Artillery FIRE missions (D-045) | the registered battery behind Kingsbridge |
 | Rail operational movement (D-037) | the Po reserve riding the trunk |

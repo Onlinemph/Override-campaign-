@@ -201,7 +201,8 @@ export class Campaign {
       return { ok: false, reason: 'formation is routed and uncommandable (core 3.2/7.4)' };
     }
     if (!isFormationOnNet(this.truth, f)) {
-      return { ok: false, reason: 'formation is off-net: order undeliverable (core 4.2)' };
+      return { ok: false, reason: 'formation is off-net: order undeliverable (core 4.2) — '
+        + 'extend the net with a relay (a Mobile HQ pushed forward, or a COMM_RELAY mast)' };
     }
     const stamped: Order = { ...order, issuedTick: this.truth.tick,
                              effectiveTick: this.truth.tick + 1 };

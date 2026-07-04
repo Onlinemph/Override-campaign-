@@ -205,10 +205,25 @@ Orders only reach formations **on the net**: within reach of a command node — 
 formation (radius 12), a grounded DropShip or fixed base (radius 24), facilities as
 authored, any comm satellite (theater-wide). Hostile ECM cuts the net in its own hex.
 
+**The net chains** (D-048): any formation with an HQ-tagged unit (a Mobile HQ, a
+command console — derived from the record sheet) and any facility tagged `COMM_RELAY`
+is a **relay**. A relay is *chained* when it sits within 24 hexes
+(`NET.RELAY_LINK_HEXES`) of a command node or another chained relay, and a chained
+relay nets formations at the normal 12-hex radius. Backbone hops are long; the local
+umbrella is not. So: drive a relay truck behind your advance and the net follows;
+string masts down a road and a distant garrison stays commandable. The chain is
+recomputed from live positions every step and it is fragile **on purpose**:
+
+- a relay that goes **EMCON DARK** relays nothing (the radio is off);
+- hostile **ECM** parked on a relay cuts it out of the chain without firing a shot;
+- a **dead** relay drops *everything chained downstream* off the net at once;
+- a chained relay is a big radio — **SIG −1** (`relaying`), direction-finding loves it.
+
 Off-net formations are on their own: they run their standing order and their
 **conditionals** (which is why you plot them). They cannot receive new orders until
 they're reached — physically. The GM has a "send a runner" recall action for stranded
-units. Losing your HQ hurts more than losing a lance.
+units (couriers route to the nearest net entry, relays included). Losing your HQ hurts
+more than losing a lance; losing a mid-chain relay can hurt more than either.
 
 **Conditionals** ride on any order and fire even off-net:
 

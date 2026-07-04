@@ -40,7 +40,7 @@ export type TerrainType =
   'CLEAR' | 'WOODS' | 'ROUGH' | 'HILLS' | 'MOUNTAIN' | 'WATER' | 'SWAMP' | 'URBAN';
 export type InfraTag =
   'ROAD' | 'RAIL' | 'BRIDGE' | 'TOWN' | 'CITY' | 'FORT' | 'SPACEPORT' | 'FACTORY'
-  | 'HPG' | 'DEPOT' | 'SENSOR_STATION' | 'AIRSTRIP';
+  | 'HPG' | 'DEPOT' | 'SENSOR_STATION' | 'AIRSTRIP' | 'COMM_RELAY';
 export interface Hex {
   theaterId: Id; q: number; r: number; terrain: TerrainType;
   infra: InfraTag[];
