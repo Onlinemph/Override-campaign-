@@ -131,6 +131,12 @@ export const MOVEMENT = {
   DROPSHIP_ATMO_OMP_MULT: 8,
   RAIL_OMP: 12,
   SUPPORT_OMP: 2,               // towed artillery / trucks / MASH; road-bound (×2 off-road)
+  // D-046: movement to contact — inside this radius of a REAL enemy formation, a
+  // fast-forwarded column moves ONE hex per step, so the detection & trigger passes
+  // are awake between strides — no more marching 12 hexes through an outpost line
+  // and into an enemy hex in one atomic bound. Exempt: CONTACT mode (already the
+  // deliberate pace) and MOVE_CAUTIOUS (the stealth pace — half speed, scouts out).
+  HALT_AT_ENEMY_HEXES: 2,
 } as const;
 
 // ── Command nets (core §4.2) ────────────────────────────────────────────────

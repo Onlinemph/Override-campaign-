@@ -7,8 +7,10 @@
  *
  *   elevation  — ridgeline mountain RANGES (walls to every vehicle) with carved PASSES
  *   ocean      — a coastal sea along chosen edges; low ground drowns
- *   rivers     — walk downhill from the ridges to the sea; WATER lines a column can
- *                cross only where a road BRIDGES them (and engineers can drop bridges)
+ *   rivers     — a GREAT RIVER crosses the whole continent from the far edge to the
+ *                sea (the map has two banks), fed by lesser streams off the ridges;
+ *                WATER lines a column can cross only where a road BRIDGES them
+ *                (and engineers can drop or build bridges)
  *   forests    — biome-scale woods, not speckle
  *   cities     — an URBAN-cluster capital and satellite towns, sited near water & flat
  *   the network— roads pathfound between settlements over the real terrain costs, so
@@ -122,6 +124,55 @@ export function generateContinent(params: ContinentParams): GenOverride[] {
         const nq = at[0] + dq, nr = at[1] + dr;
         if (!inb(nq, nr) || hexDist(at[0], at[1], nq, nr) > 1) continue;
         if (terrain[idx(nq, nr)] === 'MOUNTAIN') terrain[idx(nq, nr)] = 'ROUGH';
+      }
+    }
+  }
+
+  // ── 4a. the great river (D-044): one master stream, far edge to the sea ──
+  // Real continents drain through a trunk river; operationally it cuts the map
+  // into BANKS, and wherever the road net crosses it, a bridge — the chokepoints
+  // the whole continent argues over. It cuts canyons straight through mountains,
+  // and its lower reaches run wide.
+  {
+    const edge = coastEdges[0]!;
+    const toward: [number, number] = edge === 'E' ? [1, 0] : edge === 'W' ? [-1, 0]
+      : edge === 'S' ? [0, 1] : [0, -1];
+    // spring on the opposite edge (walk inland past any far-shore ocean)
+    const t = 0.25 + rng() * 0.5;
+    let q = edge === 'E' ? 0 : edge === 'W' ? w - 1 : Math.floor(w * t);
+    let r = edge === 'S' ? 0 : edge === 'N' ? h - 1 : Math.floor(h * t);
+    let guard = Math.max(w, h);
+    while (inb(q, r) && terrain[idx(q, r)] === 'WATER' && guard-- > 0) {
+      q += toward[0]; r += toward[1];
+    }
+    const visited = new Set<string>();
+    const course: Array<[number, number]> = [];
+    for (let step = 0; step < (w + h) * 2; step++) {
+      if (!inb(q, r)) break;
+      if (terrain[idx(q, r)] === 'WATER') break; // reached the sea
+      visited.add(key(q, r));
+      terrain[idx(q, r)] = 'WATER'; // canyon through anything, mountains included
+      course.push([q, r]);
+      // lowest unvisited neighbor, nudged toward the coast so it always arrives
+      let best: [number, number] | null = null, bestE = Infinity;
+      for (const d of DIRS) {
+        const nq = q + d[0], nr = r + d[1];
+        if (!inb(nq, nr) || visited.has(key(nq, nr))) continue;
+        const drift = (d[0] * toward[0] + d[1] * toward[1]) > 0 ? -0.55 : 0.25;
+        const e = elev[idx(nq, nr)]! + drift + (rng() - 0.5) * 0.2;
+        if (e < bestE) { bestE = e; best = [nq, nr]; }
+      }
+      if (!best) break;
+      [q, r] = best;
+    }
+    // the lower half runs wide — a second hex of water alongside
+    for (let i = Math.floor(course.length / 2); i < course.length; i++) {
+      const [bq, br] = course[i]!;
+      for (const d of DIRS) {
+        const nq = bq + d[0], nr = br + d[1];
+        if (inb(nq, nr) && terrain[idx(nq, nr)] !== 'MOUNTAIN' && rng() < 0.4) {
+          terrain[idx(nq, nr)] = 'WATER';
+        }
       }
     }
   }
@@ -282,6 +333,19 @@ export function generateContinent(params: ContinentParams): GenOverride[] {
       if (i === 1) railPaths.push(path); // the trunk line: capital ↔ first city
     }
     connected.push(from);
+  }
+  // spokes (D-044): every town also roads to the capital. Reusing existing road
+  // is nearly free, so nearby spokes merge into trunks — but towns across the
+  // great river force NEW crossings, and the net ends up with several bridges
+  // instead of one. Redundant crossings are what make a bridge worth fighting for.
+  for (let i = 1; i < sites.length; i++) {
+    const path = findPath(sites[i]!, sites[0]!);
+    if (!path) continue;
+    for (const [q, r] of path) {
+      tag(q, r, 'ROAD');
+      roads.add(key(q, r));
+      if (terrain[idx(q, r)] === 'WATER') tag(q, r, 'BRIDGE');
+    }
   }
   for (const path of railPaths) for (const [q, r] of path) tag(q, r, 'RAIL');
 

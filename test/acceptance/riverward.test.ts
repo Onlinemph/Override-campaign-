@@ -1,0 +1,146 @@
+/**
+ * Acceptance — OPERATION RIVERWARD (demo/riverward.json): the continent-generator
+ * showcase. The campaign was BUILT by reading generated geography (D-041/D-044) —
+ * the capital, the great river, the bridges the road net laid — and the opening
+ * act is the bridge war itself: the assault marches on the capital, the recon
+ * satellite tips off the defenders, the hidden demo team drops the span in the
+ * column's face (D-045: demolition from the bank, by an off-net conditional —
+ * D-046 trigger semantics), the pioneers bridge the gap, and the crossing ends
+ * frozen in a battle at the held bridgehead. Byte-exact replay.
+ */
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { Campaign, replay } from '../../src/core/truth.js';
+import { loadCampaignFixture } from '../../src/demo.js';
+import { validateCampaign } from '../../src/campaign/schema.js';
+import { findRoute } from '../../src/engine/route.js';
+import { stallReason } from '../../src/engine/stall.js';
+import { isLibraryAvailable } from '../../src/roster/library.js';
+import { hexKey } from '../../src/core/types.js';
+import { readFileSync } from 'node:fs';
+import type { GroundPos, TruthState } from '../../src/core/types.js';
+
+const path = join(__dirname, '../../demo/riverward.json');
+const has = isLibraryAvailable();
+
+const T = 'cascara';
+const CAPITAL = { q: 9, r: 9 }; // seed RIVERWARD-9 (printed by make-riverward.mjs)
+const gp = (p: { q: number; r: number }): GroundPos =>
+  ({ kind: 'ground', theaterId: T, q: p.q, r: p.r });
+const hexAt = (t: TruthState, p: { q: number; r: number }) =>
+  t.theaters[T].hexes[hexKey(p.q, p.r)];
+
+/** The first great-river span on the assault's route to the capital. */
+function contestedSpan(t: TruthState): GroundPos {
+  const route = findRoute(t, t.formations['blue-assault'], gp(CAPITAL));
+  expect(route).toBeTruthy();
+  const span = route!.path.find(p => {
+    const h = hexAt(t, p);
+    return h?.terrain === 'WATER' && h.infra.includes('BRIDGE');
+  });
+  expect(span).toBeTruthy(); // the river divides: no bridge, no capital
+  return gp(span!);
+}
+
+describe.skipIf(!has)('OPERATION RIVERWARD — the bridge war on a generated continent', () => {
+  it('validates clean; the found geography and the toolkit are all real', () => {
+    const json = JSON.parse(readFileSync(path, 'utf8'));
+    expect(validateCampaign(json)).toEqual([]);
+    const t = loadCampaignFixture(path);
+
+    // derivations: the bridgelayer is an engineer, the hover cavalry hovers,
+    // the scout helicopters fly, the listening post has HQ ears
+    const tagsOf = (name: string) =>
+      Object.values(t.units).find(u => u.name === name)?.tags ?? [];
+    expect(tagsOf('Pioneer 1')).toContain('ENGINEER');
+    expect(tagsOf('Kelpie 1')).toContain('HOVER');
+    expect(Object.values(t.units).find(u => u.name === 'Merlin 1')?.class).toBe('VTOL');
+    expect(tagsOf('Argent Span Post')).toContain('HQ');
+
+    // every demo team stands watch at its bridgehead, charges wired on a real span
+    for (const i of [0, 1, 2]) {
+      const o = t.orders[`o-sap-${i}`];
+      expect(o.kind).toBe('PATROL'); // the standing order that keeps conditionals armed
+      expect(o.conditionals[0].trigger.when).toBe('CONTACT_WITHIN');
+      const then = o.conditionals[0].thenOrder;
+      expect(then.kind).toBe('DEMOLISH');
+      const wired = hexAt(t, then.targetHex as GroundPos);
+      expect(wired.terrain).toBe('WATER');
+      expect(wired.infra).toContain('BRIDGE');
+    }
+
+    // the route to the capital crosses the great river on a wired span
+    const span = contestedSpan(t);
+    const wiredSpans = [0, 1, 2].map(i =>
+      t.orders[`o-sap-${i}`].conditionals[0].thenOrder.targetHex as GroundPos);
+    expect(wiredSpans.some(w => w.q === span.q && w.r === span.r)).toBe(true);
+  });
+
+  it('plays the crossing: the span blows in their face, the pioneers answer, battle at the bridgehead', () => {
+    const c = Campaign.create(loadCampaignFixture(path));
+    const span = contestedSpan(c.truth);
+    const spanInfra = () => hexAt(c.truth, span).infra;
+    const posOf = (id: string) => c.truth.formations[id].pos as GroundPos;
+
+    // Act I — the assault lance marches on the capital along the route the engine
+    // itself plots (over the span). The recon satellite samples the road; the
+    // guard's listening post picks the column up on the approach; the demo team's
+    // conditional drops the span BEFORE the column reaches it.
+    const route = findRoute(c.truth, c.truth.formations['blue-assault'], gp(CAPITAL))!;
+    c.inject({ type: 'ORDER_ISSUED', order: { id: 'o-march', sideId: 'skye',
+      formationId: 'blue-assault', issuedTick: 0, effectiveTick: 1, kind: 'MOVE',
+      path: route.path.map(p => gp(p)), conditionals: [] } });
+
+    let steps = 0;
+    while (spanInfra().includes('BRIDGE')) {
+      expect(c.truth.pendingEngagementId, 'collided before the sappers fired').toBeFalsy();
+      c.step();
+      if (++steps > 2500) throw new Error('the demo team never fired');
+    }
+    // still on the wrong bank, and the order explains why it is stuck
+    const stallAt = posOf('blue-assault');
+    expect(stallAt.q === span.q && stallAt.r === span.r).toBe(false);
+    expect(stallReason(c.truth, c.truth.formations['blue-assault'])).toMatch(/impassable/);
+
+    // Act II — the pioneers march to the assault's bank and span the gap from it
+    // (D-045: BUILD_BRIDGE with an adjacent targetHex — open water they could
+    // never drive into)
+    const bank = { q: stallAt.q, r: stallAt.r };
+    const engRoute = findRoute(c.truth, c.truth.formations['blue-eng'], gp(bank))!;
+    let t0 = c.truth.tick;
+    c.inject({ type: 'ORDER_ISSUED', order: { id: 'o-pioneers', sideId: 'skye',
+      formationId: 'blue-eng', issuedTick: t0, effectiveTick: t0 + 1, kind: 'MOVE',
+      path: engRoute.path.map(p => gp(p)), conditionals: [] } });
+    steps = 0;
+    while (posOf('blue-eng').q !== bank.q || posOf('blue-eng').r !== bank.r) {
+      c.step();
+      if (++steps > 2500) throw new Error('pioneers never reached the bank');
+    }
+    t0 = c.truth.tick;
+    c.inject({ type: 'ORDER_ISSUED', order: { id: 'o-span', sideId: 'skye',
+      formationId: 'blue-eng', issuedTick: t0, effectiveTick: t0 + 1,
+      kind: 'BUILD_BRIDGE', targetHex: span, conditionals: [] } });
+    steps = 0;
+    while (!spanInfra().includes('BRIDGE')) {
+      c.step();
+      if (++steps > 600) throw new Error('the new span never went in');
+    }
+
+    // Act III — the standing MOVE resumes over the new span; the crossing ends
+    // frozen in an engagement at the held bridgehead (that battle is for the table)
+    steps = 0;
+    while (!c.truth.pendingEngagementId) {
+      c.step();
+      if (++steps > 800) throw new Error('the assault never crossed');
+    }
+    const battle = c.truth.engagements[c.truth.pendingEngagementId!];
+    // the fight is at the bridgehead: the hex the guard formation holds, one hex
+    // across the water from where the column stalled
+    const guardHexes = [0, 1, 2].map(i => posOf(`red-guard-${i}`));
+    expect(guardHexes.some(g =>
+      g.q === (battle.hex as GroundPos).q && g.r === (battle.hex as GroundPos).r)).toBe(true);
+
+    // the whole crossing, byte-exact from the log
+    expect(replay(c.store.all())).toEqual(c.truth);
+  }, 120_000);
+});

@@ -230,6 +230,22 @@ export function movementPass(
     let forcedPulses = 0;
     let hi = 0;
 
+    // D-046: movement to contact — real enemy positions in this theater. Inside
+    // the halt radius a fast-forwarded column moves ONE hex per step: every stride
+    // near the enemy line gets a detection/trigger pass before the next, so no one
+    // bounds through an outpost line into an occupied hex unseen. Two paces are
+    // exempt because they already ARE deliberate: CONTACT mode (the engine's own
+    // careful clock) and MOVE_CAUTIOUS (half speed, scouts out — the stealth pace
+    // that slips past positions without the stutter).
+    const contactScale0 = s.clockMode === 'CONTACT';
+    const wary = !contactScale0 && order.kind !== 'MOVE_CAUTIOUS';
+    const enemyPosts: GroundPos[] = !wary ? [] : Object.values(s.formations)
+      .filter(o => !o.destroyed && !o.mounted && o.sideId !== f.sideId
+        && o.pos.kind === 'ground' && o.pos.theaterId === cur0.theaterId)
+      .map(o => o.pos as GroundPos);
+    const nearEnemy = (p: GroundPos): boolean =>
+      enemyPosts.some(e => hexDistance(p, e) <= MOVEMENT.HALT_AT_ENEMY_HEXES);
+
     while (hi < hops.length && avail > 1e-9) {
       const cur = f.pos as GroundPos;
       const next: GroundPos = { ...cur, q: hops[hi].q, r: hops[hi].r };
@@ -237,6 +253,8 @@ export function movementPass(
       // SHADOW never enters the standoff ring — stop one step short of the contact
       if (isShadow && shadowTarget &&
           hexDistance(next, shadowTarget) < RECON_TRICKS.SHADOW_STANDOFF_HEXES) break;
+
+      const haltAfterThisHex = wary && nearEnemy(next);
 
       const hex = getHex(s, next);
       if (!hex) break;
@@ -272,6 +290,7 @@ export function movementPass(
         progress = 0;
         if (hops[hi].wpIndex >= 0) pathIndex = hops[hi].wpIndex + 1; // reached a waypoint
         hi++;
+        if (haltAfterThisHex) break; // D-046: halted at the enemy's outposts
       } else {
         progress += avail / hexCost;
         if (order.kind === 'FORCED_MARCH' && !contactScale) forcedPulses += avail;

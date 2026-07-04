@@ -95,6 +95,15 @@ mechs, minefields, artillery, decoys, and a fighter wing. The walkthrough doc is
 complete first game night. And every player screen carries a **📖 War diary** —
 the campaign as that side lived it, day by day, fog intact.
 
+**Or fight the river**: **[OPERATION RIVERWARD](docs/OPERATION_RIVERWARD.md)** —
+`npm run dev -- demo/riverward.json` — a 3068 river-line defense on a **generated
+120×80 continent** where nothing was hand-placed: the scenario script generated the
+map, then *read* it — the capital, the great river, the three bridges the road net
+actually built — and stationed both armies at what it found. Demo teams stand watch at
+wired spans (a conditional drops the bridge when a contact closes), hover cavalry
+crosses where no bridge is, bridgelayers answer demolitions, and a recon satellite
+sweeps the river corridor. Change the seed and the war moves house.
+
 **The UI explains itself.** The order form only offers what the selected formation can
 actually do (a "show all" box lifts the filter), each order kind carries a one-line
 description, and any order that's *waiting* on something says why in words — "no stocked

@@ -43,6 +43,26 @@ describe('M2 — trigger evaluation', () => {
     expect(evalTrigger(truth, f.id, 'blue', { when: 'CONTACT_WITHIN', param: 3 })).toBe(false);
   });
 
+  it('CONTACT_WITHIN sees with its own eyes: the live track wins over a stale ' +
+     'delivered fix when the contact is inside the formation\'s sensor reach (D-046)', () => {
+    const truth = baseTruth();
+    const f = addMechFormation(truth, { id: 'f', sideId: 'blue', pos: gp(5, 5) });
+    // the net's last delivered picture puts the enemy far away; the LIVE track
+    // (someone's sensors, right now) has it two hexes from this formation
+    truth.contacts['c'] = {
+      id: 'c', observerSideId: 'blue', targetFormationId: 'x', kind: 'STANDARD',
+      level: 2, lastConfirmedTick: 0, lastFadeTick: 0,
+      estPos: gp(7, 5), posErrorHexes: 0, staleAsOfTick: 0,
+      delivered: { level: 2, estPos: gp(20, 5), posErrorHexes: 0, asOfTick: 0 },
+    };
+    // live at dist 2 ≤ own passive reach ⇒ the formation reacts to what it can see
+    expect(evalTrigger(truth, f.id, 'blue', { when: 'CONTACT_WITHIN', param: 2 })).toBe(true);
+    // but a live track BEYOND its own sensors stays invisible: only the delivered
+    // (stale, far) picture reaches it — no trigger
+    truth.contacts['c'].estPos = gp(12, 5); // dist 7 > passive
+    expect(evalTrigger(truth, f.id, 'blue', { when: 'CONTACT_WITHIN', param: 4 })).toBe(false);
+  });
+
   it('DETECTED_SELF: an enemy holds the given ladder level on this formation', () => {
     const truth = baseTruth();
     const f = addMechFormation(truth, { id: 'f', sideId: 'blue', pos: gp(5, 5) });

@@ -464,6 +464,11 @@ const ORDER_META = [
   ['DIG_IN',        'entrench (takes time; moving undoes it)', ['ground']],
   ['REST',          'recover readiness in place', ['ground']],
   ['REARM',         'draw ammo from a depot/factory/convoy in this hex', ['ground']],
+  ['FIRE',          'artillery mission: shell the last map click (or a contact) every turn — firing reveals your battery', ['arty']],
+  ['LAY_MINES',     'sow a hidden minefield in this hex (1 pulse)', ['engineer']],
+  ['BREACH',        'clear the mines in this hex (2 pulses)', ['engineer']],
+  ['DEMOLISH',      'blow a bridge or rail in or beside this hex (click it) — instant, and very loud', ['engineer']],
+  ['BUILD_BRIDGE',  'span a river hex in or beside this one — click it (4 pulses)', ['engineer']],
   ['REPAIR',        'queue damaged units into the shop here (or the carrier bay)', ['ground', 'embarked']],
   ['EMBARK',        'march to a friendly DropShip and load into a bay', ['ground']],
   ['DISEMBARK',     'step off the landed DropShip', ['embarked']],
@@ -479,6 +484,7 @@ const ORDER_META = [
   ['DESCEND',       're-enter from orbit — arrives in the sky directly over your last map click', ['vessel']],
 ];
 
+const ARTY_TAGS = ['ARROW_IV', 'SNIPER', 'THUMPER', 'LONG_TOM'];
 function formationDomains(f) {
   const d = [];
   if (f.mountedOn) d.push('embarked');
@@ -487,7 +493,12 @@ function formationDomains(f) {
     if (f.vessel) d.push('vessel');
     else if (f.carrier) d.push('carrier');
     else if (f.flight) d.push('flight');
-    else d.push('ground');
+    else {
+      d.push('ground');
+      const units = f.units || [];
+      if (units.some(u => (u.tags || []).some(t => ARTY_TAGS.includes(t)))) d.push('arty');
+      if (units.some(u => (u.tags || []).includes('ENGINEER'))) d.push('engineer');
+    }
   }
   return d;
 }
@@ -533,7 +544,7 @@ async function sendOrder() {
     let ok = 0, fail = [];
     for (const fid of group) {
       const b = { formationId: fid, kind, path };
-      if (['LAND', 'DISEMBARK', 'DESCEND'].includes(kind) && path.length) {
+      if (['LAND', 'DISEMBARK', 'DESCEND', 'FIRE', 'DEMOLISH', 'BUILD_BRIDGE'].includes(kind) && path.length) {
         b.targetHex = path[path.length - 1];
         b.path = [];
       }
@@ -563,7 +574,9 @@ async function sendOrder() {
   // carrier ops: EMBARK names its ship; LAND/DISEMBARK/DESCEND take the last plotted
   // hex (DESCEND: you arrive in the sky directly over it — the spheroid doctrine)
   if (kind === 'EMBARK') body.targetFormationId = document.getElementById('o-carrier').value;
-  if (['LAND', 'DISEMBARK', 'DESCEND'].includes(kind) && path.length) {
+  // FIRE aims at the last plotted click; DEMOLISH/BUILD_BRIDGE name their work
+  // site the same way (it must be in or beside the sappers' hex)
+  if (['LAND', 'DISEMBARK', 'DESCEND', 'FIRE', 'DEMOLISH', 'BUILD_BRIDGE'].includes(kind) && path.length) {
     body.targetHex = path[path.length - 1];
     body.path = [];
   }

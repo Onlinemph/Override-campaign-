@@ -6,6 +6,14 @@
  *   DEMOLISH     — blow a BRIDGE/RAIL tag (instant, loud: SIG −3 that turn)
  *   BUILD_BRIDGE — lay a BRIDGE tag (4 pulses)
  *
+ * D-045: sappers work from the bank. DEMOLISH and BUILD_BRIDGE take an optional
+ * targetHex; when it names an ADJACENT hex the work happens there — a ground
+ * engineer can span open water it could never drive into, and a demo team can
+ * drop a span without standing on it when it goes. A target farther than one hex
+ * simply stalls the order (stall.ts says why). No targetHex ⇒ the engineer's own
+ * hex, as before. LAY_MINES and BREACH stay own-hex: you sow or sweep ground you
+ * physically hold.
+ *
  * And the payoff: an enemy that moves into a mined hex takes a Quick-Resolution hit
  * (core §9.3, BR 3) — the minefield is revealed when it bites. Only ENGINEER-tagged
  * formations can run the toolkit.
@@ -15,6 +23,7 @@ import type { DamageState, Formation, GroundPos, Id, TruthState } from '../core/
 import { hexKey } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
 import { rollDice } from '../core/rng.js';
+import { hexDistance } from '../hex/axial.js';
 
 const DAMAGE_STEPS: DamageState[] = ['OK', 'DAMAGED', 'CRIPPLED', 'DESTROYED'];
 function worsen(cur: DamageState, n: number): DamageState {
@@ -71,14 +80,26 @@ export function engineeringPass(s: TruthState, dt: number, emit: (e: GameEvent) 
     const hex = s.theaters[here.theaterId]?.hexes[hexKey(here.q, here.r)];
     if (!hex) continue;
 
+    // D-045: DEMOLISH/BUILD_BRIDGE may name an adjacent work site; too far ⇒ stall
+    let work = here;
+    if (order.kind === 'DEMOLISH' || order.kind === 'BUILD_BRIDGE') {
+      const t = order.targetHex;
+      if (t?.kind === 'ground' && (t.q !== here.q || t.r !== here.r)) {
+        if (t.theaterId !== here.theaterId || hexDistance(here, t) > 1) continue;
+        work = t;
+      }
+    }
+    const workHex = s.theaters[work.theaterId]?.hexes[hexKey(work.q, work.r)];
+    if (!workHex) continue;
+
     if (order.kind === 'DEMOLISH') {
       // instant & loud: strip BRIDGE/RAIL, flag the engineer as having made noise
-      const next = hex.infra.filter(t => t !== 'BRIDGE' && t !== 'RAIL');
-      if (next.length !== hex.infra.length) {
-        emit({ type: 'HEX_INFRA_CHANGED', theaterId: here.theaterId,
-          hexKey: hexKey(here.q, here.r), infra: next });
+      const next = workHex.infra.filter(t => t !== 'BRIDGE' && t !== 'RAIL');
+      if (next.length !== workHex.infra.length) {
+        emit({ type: 'HEX_INFRA_CHANGED', theaterId: work.theaterId,
+          hexKey: hexKey(work.q, work.r), infra: next });
         emit({ type: 'FORMATION_FIRED', formationId: f.id, tick: s.tick }); // SIG −3, loud
-        emit({ type: 'GM_NOTE', tick: s.tick, text: `${f.name} demolished a span at ${here.q},${here.r}` });
+        emit({ type: 'GM_NOTE', tick: s.tick, text: `${f.name} demolished a span at ${work.q},${work.r}` });
       }
       emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
       continue;
@@ -97,8 +118,9 @@ export function engineeringPass(s: TruthState, dt: number, emit: (e: GameEvent) 
       } else if (order.kind === 'BREACH') {
         for (const mineId of [...hex.minefieldIds]) emit({ type: 'MARKER_REMOVED', markerId: mineId });
       } else { // BUILD_BRIDGE
-        if (!hex.infra.includes('BRIDGE')) emit({ type: 'HEX_INFRA_CHANGED',
-          theaterId: here.theaterId, hexKey: hexKey(here.q, here.r), infra: [...hex.infra, 'BRIDGE'] });
+        if (!workHex.infra.includes('BRIDGE')) emit({ type: 'HEX_INFRA_CHANGED',
+          theaterId: work.theaterId, hexKey: hexKey(work.q, work.r),
+          infra: [...workHex.infra, 'BRIDGE'] });
       }
       emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
       emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id, patch: { engPulseAcc: 0 } });

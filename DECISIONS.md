@@ -1044,3 +1044,84 @@ which is what a planetary radar site should do.
    picker description sells descend-on-target; the field manual's ground section learned
    rail, bridges, auto-route, and click-to-command; CAMPAIGN_FORMAT documents
    airHexByTheater as the air-region ORIGIN (D-037), not "the hex over the theater".
+
+## D-044 ✅ The great river + spoke roads: every continent gets banks worth fighting over
+1. **The great river**: generateContinent now runs one master stream from the far map
+   edge to the coastal sea — lowest-neighbor descent nudged coastward, canyoning
+   straight through mountain ranges, widening across its lower half. Because it runs
+   edge-to-sea, it topologically DIVIDES the continent into banks: a seed scan before
+   this (24 seeds at 120×80) found ZERO maps where water separated any two settlements;
+   after, most seeds divide 1–3 towns from the capital and the road net's bridges are
+   the only ground crossings. Lesser ridge-fed rivers now read as tributaries.
+2. **Spoke roads**: after the nearest-peer MST, every town also pathfinds a road to the
+   capital. Reusing existing road is nearly free so nearby spokes merge into trunks —
+   but towns across the great river force NEW crossings. Bridge count per continent
+   went from 0–2 to a reliable 1–3 CROSSING SITES, which is what makes any one of them
+   worth demolishing, garrisoning, or taking by coup de main.
+
+## D-045 ✅ The engineer's war: FIRE and the toolkit become real orders
+1. **Exposure**: FIRE / LAY_MINES / BREACH / DEMOLISH / BUILD_BRIDGE joined schema
+   GROUND_ORDERS (campaign authors can plot them) and the player picker's ORDER_META —
+   gated by new formation domains: `arty` (any unit with an artillery tag) and
+   `engineer` (ENGINEER tag). A line lance sees neither; the engine had run these
+   passes for ages, but no player could reach them without hand-crafting JSON.
+2. **Sappers work from the bank**: DEMOLISH and BUILD_BRIDGE take an optional targetHex;
+   when it names an ADJACENT hex the work happens there. Without this, BUILD_BRIDGE was
+   unusable for its whole purpose — a ground engineer cannot drive into the open water
+   it needs to span — and a demo team had to stand ON the bridge it was about to drop.
+   A target farther than one hex stalls (stall.ts explains); LAY_MINES/BREACH remain
+   own-hex (you sow or sweep ground you hold). The player UI sends the last map click
+   as the work site; conditional then-orders carry targetHex through the loader and the
+   order API (a wired demolition charge is a conditional's whole career).
+3. **Batteries got their range back**: batteryRange reads LONG_TOM/SNIPER/THUMPER/
+   ARROW_IV unit tags — which NOTHING derived. An authored Mobile Long Tom had range 0
+   and its FIRE missions silently did nothing (DAGGERPOINT's included, since forever).
+   extractTags now reads the artillery pieces off the record sheet (matched against
+   weapon names, so "Beast Infantry (Sniper)" riflemen don't become an artillery
+   battalion). FIRE also earned stall reasons mirroring firesPass's silent continues:
+   no tubes / magazines dry / no target / out of range (with the numbers).
+
+## D-046 ✅ Movement to contact & eyes of your own: the fast-forward blunder pack
+Building the RIVERWARD acceptance test surfaced two engine holes an autopaced campaign
+falls into the moment defended ground matters:
+1. **Movement to contact** (MOVEMENT.HALT_AT_ENEMY_HEXES = 2): a fast-forwarded column
+   used to cross 12 hexes in one WATCH step and land INSIDE an enemy-held hex — through
+   the outpost line, past every sensor, straight into a meeting engagement no one saw
+   coming. Now, within 2 hexes of a REAL enemy formation, fast-forward movement takes
+   ONE hex per step, so the detection and trigger passes are awake between strides.
+   Exempt: CONTACT mode (already the deliberate pace) and MOVE_CAUTIOUS (the stealth
+   pace — half speed, scouts out, and the M1 hidden battalion still makes its lay-up
+   hex before dawn).
+2. **Conditionals see with their own eyes**: CONTACT_WITHIN measured against the
+   DELIVERED (net) contact estimate — so an off-net bridge guard whose listening post
+   was staring at a mech lance one hex away never fired its wired charges, because the
+   only delivered fix was a satellite pass from hours earlier, forty hexes east. The
+   trigger now uses the live track when the contact sits inside the formation's OWN
+   sensor reach (spec §3.3's "conditionals keep running off-net" finally means it),
+   and the stale delivered picture otherwise.
+Also learned, the hard way: conditionals die with their order, and HIDE completes
+INSTANTLY — a "hidden demo team" authored on HIDE stands there with dead charges.
+PATROL-in-place (a one-waypoint patrol of its own hex) is the standing order that
+keeps a stationary formation's conditionals armed; RIVERWARD's sappers and its
+registered-fires battery both use it.
+
+## D-047 ✅ Showcase: Operation RIVERWARD — the bridge war on a generated continent
+demo/riverward.json (scripts/make-riverward.mjs): a 3068 river-line defense on seed
+RIVERWARD-9's 120×80 continent — and unlike DAGGERPOINT, the script BULLDOZES NOTHING.
+It generates the continent, then READS it: finds the capital (CITY tag), the towns and
+their banks (flood fill), the bridge crossings the road net actually built (clustered
+BRIDGE hexes with their road approaches), the rail trunk, a hills site for the radar
+station, an artillery position inside Long Tom range of the middle span, and a far-bank
+LZ in the radar gap — then stations both armies at what it found. Change the seed and
+the war moves house. The Cascara Home Guard (FWLM) holds the Verdigris line: a guard
+(infantry + listening post + flak) dug in at every bridgehead beside a demo team whose
+conditional drops the span when a contact closes within 2; a recon satellite sweeps the
+river corridor; armor reserve on the rail trunk; the 10th Skye Rangers (LAAF) land with
+mechs, hover cavalry (the river doesn't stop THEM), Ferret scout VTOLs, bridgelayers
+(Prometheus Combat Support Bridgelayer — it's in the card library), and Long Toms.
+The acceptance test plays the whole opening act on the real engine: the assault marches
+on the capital, the satellite tips off the guard, the span blows IN THE COLUMN'S FACE
+(D-045 demolition-from-the-bank by D-046 off-net conditional), the stalled lance's
+order explains itself, the pioneers march up and BUILD_BRIDGE the gap, the standing
+MOVE resumes over the new span, and the campaign freezes into a battle at the held
+bridgehead — byte-exact replay throughout.

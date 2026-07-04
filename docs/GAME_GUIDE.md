@@ -104,10 +104,18 @@ with a ⏳ reason on your screen until you re-plot.
 marching mech battalion. Rail lines are operational arteries: plan offensives around
 them, defend the junctions, and cut the enemy's (engineers can DEMOLISH bridges).
 
-**Bridges & rivers** (D-041): a WATER hex carrying a BRIDGE is crossable by ground
-columns at road pace — and engineers can **drop the bridge**, turning the river back
-into a wall. Generated continents route their road networks through mountain passes
-and over river bridges, so the chokepoints are made by the geography itself.
+**Bridges & rivers** (D-041/D-044): a WATER hex carrying a BRIDGE is crossable by
+ground columns at road pace — and engineers can **drop the bridge**, turning the river
+back into a wall. Every generated continent has a **great river** running from the
+interior to the sea, dividing the map into banks; the road network crosses it at the
+handful of bridges it could afford to build. Those spans are the chokepoints the
+geography made — hold them, wire them, or bring a bridgelayer.
+
+**Movement to contact** (D-046): within 2 hexes of a real enemy formation, a
+fast-forwarded column moves **one hex per step** — the sensors and standing orders on
+both sides get to react between strides, so nobody bounds through an outpost line into
+an occupied hex in one time-jump. Exceptions: contact mode (already deliberate) and
+MOVE_CAUTIOUS (the stealth pace slips past without checking its stride).
 
 **🖱 Click to command** (D-042): click one of your unit markers on the map to select
 it (click a stacked hex again to cycle through the stack); **shift-click** more units to
@@ -246,16 +254,33 @@ stall reason.
 | **EMBARK** | march to a friendly carrier's live position and load into a free bay when it's landed. Waits at the ramp if the bays are full or the ship is aloft |
 | **DISEMBARK** | step out of the bay onto the carrier's hex (or adjacent) once it lands |
 
-Engineer-tagged formations also run the **engineer toolkit** (GM actions): lay a hidden
-minefield (1 pulse), breach one (2 pulses), build a bridge (4 pulses), demolish a
-bridge (instant, loud — SIG −3 that turn). Minefields bite movers with a BR-3
-quick-resolution hit and are revealed when they bite.
+ENGINEER-tagged formations also get the **engineer toolkit** in their own order picker
+(D-045):
 
-Artillery formations execute **FIRE missions** (GM-run, core §9.1): a standing mission
-that shoots each step at a spotted hex (needs ≥ CONTACT), quick-resolves against
-whatever is truly there — and reveals the battery's own hex at CONTACT to every enemy
-that can range it. Shoot-and-scoot is the lifestyle. Ranges: Arrow IV 8 hexes, Sniper
-18, Thumper 21, Long Tom 30, cruise missiles 50–120.
+| Order | What actually happens |
+|---|---|
+| **LAY_MINES** | sow a hidden minefield in your hex (1 pulse). Bites enemy movers with a BR-3 quick-resolution hit; revealed when it bites |
+| **BREACH** | clear the mines in your hex (2 pulses) |
+| **DEMOLISH** | blow the BRIDGE/RAIL in your hex **or one you click beside you** — instant, and loud (SIG −3 that turn). Sappers work from the bank |
+| **BUILD_BRIDGE** | span a river hex in or beside your own — click it (4 pulses). The only way tracked tonnage crosses open water |
+
+The work-site rule: DEMOLISH and BUILD_BRIDGE take the last map click as their target;
+it must be your own hex or an adjacent one (farther stalls, with a reason). Wire a
+demolition as a **conditional** (*when a contact closes within 2 → DEMOLISH the span*)
+and the charges fire even off-net — but note that conditionals live on the current
+order, and instant orders like HIDE complete immediately: give a stationary sapper a
+one-waypoint **PATROL of its own hex** as the standing order that keeps the trigger
+armed.
+
+Artillery formations (any unit whose record sheet mounts a Long Tom, Sniper, Thumper,
+or Arrow IV — the battery tags derive from the card) get **FIRE** in their picker
+(core §9.1): a standing mission that shoots each step at the last map click or a picked
+contact, quick-resolves against whatever is truly there — and reveals the battery's own
+hex at CONTACT to every enemy that can range it. Shoot-and-scoot is the lifestyle.
+Intel matters: LOCK is clean, CONTACT −2, less (or a bare hex) −4 unless a friendly
+spotter holds LOS to the target. A waiting battery explains itself: no tubes, dry
+magazines, no target, or out of range. Ranges: Arrow IV 8 hexes, Sniper 18, Thumper 21,
+Long Tom 30.
 
 ### Air orders (flights, VTOL-carriers excluded — flights are ASF/conventional fighters and DropShips)
 

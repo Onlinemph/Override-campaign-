@@ -67,6 +67,37 @@ describe('M7 — engineers', () => {
     expect(truth.theaters[T].hexes['5,5'].infra).toContain('BRIDGE');
   });
 
+  // D-045: sappers work from the bank — an adjacent targetHex names the work site
+  it('DEMOLISH blows an ADJACENT span named by targetHex (work from the bank)', () => {
+    const truth = baseTruth('ENG-DEMO-ADJ', [{ q: 6, r: 5, terrain: 'WATER', infra: ['ROAD', 'BRIDGE'] }]);
+    engineer(truth, 'eng', gp(5, 5)); // on the bank, beside the span
+    order(truth, 'eng', 'DEMOLISH');
+    truth.orders['o-eng'].targetHex = gp(6, 5);
+    run(truth);
+    expect(truth.theaters[T].hexes['6,5'].infra).toEqual(['ROAD']);
+    expect(truth.orders['o-eng'].completed).toBe(true);
+  });
+
+  it('BUILD_BRIDGE spans adjacent open water a ground engineer could never enter', () => {
+    const truth = baseTruth('ENG-BUILD-ADJ', [{ q: 6, r: 5, terrain: 'WATER' }]);
+    engineer(truth, 'eng', gp(5, 5));
+    order(truth, 'eng', 'BUILD_BRIDGE');
+    truth.orders['o-eng'].targetHex = gp(6, 5);
+    for (let i = 0; i < 4; i++) run(truth);
+    expect(truth.theaters[T].hexes['6,5'].infra).toContain('BRIDGE');
+    expect(truth.orders['o-eng'].completed).toBe(true);
+  });
+
+  it('a work site farther than one hex stalls the order (no teleporting charges)', () => {
+    const truth = baseTruth('ENG-FAR', [{ q: 9, r: 5, terrain: 'WATER', infra: ['BRIDGE'] }]);
+    engineer(truth, 'eng', gp(5, 5));
+    order(truth, 'eng', 'DEMOLISH');
+    truth.orders['o-eng'].targetHex = gp(9, 5);
+    run(truth);
+    expect(truth.theaters[T].hexes['9,5'].infra).toContain('BRIDGE'); // untouched
+    expect(truth.orders['o-eng'].completed).toBeFalsy();              // waiting, not dropped
+  });
+
   it('a non-engineer cannot run the toolkit', () => {
     const truth = baseTruth('ENG-NOPE');
     addMechFormation(truth, { id: 'mech', sideId: 'blue', pos: gp(5, 5) });

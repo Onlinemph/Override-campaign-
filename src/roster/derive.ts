@@ -81,6 +81,15 @@ export function extractTags(text: string, motionType?: string): string[] {
   if (has(/c3\s*master|c3master/i)) tags.add('C3M');
   if (has(/mobile\s*(hq|headquarters)|command\s*console/i)) tags.add('HQ');
 
+  // artillery pieces (D-045): these tags are what gives a battery its range —
+  // firesPass/batteryRange read them (ARTILLERY_TAG_RANGE). Matched against the
+  // weapon names as printed on the sheet, so "Beast Infantry (Sniper)" riflemen
+  // don't become an artillery battalion.
+  if (has(/long\s*tom/i)) tags.add('LONG_TOM');
+  if (has(/sniper\s*(artillery|cannon)/i)) tags.add('SNIPER');
+  if (has(/thumper\s*(artillery|cannon)/i)) tags.add('THUMPER');
+  if (has(/arrow\s*iv/i)) tags.add('ARROW_IV');
+
   if ((motionType ?? '').toLowerCase().includes('wheeled')) tags.add('WHEELED');
   if (/hover|wige/.test((motionType ?? '').toLowerCase())) tags.add('HOVER');
 

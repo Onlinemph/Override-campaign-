@@ -276,4 +276,47 @@ describe('B5 — movement', () => {
     expect(moved.headingDeg).toBe(0);
     expect(truth.formations['m1'].lastHeadingDeg).toBe(0);
   });
+
+  // D-046: movement to contact — no bounding through an outpost line at fast-forward
+  describe('movement to contact (D-046)', () => {
+    it('a fast-forwarded column slows to one hex per step near a real enemy', () => {
+      const truth = baseTruth('MOVE-SEED', [], 40);
+      const f = addMechFormation(truth, { id: 'col', sideId: 'blue', pos: gp(0, 5), omp: 6 });
+      addMechFormation(truth, { id: 'post', sideId: 'red', pos: gp(10, 5) });
+      activate(truth, moveOrder('o1', f, 'MOVE',
+        Array.from({ length: 10 }, (_, i) => gp(i + 1, 5))));
+      // pulse 1 covers 6 clear hexes; pulse 2 would too — but 8,5 enters the halt
+      // radius (2) of the post at 10,5, and the stride checks there
+      run(truth, 10);
+      expect(posOf(truth, 'col')).toEqual(gp(6, 5));
+      run(truth, 10);
+      expect(posOf(truth, 'col')).toEqual(gp(8, 5));
+      // inside the radius: one hex per step, however long the step
+      run(truth, 20);
+      expect(posOf(truth, 'col')).toEqual(gp(9, 5));
+      run(truth, 10);
+      expect(posOf(truth, 'col')).toEqual(gp(10, 5)); // the deliberate final stride
+    });
+
+    it('MOVE_CAUTIOUS is exempt — the stealth pace slips past without the stutter', () => {
+      const truth = baseTruth('MOVE-SEED', [], 40);
+      const f = addMechFormation(truth, { id: 'ghost', sideId: 'blue', pos: gp(4, 5), omp: 6 });
+      addMechFormation(truth, { id: 'post', sideId: 'red', pos: gp(7, 4) });
+      activate(truth, moveOrder('o1', f, 'MOVE_CAUTIOUS',
+        Array.from({ length: 6 }, (_, i) => gp(5 + i, 5))));
+      // cautious = half speed (3 hexes/pulse) but NO one-hex cap near the post
+      run(truth, 10);
+      expect(posOf(truth, 'ghost')).toEqual(gp(7, 5));
+    });
+
+    it('CONTACT mode closes freely — that is already the deliberate pace', () => {
+      const truth = baseTruth('MOVE-SEED', [], 40);
+      truth.clockMode = 'CONTACT';
+      const f = addMechFormation(truth, { id: 'col', sideId: 'blue', pos: gp(8, 5), omp: 10 });
+      addMechFormation(truth, { id: 'post', sideId: 'red', pos: gp(11, 5) });
+      activate(truth, moveOrder('o1', f, 'MOVE', [gp(9, 5), gp(10, 5)]));
+      run(truth, 2); // omp 10 ⇒ 1 hex/turn: two turns, two hexes, no halt
+      expect(posOf(truth, 'col')).toEqual(gp(10, 5));
+    });
+  });
 });

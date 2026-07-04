@@ -11,6 +11,7 @@ import type { Formation, GroundPos, TruthState } from '../core/types.js';
 import { hexKey } from '../core/types.js';
 import { hexDistance } from '../hex/axial.js';
 import { hexEntryCost, strikeTargetHex } from './movement.js';
+import { batteryRange } from './fires.js';
 
 function repairSourceHere(s: TruthState, f: Formation): 'facility' | 'carrier' | null {
   if (f.pos.kind === 'ground') {
@@ -101,6 +102,50 @@ export function stallReason(s: TruthState, f: Formation): string | undefined {
           : 'shop queue waiting — all carrier turnaround crews are busy';
       }
       return undefined; // benches working
+    }
+    case 'FIRE': {
+      // mirrors the silent `continue`s in firesPass, in check order
+      if (f.pos.kind !== 'ground') return undefined;
+      const range = batteryRange(s, f);
+      if (range === 0) return 'holding fire — no artillery tubes in this formation';
+      if (f.unitIds.every(uid => s.units[uid]?.ammoState === 'DRY')) {
+        return 'magazines dry — REARM before the battery can shoot';
+      }
+      const est = order.targetContactId
+        ? (s.contacts[order.targetContactId]?.delivered?.estPos
+            ?? s.contacts[order.targetContactId]?.estPos)
+        : undefined;
+      const aim = est?.kind === 'ground' ? est
+        : (order.targetHex?.kind === 'ground' ? order.targetHex : null);
+      if (!aim) return 'holding fire — no target: pick a contact or plot a hex';
+      if (aim.theaterId !== f.pos.theaterId || hexDistance(f.pos, aim) > range) {
+        return `holding fire — target is out of range (${hexDistance(f.pos, aim)} > ${range} hexes)`;
+      }
+      return undefined;
+    }
+    case 'DEMOLISH': case 'BREACH': case 'LAY_MINES': case 'BUILD_BRIDGE': {
+      // the pass silently drops the order for non-engineers — say so up front
+      const eng = f.unitIds.some(uid => s.units[uid]?.tags.includes('ENGINEER'));
+      if (!eng) return 'this formation has no ENGINEER unit — the toolkit needs one';
+      if (f.pos.kind !== 'ground') return undefined;
+      // D-045: DEMOLISH/BUILD_BRIDGE may name a work site — it must be adjacent
+      let work: GroundPos = f.pos;
+      if (['DEMOLISH', 'BUILD_BRIDGE'].includes(order.kind)) {
+        const t = order.targetHex;
+        if (t?.kind === 'ground' && (t.q !== f.pos.q || t.r !== f.pos.r)) {
+          if (t.theaterId !== f.pos.theaterId || hexDistance(f.pos, t) > 1) {
+            return `too far from the work site (${t.q},${t.r}) — the sappers must be in or beside it`;
+          }
+          work = t;
+        }
+      }
+      if (order.kind === 'DEMOLISH') {
+        const hex = s.theaters[work.theaterId]?.hexes[hexKey(work.q, work.r)];
+        if (hex && !hex.infra.includes('BRIDGE') && !hex.infra.includes('RAIL')) {
+          return 'nothing to demolish there — no bridge or rail in that hex';
+        }
+      }
+      return undefined;
     }
     case 'LAND': {
       if (!order.targetHex) return undefined;

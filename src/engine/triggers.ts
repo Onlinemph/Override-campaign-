@@ -12,6 +12,7 @@ import { hexKey } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
 import { hexDistance } from '../hex/axial.js';
 import { airHexOver } from './air.js';
+import { formationSensors } from './detection.js';
 
 function asHex(pos: { kind: string }): GroundPos | null {
   return pos.kind === 'ground' ? (pos as GroundPos) : null;
@@ -47,7 +48,18 @@ function nearestOwnContactDist(s: TruthState, sideId: Id, formationId: Id): numb
   let best = Infinity;
   for (const c of Object.values(s.contacts)) {
     if (c.observerSideId !== sideId || c.level < 1) continue;
-    const est = c.delivered?.estPos ?? c.estPos;
+    // The formation reacts to the picture it can actually hold: the delivered
+    // (net) estimate — OR the live track when the contact sits inside its OWN
+    // sensor reach. An off-net bridge guard must be able to blow the span at an
+    // enemy its own listening post is staring at (spec §3.3: conditionals keep
+    // running off-net); the stale delivered fix from a satellite pass hours ago
+    // must not pin its eyes shut. (D-046)
+    let est = c.delivered?.estPos ?? c.estPos;
+    const live = c.estPos;
+    if (live.kind === 'ground' && from && live.theaterId === from.theaterId
+        && hexDistance(from, live) <= formationSensors(s, f).passive) {
+      est = live;
+    }
     if (est.kind === 'ground' && from && est.theaterId === from.theaterId) {
       best = Math.min(best, hexDistance(from, est));
     } else if (est.kind === 'air') {

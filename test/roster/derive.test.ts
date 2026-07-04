@@ -42,6 +42,21 @@ describe('extractTags — electronic-warfare gear from the record sheet', () => 
     expect(extractTags('AC/2', 'Wheeled')).toContain('WHEELED');
     expect(extractTags('AC/2', 'Tracked')).not.toContain('WHEELED');
   });
+
+  // D-045: artillery pieces on the sheet make the unit a battery (batteryRange
+  // reads these tags — before this, an authored Mobile Long Tom had range 0 and
+  // its FIRE missions silently did nothing)
+  it('reads artillery pieces as battery tags', () => {
+    expect(extractTags('Long Tom Artillery Piece')).toContain('LONG_TOM');
+    expect(extractTags('ISLongTom')).toContain('LONG_TOM');
+    expect(extractTags('Sniper Artillery Piece')).toContain('SNIPER');
+    expect(extractTags('Thumper Artillery Piece')).toContain('THUMPER');
+    expect(extractTags('Arrow IV Missile System')).toContain('ARROW_IV');
+  });
+
+  it('sniper riflemen are not an artillery battalion', () => {
+    expect(extractTags('Beast Infantry (Camel)(Sniper) Auto-Rifle')).not.toContain('SNIPER');
+  });
 });
 
 describe('deriveUnitFields — movement & class per kind', () => {

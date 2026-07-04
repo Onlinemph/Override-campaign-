@@ -214,6 +214,9 @@ export function buildCampaign(j: FixtureJson, source = 'campaign', enrich = true
           effectiveTick: 0, kind: c.then.kind,
           ...(c.then.path ? { path: c.then.path.map((p: any) =>
             ({ kind: 'ground', theaterId, q: p.q, r: p.r })) } : {}),
+          ...(c.then.targetHex ? { targetHex: { kind: 'ground' as const,
+            theaterId: c.then.targetHex.theaterId ?? theaterId,
+            q: c.then.targetHex.q, r: c.then.targetHex.r } } : {}),
           ...(c.then.targetContactId ? { targetContactId: c.then.targetContactId } : {}),
           ...(c.then.airSpeed ? { airSpeed: c.then.airSpeed } : {}),
           ...(c.then.loiterTicks !== undefined ? { loiterTicks: c.then.loiterTicks } : {}),

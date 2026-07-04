@@ -203,7 +203,8 @@ map. `secret: true` (pirate points) hides the node from players until surveyed.
 ```
 
 `kind` is any ground (`MOVE FORCED_MARCH MOVE_CAUTIOUS HIDE DIG_IN PATROL SCREEN STRIKE
-SHADOW RESUPPLY REST REARM EMBARK DISEMBARK`), air (`CAP SWEEP RECON STRIKE_AIR CAS
+SHADOW RESUPPLY REST REARM REPAIR EMBARK DISEMBARK FIRE LAY_MINES BREACH DEMOLISH
+BUILD_BRIDGE`), air (`CAP SWEEP RECON STRIKE_AIR CAS
 ESCORT INTERDICTION FERRY TANKER SAR ORBITAL_STANDBY LIFT_OFF LAND ASCEND`) or space
 (`TRANSIT COLD_COAST STATION_KEEP INTERCEPT SKIM_FUEL RECHARGE_SAIL QUICK_CHARGE JUMP
 INSPECT BLOCKADE BOARD DESCEND`) order. `DESCEND` needs the vessel at a node with a
@@ -212,10 +213,16 @@ embedding the theater it flies over).
 
 Extras: `airStation: {q,r}` + `airPath: true` (treat `path` as air hexes) + `airSpeed`
 + `loiterTicks` for air missions; `laneId`/`burnProfile` for space transits;
-`targetContactId` for STRIKE/SWEEP; `targetFormationId` for EMBARK (the carrier to load
-into); `targetHex` for LAND/DISEMBARK; `emconOverride`. `conditionals[]` fire even off-net
-(`when`: `CONTACT_WITHIN DETECTED_SELF TICK_REACHED HEX_REACHED FUEL_BELOW RDY_BELOW
-ALLY_ENGAGED`, with `param`).
+`targetContactId` for STRIKE/SWEEP/FIRE; `targetFormationId` for EMBARK (the carrier to
+load into); `targetHex` for LAND/DISEMBARK, FIRE (the target hex), and
+DEMOLISH/BUILD_BRIDGE (the work site — must be in or beside the engineer's hex);
+`emconOverride`. `conditionals[]` fire even off-net (`when`: `CONTACT_WITHIN
+DETECTED_SELF TICK_REACHED HEX_REACHED FUEL_BELOW RDY_BELOW ALLY_ENGAGED`, with
+`param`); a `then` order may carry `path`, `targetContactId`, or `targetHex` (a wired
+demolition charge is a conditional with `then: { "kind": "DEMOLISH", "targetHex":
+{...} }`). Two gotchas: conditionals die with their order, and instant orders (HIDE,
+DEMOLISH) complete immediately — a stationary formation that must keep a trigger armed
+wants a one-waypoint `PATROL` of its own hex as its standing order.
 
 ## `markers[]` — battlefield furniture (optional)
 
