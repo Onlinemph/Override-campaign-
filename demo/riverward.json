@@ -16581,6 +16581,21 @@
       "r": 24,
       "sigBase": 7,
       "emcon": "PASSIVE",
+      "rules": [
+        {
+          "when": "DETECTED_SELF",
+          "param": 0,
+          "then": {
+            "kind": "MOVE",
+            "path": [
+              {
+                "q": 60,
+                "r": 22
+              }
+            ]
+          }
+        }
+      ],
       "units": [
         {
           "name": "Ghost 1",
@@ -16603,6 +16618,19 @@
       "r": 22,
       "sigBase": 7,
       "posture": "DUG_IN",
+      "rules": [
+        {
+          "when": "ALLY_ENGAGED",
+          "param": 20,
+          "then": {
+            "kind": "FIRE",
+            "targetHex": {
+              "q": 60,
+              "r": 24
+            }
+          }
+        }
+      ],
       "units": [
         {
           "name": "Thunder",
@@ -16744,6 +16772,19 @@
       "q": 21,
       "r": 32,
       "sigBase": 9,
+      "rules": [
+        {
+          "when": "CONTACT_WITHIN",
+          "param": 2,
+          "then": {
+            "kind": "DEMOLISH",
+            "targetHex": {
+              "q": 21,
+              "r": 33
+            }
+          }
+        }
+      ],
       "units": [
         {
           "name": "Sapper 1",
@@ -16793,6 +16834,19 @@
       "q": 60,
       "r": 22,
       "sigBase": 9,
+      "rules": [
+        {
+          "when": "CONTACT_WITHIN",
+          "param": 2,
+          "then": {
+            "kind": "DEMOLISH",
+            "targetHex": {
+              "q": 60,
+              "r": 23
+            }
+          }
+        }
+      ],
       "units": [
         {
           "name": "Sapper 2",
@@ -16842,6 +16896,19 @@
       "q": 87,
       "r": 68,
       "sigBase": 9,
+      "rules": [
+        {
+          "when": "CONTACT_WITHIN",
+          "param": 2,
+          "then": {
+            "kind": "DEMOLISH",
+            "targetHex": {
+              "q": 88,
+              "r": 68
+            }
+          }
+        }
+      ],
       "units": [
         {
           "name": "Sapper 3",
@@ -17282,85 +17349,22 @@
       "id": "o-sap-0",
       "sideId": "marik",
       "formationId": "red-sap-0",
-      "kind": "PATROL",
-      "effectiveTick": 0,
-      "path": [
-        {
-          "q": 21,
-          "r": 32
-        }
-      ],
-      "conditionals": [
-        {
-          "trigger": {
-            "when": "CONTACT_WITHIN",
-            "param": 2
-          },
-          "then": {
-            "kind": "DEMOLISH",
-            "targetHex": {
-              "q": 21,
-              "r": 33
-            }
-          }
-        }
-      ]
+      "kind": "HIDE",
+      "effectiveTick": 0
     },
     {
       "id": "o-sap-1",
       "sideId": "marik",
       "formationId": "red-sap-1",
-      "kind": "PATROL",
-      "effectiveTick": 0,
-      "path": [
-        {
-          "q": 60,
-          "r": 22
-        }
-      ],
-      "conditionals": [
-        {
-          "trigger": {
-            "when": "CONTACT_WITHIN",
-            "param": 2
-          },
-          "then": {
-            "kind": "DEMOLISH",
-            "targetHex": {
-              "q": 60,
-              "r": 23
-            }
-          }
-        }
-      ]
+      "kind": "HIDE",
+      "effectiveTick": 0
     },
     {
       "id": "o-sap-2",
       "sideId": "marik",
       "formationId": "red-sap-2",
-      "kind": "PATROL",
-      "effectiveTick": 0,
-      "path": [
-        {
-          "q": 87,
-          "r": 68
-        }
-      ],
-      "conditionals": [
-        {
-          "trigger": {
-            "when": "CONTACT_WITHIN",
-            "param": 2
-          },
-          "then": {
-            "kind": "DEMOLISH",
-            "targetHex": {
-              "q": 88,
-              "r": 68
-            }
-          }
-        }
-      ]
+      "kind": "HIDE",
+      "effectiveTick": 0
     },
     {
       "id": "o-screen",
@@ -17384,51 +17388,6 @@
         {
           "q": 59,
           "r": 29
-        }
-      ],
-      "conditionals": [
-        {
-          "trigger": {
-            "when": "DETECTED_SELF",
-            "param": 0
-          },
-          "then": {
-            "kind": "MOVE",
-            "path": [
-              {
-                "q": 60,
-                "r": 22
-              }
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "id": "o-arty",
-      "sideId": "marik",
-      "formationId": "red-arty",
-      "kind": "PATROL",
-      "effectiveTick": 0,
-      "path": [
-        {
-          "q": 57,
-          "r": 22
-        }
-      ],
-      "conditionals": [
-        {
-          "trigger": {
-            "when": "ALLY_ENGAGED",
-            "param": 20
-          },
-          "then": {
-            "kind": "FIRE",
-            "targetHex": {
-              "q": 60,
-              "r": 24
-            }
-          }
         }
       ]
     }

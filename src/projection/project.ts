@@ -54,6 +54,35 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
         }),
         inSupply: f.supply.inSupply,
       };
+      // D-049: the queued plan — pending steps chained after the current order, in
+      // execution order, so the panel can show "1. MOVE → 52,40 · 2. DIG_IN · …"
+      {
+        const byAfter = new Map<string, (typeof truth.orders)[string]>();
+        for (const o of Object.values(truth.orders)) {
+          if (o.formationId === f.id && !o.completed && o.afterOrderId) {
+            byAfter.set(o.afterOrderId, o);
+          }
+        }
+        const steps: NonNullable<OwnFormationView['plan']> = [];
+        let cursor = f.currentOrderId;
+        while (cursor && byAfter.has(cursor) && steps.length < 12) {
+          const o = byAfter.get(cursor)!;
+          const dest = o.targetHex ?? [...(o.path ?? [])].reverse()
+            .find((p): p is GroundPos => p.kind === 'ground');
+          steps.push({ kind: o.kind, ...(dest ? { dest: { q: dest.q, r: dest.r } } : {}) });
+          cursor = o.id;
+        }
+        if (steps.length) view.plan = steps;
+      }
+      // D-049: standing rules, in plain terms for the rules panel
+      if (f.rules?.length) {
+        view.rules = f.rules.map(r => ({
+          when: r.trigger.when, param: r.trigger.param, thenKind: r.thenOrder.kind,
+          armed: r.armed !== false, repeat: !!r.repeat,
+          ...(r.thenOrder.targetHex ? { targetHex: {
+            q: r.thenOrder.targetHex.q, r: r.thenOrder.targetHex.r } } : {}),
+        }));
+      }
       // ext: carrier ops — own bays & rides
       if (f.carrier) {
         view.carrier = {

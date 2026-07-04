@@ -8,7 +8,7 @@ import type {
   Engagement, Formation, GroundPos, HandoffPackage, Id, JumpDrive, LanePos, Marker,
   NodePos, Order, Pilot, Position, Posture, RefitProject, SalvageToken, TruthState,
   Tick, Unit,
-} from './types.js';
+ StandingRule } from './types.js';
 import { CAREER, SKYWATCH } from '../rules.js';
 import { hexKey as hexKeyOf } from './types.js';
 
@@ -41,6 +41,12 @@ export type GameEvent =
   // ── M2: triggers, engagement, handoff round-trip, logistics ──
   | { type: 'TRIGGER_FIRED'; orderId: Id; formationId: Id; triggerIndex: number;
       newOrder: Order; tick: Tick }
+  // D-049: standing rules — persistent if-then reflexes on the formation
+  | { type: 'RULES_SET'; formationId: Id; rules: StandingRule[]; tick: Tick }
+  | { type: 'RULE_FIRED'; formationId: Id; ruleIndex: number; newOrder: Order; tick: Tick }
+  | { type: 'RULE_REARMED'; formationId: Id; ruleIndex: number }
+  // D-049: plan steps cancelled when a newer activation abandons the old plan
+  | { type: 'ORDER_CANCELLED'; orderId: Id; formationId: Id; tick: Tick }
   | { type: 'POSTURE_CHANGED'; formationId: Id; posture: Posture; tick: Tick }
   | { type: 'ENGAGEMENT_TRIGGERED'; engagement: Engagement }
   | { type: 'EVASION_RESOLVED'; engagementId: Id; success: boolean;
@@ -314,6 +320,30 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
       if (order?.conditionals?.[e.triggerIndex]) {
         (order.conditionals[e.triggerIndex] as { fired?: boolean }).fired = true;
       }
+      break;
+    }
+
+    // ── D-049: standing rules & plans ────────────────────────────────────────
+    case 'RULES_SET': {
+      const f = s.formations[e.formationId];
+      f.rules = structuredClone(e.rules).map(r => ({ ...r, armed: true }));
+      break;
+    }
+    case 'RULE_FIRED': {
+      s.orders[e.newOrder.id] = e.newOrder;
+      const rule = s.formations[e.formationId].rules?.[e.ruleIndex];
+      if (rule) rule.armed = false;
+      break;
+    }
+    case 'RULE_REARMED': {
+      const rule = s.formations[e.formationId].rules?.[e.ruleIndex];
+      if (rule) rule.armed = true;
+      break;
+    }
+    case 'ORDER_CANCELLED': {
+      s.orders[e.orderId].completed = true;
+      const f = s.formations[e.formationId];
+      if (f.currentOrderId === e.orderId) f.currentOrderId = undefined;
       break;
     }
 
@@ -811,6 +841,7 @@ export function isInterestingEvent(e: GameEvent): boolean {
     case 'ORDER_COMPLETED':
     case 'FORMATION_DESTROYED':
     case 'TRIGGER_FIRED':
+    case 'RULE_FIRED':
     case 'ENGAGEMENT_TRIGGERED':
     case 'BATTLE_RESULT_INGESTED':
     case 'FUEL_THRESHOLD':

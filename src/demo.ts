@@ -105,6 +105,26 @@ export function buildFormationEntities(f: any):
                       homeFacilityId: f.flight?.homeFacilityId,
                       ...(f.flight?.homeCarrierId ? { homeCarrierId: f.flight.homeCarrierId } : {}) };
   }
+  // D-049: standing rules — authored as { when, param, then: {...}, repeat? }
+  if (Array.isArray(f.rules) && f.rules.length) {
+    const theaterId = f.theaterId ?? '';
+    formation.rules = f.rules.map((r: any) => ({
+      trigger: { when: r.when, param: r.param },
+      thenOrder: {
+        id: 'ph', sideId: f.sideId, formationId: f.id, issuedTick: 0, effectiveTick: 0,
+        kind: r.then.kind,
+        ...(r.then.path ? { path: r.then.path.map((p: any) =>
+          ({ kind: 'ground', theaterId, q: p.q, r: p.r })) } : {}),
+        ...(r.then.targetHex ? { targetHex: { kind: 'ground' as const,
+          theaterId: r.then.targetHex.theaterId ?? theaterId,
+          q: r.then.targetHex.q, r: r.then.targetHex.r } } : {}),
+        ...(r.then.targetContactId ? { targetContactId: r.then.targetContactId } : {}),
+        ...(r.then.emconOverride ? { emconOverride: r.then.emconOverride } : {}),
+      },
+      ...(r.repeat ? { repeat: true } : {}),
+      armed: true,
+    }));
+  }
   formation.unitIds = units.map((u: Unit) => u.id);
   return { formation, units, pilots, jumpDrives };
 }

@@ -126,6 +126,7 @@ export interface Formation {
   posture: Posture;
   onNet: boolean; netNodeId?: Id;
   currentOrderId?: Id; standingOrderIds: Id[];
+  rules?: StandingRule[];          // D-049: persistent if-then reflexes (see StandingRule)
   mounted?: { carrierFormationId: Id };
   /** ext: carrier capability (DropShip/carrier). `bays` caps embarked formations; a
    * recovered flight rearms from `crews` turnaround crews drawing on `avFuelTons` of
@@ -281,6 +282,9 @@ export interface Order {
   path?: Position[]; targetContactId?: Id; targetHex?: GroundPos; station?: Position;
   targetFormationId?: Id;          // ext: EMBARK — the own-side carrier to load into
   burnProfile?: BurnProfile;
+  // D-049: plan step — this order only becomes due once the named order completes.
+  // Steps of one plan share an issuedTick; a NEWER activation cancels stale steps.
+  afterOrderId?: Id;
   conditionals: { trigger: Trigger; thenOrder: Omit<Order, 'conditionals'>;
                   fired?: boolean /* ext (M2): consumed, won't re-fire */ }[];
   emconOverride?: Emcon;
@@ -294,6 +298,20 @@ export interface Order {
   destinationNodeId?: Id;          // which end of the lane we are burning for
 }
 export interface ATO { id: Id; sideId: Id; pulse: number; orderIds: Id[] }
+
+/**
+ * D-049: a standing rule — an if-then reflex that lives on the FORMATION, not on
+ * any order. Evaluated every step whatever the unit is doing (and off-net: rules
+ * are pre-programmed, like conditionals). A fired rule spawns its thenOrder and
+ * disarms; `repeat` rules re-arm once their trigger goes false again (edge-
+ * triggered), one-shot rules stay spent.
+ */
+export interface StandingRule {
+  trigger: Trigger;
+  thenOrder: Omit<Order, 'conditionals'>;
+  repeat?: boolean;
+  armed?: boolean; // runtime: false after firing; undefined/true = armed
+}
 
 // ── §3.6 Handoff Package & Battle Result (forms land in M2) ─────────────────
 export interface HandoffPackage {

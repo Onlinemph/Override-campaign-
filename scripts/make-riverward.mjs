@@ -302,10 +302,17 @@ const formations = [
             veh('Iron 3', 'Po Heavy Tank'), veh('Iron 4', 'Vedette Medium Tank')] },
   { id: 'red-screen', sideId: 'marik', name: 'Verdigris Screen', theaterId: T,
     q: screenBase.q, r: screenBase.r, sigBase: 7, emcon: 'PASSIVE',
+    // the fallback is a rule, not a conditional: it survives any order change
+    rules: [{ when: 'DETECTED_SELF', param: 0,
+      then: { kind: 'MOVE', path: [{ q: middle.near.q, r: middle.near.r }] } }],
     units: [veh('Ghost 1', 'Pegasus Scout Hover Tank'),
             veh('Ghost 2', 'Pegasus Scout Hover Tank')] },
   { id: 'red-arty', sideId: 'marik', name: 'Verdigris Fire Support', theaterId: T,
     q: arty.q, r: arty.r, sigBase: 7, posture: 'DUG_IN',
+    // registered fires as a standing rule: the moment a battle erupts within
+    // reach, the mission opens on the middle span's far approach (D-049)
+    rules: [{ when: 'ALLY_ENGAGED', param: 20,
+      then: { kind: 'FIRE', targetHex: { q: middle.far.q, r: middle.far.r } } }],
     units: [veh('Thunder', 'Mobile Long Tom Artillery LT-MOB-25F')] },
   { id: 'red-aa', sideId: 'marik', name: 'Capital Flak Battery', theaterId: T,
     q: capital.q, r: capital.r, sigBase: 7, posture: 'DUG_IN',
@@ -329,6 +336,10 @@ const formations = [
               veh(`${c.name} Flak`, 'Partisan AA Vehicle', { tags: ['AA'] })] },
     { id: `red-sap-${i}`, sideId: 'marik', name: `${c.name} Demo Team`, theaterId: T,
       q: c.near.q, r: c.near.r, sigBase: 9,
+      // the charges are a STANDING RULE (D-049): it lives on the formation, fires
+      // even off-net, and survives whatever order the demo team is running
+      rules: [{ when: 'CONTACT_WITHIN', param: 2,
+        then: { kind: 'DEMOLISH', targetHex: { q: c.anchor.q, r: c.anchor.r } } }],
       units: [veh(`Sapper ${i + 1}`, 'Engineering Vehicle', { tags: ['ENGINEER'] })] },
   ]),
 
@@ -480,32 +491,19 @@ const campaign = {
     marik: ['red-hq', 'red-spaceport'],
   },
   orders: [
-    // the sappers stand watch at their bridgeheads, charges wired on the adjacent
-    // span. PATROL-in-place is the standing order that never completes, so the
-    // conditional stays armed: the moment their side holds a contact within 2
-    // hexes, DEMOLISH fires and the bridge drops (D-045: demolition from the
-    // bank, targetHex). The guard's listening post is the eyes that trip it.
-    // (Conditionals die with their order — HIDE completes instantly, so a HIDE
-    // sapper would stand there with dead charges. Ask us how we know.)
+    // D-049: the demolition charges, the registered fires, and the screen's
+    // fallback all live as STANDING RULES on their formations now (see the
+    // formation entries) — they persist across any order and fire off-net. The
+    // demo teams can therefore genuinely HIDE, and the battery needs no order at
+    // all. (Historically these were conditionals on PATROL-in-place hack orders,
+    // because conditionals die with their order and HIDE completes instantly.)
     ...crossings.map((c, i) => ({
-      id: `o-sap-${i}`, sideId: 'marik', formationId: `red-sap-${i}`, kind: 'PATROL',
-      effectiveTick: 0, path: [{ q: c.near.q, r: c.near.r }],
-      conditionals: [{ trigger: { when: 'CONTACT_WITHIN', param: 2 },
-        then: { kind: 'DEMOLISH', targetHex: { q: c.anchor.q, r: c.anchor.r } } }],
+      id: `o-sap-${i}`, sideId: 'marik', formationId: `red-sap-${i}`, kind: 'HIDE',
+      effectiveTick: 0,
     })),
-    // the hover screen sweeps the far-bank approach and falls back over the middle
-    // span the moment it knows it has been seen
+    // the hover screen sweeps the far-bank approach (its been-seen fallback is a rule)
     { id: 'o-screen', sideId: 'marik', formationId: 'red-screen', kind: 'PATROL',
-      effectiveTick: 0, path: screenLoop.map(p => ({ q: p.q, r: p.r })),
-      conditionals: [{ trigger: { when: 'DETECTED_SELF', param: 0 },
-        then: { kind: 'MOVE', path: [{ q: middle.near.q, r: middle.near.r }] } }] },
-    // the fire-support battery is laid on the middle span's far approach but holds
-    // fire (firing reveals it): the moment a battle erupts within reach, the
-    // registered mission begins on the approach every attacker must stage through
-    { id: 'o-arty', sideId: 'marik', formationId: 'red-arty', kind: 'PATROL',
-      effectiveTick: 0, path: [{ q: arty.q, r: arty.r }],
-      conditionals: [{ trigger: { when: 'ALLY_ENGAGED', param: 20 },
-        then: { kind: 'FIRE', targetHex: { q: middle.far.q, r: middle.far.r } } }] },
+      effectiveTick: 0, path: screenLoop.map(p => ({ q: p.q, r: p.r })) },
   ],
 };
 

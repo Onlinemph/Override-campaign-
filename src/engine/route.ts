@@ -58,12 +58,16 @@ export interface RouteResult {
  * Best-known route for `f` from its position to (q,r). Returns null when the
  * destination is unreachable for this formation's motion family (as far as the
  * side knows). Capped at 40k explored nodes — plenty for a 300×300 theater.
+ * D-049: `fromOverride` routes from somewhere the formation ISN'T yet — a plan's
+ * later step routes from the previous step's destination.
  */
 export function findRoute(
   s: TruthState, f: Formation, to: { q: number; r: number }, sideId?: Id,
+  fromOverride?: { q: number; r: number },
 ): RouteResult | null {
   if (f.pos.kind !== 'ground') return null;
-  const from = f.pos;
+  const from: GroundPos = fromOverride
+    ? { ...f.pos, q: fromOverride.q, r: fromOverride.r } : f.pos;
   const theaterId = from.theaterId;
   if (!knownHex(s, theaterId, to.q, to.r, sideId)) return null;
   const flies = motionFamily(s, f) === 'VTOL';

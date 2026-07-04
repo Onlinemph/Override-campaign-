@@ -70,6 +70,8 @@
       <div class="kv">air: station q,r <input id="o-station" size="5">
         speed <select id="o-airspeed"><option value="">—</option><option>CRUISE</option><option>DASH</option></select>
         loiter CT <input id="o-loiter" size="3"></div>
+      <div class="kv" id="plan-strip" style="display:none;border:1px dashed var(--line);
+        border-radius:6px;padding:4px 6px;margin:4px 0"></div>
       <details><summary class="kv">conditional (optional)</summary>
         <div class="kv">if <select id="c-when"><option value="">—none—</option>
             <option>CONTACT_WITHIN</option><option>DETECTED_SELF</option>
@@ -87,7 +89,19 @@
       </details>
       <div id="order-preview" class="legend" style="margin-top:8px;border-top:1px solid var(--line);padding-top:6px"></div>
       <div style="margin-top:6px"><button onclick="sendOrder()">Issue order</button>
+        <button onclick="addStep()" title="Queue this as the NEXT step of a plan — steps run in sequence, each starting when the last completes">➕ then…</button>
+        <button id="send-plan-btn" onclick="sendPlan()" style="display:none">🚀 send plan</button>
         <span id="o-result" class="kv"></span></div>
+      <details id="rules-panel" style="margin-top:6px">
+        <summary class="kv" style="cursor:pointer">⚡ standing rules <span id="rules-count" style="opacity:.6"></span></summary>
+        <div class="legend" style="margin:4px 0">If-then reflexes that live on the unit —
+          they persist across orders, fire even off-net, and a fired rule interrupts
+          whatever the unit is doing. Click the map first to give a rule a target hex.</div>
+        <div id="rules-list"></div>
+        <div class="kv" style="margin-top:4px"><button onclick="addRule()">+ add rule</button>
+          <button onclick="saveRules()">save rules</button>
+          <span id="rules-result" class="kv"></span></div>
+      </details>
       <div class="kv" style="margin-top:6px">quick orders:
         <button onclick="quickOrder('HIDE')" title="Hold position, go silent">Hold</button>
         <button onclick="quickOrder('REST')" title="Rest &amp; refit in place">Rest</button>
@@ -429,8 +443,12 @@ async function plotHex(q, r) {
   const selId = document.getElementById('o-formation').value;
   const auto = document.getElementById('o-autoroute').checked;
   if (auto && selId) {
+    // D-049: while building a plan, later steps route from where the PREVIOUS
+    // step ends, not from where the unit stands now
+    const from = planSteps.length ? planDest(planSteps[planSteps.length - 1]) : null;
     const res = await fetch(`/api/side/${sideId}/route?t=${encodeURIComponent(token)}` +
-        `&formationId=${encodeURIComponent(selId)}&q=${q}&r=${r}`)
+        `&formationId=${encodeURIComponent(selId)}&q=${q}&r=${r}` +
+        (from ? `&fromQ=${from.q}&fromR=${from.r}` : ''))
       .then(x => x.json()).catch(() => null);
     if (res && res.path && res.path.length) {
       plotted = res.path.map(p => ({ q: p.q, r: p.r }));
@@ -516,6 +534,7 @@ function syncKindPicker() {
     `<option value="${k}" title="${desc}">${k}</option>`).join('');
   if (rows.some(([k]) => k === prev)) sel.value = prev;
   syncCarrierRow(); syncKindHelp();
+  loadRules(); // D-049: the rules panel tracks the selected formation
 }
 function syncKindHelp() {
   const k = document.getElementById('o-kind').value;
@@ -635,6 +654,160 @@ async function fallBack() {
   const path = rt && rt.path && rt.path.length
     ? rt.path.map(p => ({ q: p.q, r: p.r })) : [{ q: best.q, r: best.r }];
   postOrder({ formationId: fid, kind: 'MOVE', path });
+}
+
+// ── D-049: plans — queue steps that run in sequence ─────────────────────────
+let planSteps = [];
+function planDest(st) {
+  if (st.targetHex) return st.targetHex;
+  return st.path && st.path.length ? st.path[st.path.length - 1] : null;
+}
+// the current form, captured as one step (mirrors sendOrder's single-order body)
+function captureStep() {
+  const kind = document.getElementById('o-kind').value;
+  const path = parsePath(document.getElementById('o-path').value);
+  const st = { kind, path };
+  if (kind === 'EMBARK') st.targetFormationId = document.getElementById('o-carrier').value;
+  if (['LAND', 'DISEMBARK', 'DESCEND', 'FIRE', 'DEMOLISH', 'BUILD_BRIDGE'].includes(kind) && path.length) {
+    st.targetHex = path[path.length - 1];
+    st.path = [];
+  }
+  const target = document.getElementById('o-target').value;
+  if (target) st.targetContactId = target;
+  const emcon = document.getElementById('o-emcon').value;
+  if (emcon) st.emconOverride = emcon;
+  const spd = document.getElementById('o-airspeed').value;
+  if (spd) st.airSpeed = spd;
+  const loiter = document.getElementById('o-loiter').value;
+  if (loiter) st.loiterTicks = +loiter;
+  return st;
+}
+function addStep() {
+  const st = captureStep();
+  if (['MOVE', 'FORCED_MARCH', 'MOVE_CAUTIOUS'].includes(st.kind) && !(st.path && st.path.length)) {
+    document.getElementById('o-result').textContent = '✗ plot a destination for this step first';
+    return;
+  }
+  planSteps.push(st);
+  plotted = [];
+  document.getElementById('o-path').value = '';
+  document.getElementById('o-eta').textContent = '';
+  renderPlanStrip();
+  refresh();
+}
+function removeStep(i) { planSteps.splice(i, 1); renderPlanStrip(); }
+function resetPlan() { planSteps = []; renderPlanStrip(); }
+function renderPlanStrip() {
+  const strip = document.getElementById('plan-strip');
+  const btn = document.getElementById('send-plan-btn');
+  if (!planSteps.length) { strip.style.display = 'none'; btn.style.display = 'none'; return; }
+  strip.style.display = '';
+  btn.style.display = '';
+  strip.innerHTML = '📋 plan: ' + planSteps.map((st, i) => {
+    const d = planDest(st);
+    return `<b>${i + 1}.</b> ${st.kind.toLowerCase().replace(/_/g, ' ')}${d ? ` → ${d.q},${d.r}` : ''} ` +
+      `<button onclick="removeStep(${i})" style="padding:0 4px">✕</button>`;
+  }).join(' · ') + ' <span style="opacity:.6">— build the next step above, ➕ to queue it, 🚀 to send</span>';
+}
+async function sendPlan() {
+  if (selectedIds.length > 1) {
+    document.getElementById('o-result').textContent = '✗ plans are plotted one formation at a time';
+    return;
+  }
+  const fid = document.getElementById('o-formation').value;
+  const steps = [...planSteps];
+  const last = captureStep(); // a plotted form is the final step (unplotted = already queued)
+  if (last.path && last.path.length || last.targetHex) steps.push(last);
+  if (!steps.length) { document.getElementById('o-result').textContent = '✗ empty plan'; return; }
+  const res = await (await fetch(`/api/side/${sideId}/plan?${q}`, { method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ formationId: fid, steps }) })).json();
+  document.getElementById('o-result').textContent = res.ok
+    ? `✓ plan sent — ${steps.length} step${steps.length === 1 ? '' : 's'}` : `✗ ${res.reason}`;
+  if (res.ok) { resetPlan(); plotted = []; document.getElementById('o-path').value = ''; refresh(); }
+}
+
+// ── D-049: standing rules — persistent if-then reflexes on the unit ─────────
+const TRIGGER_META = [
+  ['CONTACT_WITHIN', 'an enemy contact closes within N hexes', 'N hexes'],
+  ['DETECTED_SELF', 'this unit realizes it has been spotted (N = min ladder level, 0 = any)', 'level'],
+  ['ALLY_ENGAGED', 'a friendly battle erupts within N hexes', 'N hexes'],
+  ['RDY_BELOW', 'readiness drops below N', 'N'],
+  ['HEX_REACHED', 'this unit reaches hex q,r', 'q,r'],
+  ['TICK_REACHED', 'the clock reaches tick T', 'tick'],
+];
+let rulesDraft = [], rulesForFid = null, rulesDirty = false;
+function loadRules() {
+  const fid = document.getElementById('o-formation').value;
+  if (!lastView) return;
+  if (fid !== rulesForFid) resetPlan(); // a plan under construction is per-formation
+  if (fid === rulesForFid && rulesDirty) return; // don't stomp an edit in progress
+  const f = (lastView.ownFormations || []).find(x => x.id === fid);
+  rulesForFid = fid;
+  rulesDirty = false;
+  rulesDraft = ((f && f.rules) || []).map(r => ({ when: r.when, param: r.param,
+    then: { kind: r.thenKind,
+      ...(r.targetHex ? { targetHex: { q: r.targetHex.q, r: r.targetHex.r } } : {}) },
+    repeat: !!r.repeat, armed: r.armed }));
+  renderRules();
+}
+function renderRules() {
+  const box = document.getElementById('rules-list');
+  document.getElementById('rules-count').textContent =
+    rulesDraft.length ? `(${rulesDraft.length})` : '';
+  box.innerHTML = rulesDraft.map((r, i) => {
+    const whenOpts = TRIGGER_META.map(([w, d]) =>
+      `<option value="${w}" title="${d}"${r.when === w ? ' selected' : ''}>${w}</option>`).join('');
+    const kindOpts = ORDER_META.map(([k, d]) =>
+      `<option value="${k}" title="${d}"${r.then.kind === k ? ' selected' : ''}>${k}</option>`).join('');
+    const meta = TRIGGER_META.find(([w]) => w === r.when) || TRIGGER_META[0];
+    return `<div class="kv" style="margin:3px 0">${r.armed === false ? '<span title="fired — spent (repeat rules re-arm when the trigger goes false)">✔</span>' : '⚡'}
+      when <select onchange="ruleSet(${i},'when',this.value)">${whenOpts}</select>
+      <input size="4" value="${r.param ?? ''}" placeholder="${meta[2]}" title="${meta[1]}"
+        onchange="ruleSet(${i},'param',this.value)">
+      → <select onchange="ruleSet(${i},'kind',this.value)">${kindOpts}</select>
+      ${r.then.targetHex ? `<b>@${r.then.targetHex.q},${r.then.targetHex.r}</b>` : ''}
+      <button title="set the target: your last map click" onclick="ruleTarget(${i})">📍</button>
+      <label title="re-arms when the trigger goes false again (one-shot otherwise)"><input type="checkbox"
+        ${r.repeat ? 'checked' : ''} onchange="ruleSet(${i},'repeat',this.checked)"> repeat</label>
+      <button onclick="ruleRemove(${i})">✕</button>
+      <div class="legend" style="margin-left:16px">when ${Fmt.triggerWords(r.when, r.param)} → ${(ORDER_META.find(([k]) => k === r.then.kind) || ['', r.then.kind.toLowerCase()])[1]}</div>
+    </div>`;
+  }).join('') || '<div class="legend">(no rules — this unit only does what it is told)</div>';
+}
+function ruleSet(i, field, val) {
+  rulesDirty = true;
+  if (field === 'when') rulesDraft[i].when = val;
+  else if (field === 'param') rulesDraft[i].param = String(val).includes(',') || isNaN(+val) ? val : +val;
+  else if (field === 'kind') rulesDraft[i].then.kind = val;
+  else if (field === 'repeat') rulesDraft[i].repeat = val;
+  renderRules();
+}
+function ruleTarget(i) {
+  if (!plotted.length) {
+    document.getElementById('rules-result').textContent = 'click the map first, then 📍';
+    return;
+  }
+  rulesDirty = true;
+  rulesDraft[i].then.targetHex = { ...plotted[plotted.length - 1] };
+  renderRules();
+}
+function addRule() {
+  rulesDirty = true;
+  rulesDraft.push({ when: 'CONTACT_WITHIN', param: 3, then: { kind: 'HIDE' }, repeat: false, armed: true });
+  document.getElementById('rules-panel').open = true;
+  renderRules();
+}
+function ruleRemove(i) { rulesDirty = true; rulesDraft.splice(i, 1); renderRules(); }
+async function saveRules() {
+  const fid = document.getElementById('o-formation').value;
+  const body = { formationId: fid, rules: rulesDraft.map(r => ({ when: r.when, param: r.param,
+    then: { kind: r.then.kind, ...(r.then.targetHex ? { targetHex: r.then.targetHex } : {}) },
+    ...(r.repeat ? { repeat: true } : {}) })) };
+  const res = await (await fetch(`/api/side/${sideId}/rules?${q}`, { method: 'POST',
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })).json();
+  document.getElementById('rules-result').textContent = res.ok ? '✓ rules saved (re-armed)' : `✗ ${res.reason}`;
+  if (res.ok) { rulesDirty = false; refresh(); }
 }
 
 for (const id of ['o-formation', 'o-kind', 'o-path', 'o-emcon', 'o-target',

@@ -51,6 +51,19 @@
   }
   function rdyWord(r) { return r >= 8 ? 'fresh' : r >= 5 ? 'worn' : r >= 2 ? 'spent' : 'broken'; }
   function orderWords(kind) { return String(kind || '').toLowerCase().replace(/_/g, ' '); }
+  // D-049: triggers in plain words, shared by the rules panel and the forces list
+  function triggerWords(when, param) {
+    switch (when) {
+      case 'CONTACT_WITHIN': return `an enemy contact closes within ${param} hexes`;
+      case 'DETECTED_SELF': return 'this unit realizes it has been spotted';
+      case 'TICK_REACHED': return `the clock reaches tick ${param}`;
+      case 'HEX_REACHED': return `it reaches hex ${param}`;
+      case 'RDY_BELOW': return `readiness drops below ${param}`;
+      case 'ALLY_ENGAGED': return `a friendly battle erupts within ${param} hexes`;
+      case 'FUEL_BELOW': return `fuel drops below ${param}`;
+      default: return `${when} ${param}`;
+    }
+  }
 
   function hexDist(a, b) {
     const dq = a.q - b.q, dr = a.r - b.r;
@@ -90,6 +103,16 @@
     let line = head.join(' · ');
     // why the order is waiting, straight from the engine (ext)
     if (f.currentOrder && f.currentOrder.stall) line += `\n   ⏳ ${f.currentOrder.stall}`;
+    // D-049: the queued plan and standing rules, so the programming is visible
+    if (f.plan && f.plan.length) {
+      line += `\n   📋 then: ` + f.plan.map(s =>
+        orderWords(s.kind) + (s.dest ? ` → ${s.dest.q},${s.dest.r}` : '')).join(' · ');
+    }
+    if (f.rules && f.rules.length) {
+      line += `\n   ⚡ rules: ` + f.rules.map(r =>
+        `${r.armed ? '' : '(spent) '}when ${triggerWords(r.when, r.param)} → ${orderWords(r.thenKind)}` +
+        (r.targetHex ? ` @${r.targetHex.q},${r.targetHex.r}` : '')).join(' · ');
+    }
     // Notable gear derived from the record sheets (ECM raises enemy detection TN; a
     // probe or mobile HQ is what lifts the sensor reach shown above).
     const GEAR = { ECM: 'ECM', ANGEL_ECM: 'Angel ECM', BEAGLE: 'active probe',
@@ -271,5 +294,5 @@
 
   global.Fmt = { LADDER, esc, clock, ago, up, fname, facname, posText, cparts, evTick,
                  contactLine, engBriefing, humanize,
-                 emconWord, postureWord, rdyWord, orderWords, ownForce };
+                 emconWord, postureWord, rdyWord, orderWords, triggerWords, ownForce };
 })(window);

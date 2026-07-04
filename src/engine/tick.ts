@@ -34,6 +34,8 @@ function applyDueOrders(s: TruthState, emit: (e: GameEvent) => void): void {
   const due = new Map<string, typeof s.orders[string][]>();
   for (const o of Object.values(s.orders)) {
     if (o.completed || s.tick < o.effectiveTick) continue;
+    // D-049: a plan step waits for its predecessor to finish
+    if (o.afterOrderId && !s.orders[o.afterOrderId]?.completed) continue;
     const f = s.formations[o.formationId];
     if (!f || f.destroyed || f.currentOrderId === o.id) continue;
     // routed formations are uncommandable for the rout window (core §3.2/§7.4)
@@ -49,6 +51,15 @@ function applyDueOrders(s: TruthState, emit: (e: GameEvent) => void): void {
     if (cur && !cur.completed) {
       if (next.effectiveTick < cur.effectiveTick) continue; // stale order: ignore
       emit({ type: 'ORDER_SUPERSEDED', orderId: cur.id, formationId, tick: s.tick });
+    }
+    // D-049: activating a NEWER instruction abandons the old plan — its still-
+    // pending steps are cancelled so a finished new order can't resurrect them.
+    // Steps of the plan being activated share next.issuedTick and survive.
+    for (const o of Object.values(s.orders)) {
+      if (o.formationId !== formationId || o.completed || o.id === next.id) continue;
+      if (o.afterOrderId && o.issuedTick < next.issuedTick) {
+        emit({ type: 'ORDER_CANCELLED', orderId: o.id, formationId, tick: s.tick });
+      }
     }
     emit({ type: 'ORDER_ACTIVATED', orderId: next.id, formationId, tick: s.tick });
   }

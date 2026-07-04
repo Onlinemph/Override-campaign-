@@ -29,16 +29,16 @@ new bridges, new LZ — and every formation is still standing at the right kind 
 ## The defense (Cascara Home Guard, FWLM — `marik`)
 
 - **Every bridgehead is a fortified post**: dug-in infantry, a Browning listening post
-  (the eyes), a Partisan flak battery — and a **demo team** standing watch beside the
-  span with charges wired. The demo teams run a standing conditional: *the moment our
-  side holds a contact within 2 hexes, DEMOLISH the span.* They are off-net out there;
-  the conditional does not care (D-046 — they react to what their own post can see).
+  (the eyes), a Partisan flak battery — and a **demo team** hiding beside the span with
+  charges wired as a **standing rule** (D-049): *the moment our side holds a contact
+  within 2 hexes, DEMOLISH the span.* Rules live on the unit and fire even off-net
+  (D-046 — they react to what their own post can see), whatever the team is doing.
 - **A recon satellite** sweeps the whole river corridor every few pulses. Columns
   moving on the crossings get sampled; the LZ itself sits just outside the track.
 - **Riverwatch Station** (radar) on the hills behind Kingsbridge; the capital spaceport
   radar covers the home hex.
-- **The Long Tom battery** is laid on Kingsbridge's far approach and holds fire — its
-  conditional opens the registered mission the moment a battle erupts within 20 hexes.
+- **The Long Tom battery** is laid on Kingsbridge's far approach and holds fire — a
+  standing rule opens the registered mission the moment a battle erupts within 20 hexes.
 - **The Po reserve company sits on the rail trunk**: 12 hexes/hour to either end of the
   line while everyone else walks.
 - **The Verdigris command line** (D-048): 📡 relay masts strung down the road net —
@@ -81,7 +81,8 @@ bridge, or not at all. Your tools:
 | Adaptive scenario placement (D-047) | change the seed; the script re-sites the war |
 | Engineer toolkit as player orders (D-045) | DEMOLISH / BUILD_BRIDGE from the picker |
 | Demolition from the bank | demo teams beside their spans, charges on a click |
-| Conditionals off-net (D-046) | the wired spans fire without a command net |
+| Standing rules off-net (D-046/D-049) | the wired spans fire without a command net |
+| Plans — queued orders (D-049) | march → dig in → rest, plotted in three clicks |
 | Command relays (D-048) | the mast line to the bridges — hold it, jam it, or cut it |
 | Movement to contact (D-046) | columns check their stride at the outpost line |
 | Artillery FIRE missions (D-045) | the registered battery behind Kingsbridge |

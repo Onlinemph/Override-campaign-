@@ -131,4 +131,32 @@ export function triggerPass(s: TruthState, emit: (e: GameEvent) => void): void {
              triggerIndex: i, newOrder, tick: s.tick });
     }
   }
+
+  // ── D-049: standing rules — reflexes on the FORMATION, whatever it is doing ──
+  // A fired rule spawns its thenOrder (which supersedes the current order and any
+  // queued plan) and disarms; `repeat` rules re-arm once the trigger goes FALSE
+  // again (edge-triggered — "enemy within 3" firing every tick would spam orders),
+  // one-shot rules stay spent. Rules run off-net, like conditionals: pre-programmed.
+  for (const f of Object.values(s.formations)) {
+    if (f.destroyed || !f.rules?.length) continue;
+    for (let i = 0; i < f.rules.length; i++) {
+      const rule = f.rules[i];
+      const on = evalTrigger(s, f.id, f.sideId, rule.trigger);
+      if (rule.armed !== false) {
+        if (!on) continue;
+        const newOrder: Order = {
+          ...rule.thenOrder,
+          id: `rule:${f.id}:${i}:${s.tick}`,
+          formationId: f.id,
+          sideId: f.sideId,
+          issuedTick: s.tick,
+          effectiveTick: s.tick + 1,
+          conditionals: [],
+        };
+        emit({ type: 'RULE_FIRED', formationId: f.id, ruleIndex: i, newOrder, tick: s.tick });
+      } else if (!on && rule.repeat) {
+        emit({ type: 'RULE_REARMED', formationId: f.id, ruleIndex: i });
+      }
+    }
+  }
 }

@@ -703,8 +703,11 @@ const server = createServer(async (req, res) => {
       if (url.searchParams.get('t') !== tokenFor(sideId)) return json(res, 403, { error: 'bad token' });
       const f = campaign.truth.formations[String(url.searchParams.get('formationId'))];
       if (!f || f.sideId !== sideId) return json(res, 400, { error: 'not your formation' });
+      // D-049: fromQ/fromR route a plan's later step from the previous step's end
+      const fromQ = url.searchParams.get('fromQ'), fromR = url.searchParams.get('fromR');
       const route = findRoute(campaign.truth, f,
-        { q: Number(url.searchParams.get('q')), r: Number(url.searchParams.get('r')) }, sideId);
+        { q: Number(url.searchParams.get('q')), r: Number(url.searchParams.get('r')) }, sideId,
+        fromQ !== null && fromR !== null ? { q: Number(fromQ), r: Number(fromR) } : undefined);
       if (!route) return json(res, 200, { path: [], etaTicks: 0 });
       return json(res, 200, { path: route.path.map(p => ({ q: p.q, r: p.r })),
                               etaTicks: route.etaTicks });
@@ -765,6 +768,69 @@ const server = createServer(async (req, res) => {
           q: Number(b.targetHex.q), r: Number(b.targetHex.r) } } : {}),
       };
       const result = campaign.issueOrder(order);
+      if (result.ok) broadcast();
+      return json(res, result.ok ? 200 : 400, result);
+    }
+
+    // ── D-049: a PLAN — a queue of steps executed in sequence ──
+    const sidePlan = path.match(/^\/api\/side\/([^/]+)\/plan$/);
+    if (sidePlan && req.method === 'POST') {
+      const b = await readBody(req);
+      const sideId = sidePlan[1];
+      if (url.searchParams.get('t') !== tokenFor(sideId)) return json(res, 403, { ok: false, reason: 'bad token' });
+      const f = campaign.truth.formations[b.formationId];
+      if (!f || f.sideId !== sideId) return json(res, 400, { ok: false, reason: 'not your formation' });
+      if (!Array.isArray(b.steps) || !b.steps.length) return json(res, 400, { ok: false, reason: 'empty plan' });
+      const theaterId = f.pos.kind === 'ground' ? f.pos.theaterId : '';
+      const toPath = (pts: { q: number; r: number }[] = []): GroundPos[] =>
+        pts.map(p => ({ kind: 'ground', theaterId, q: p.q, r: p.r }));
+      const tick = campaign.truth.tick;
+      const orders: Order[] = b.steps.map((st: any, i: number) => ({
+        id: `plan:${sideId}:${tick}:${b.formationId}:${i}`,
+        sideId, formationId: b.formationId, issuedTick: tick, effectiveTick: tick + 1,
+        kind: st.kind,
+        path: toPath(st.path),
+        conditionals: [],
+        ...(st.targetContactId ? { targetContactId: st.targetContactId } : {}),
+        ...(st.targetFormationId ? { targetFormationId: st.targetFormationId } : {}),
+        ...(st.emconOverride ? { emconOverride: st.emconOverride } : {}),
+        ...(st.airSpeed ? { airSpeed: st.airSpeed } : {}),
+        ...(st.loiterTicks !== undefined ? { loiterTicks: Number(st.loiterTicks) } : {}),
+        ...(st.targetHex ? { targetHex: { kind: 'ground' as const,
+          theaterId: st.targetHex.theaterId || theaterId || Object.keys(campaign.truth.theaters)[0],
+          q: Number(st.targetHex.q), r: Number(st.targetHex.r) } } : {}),
+      }));
+      const result = campaign.issuePlan(orders);
+      if (result.ok) broadcast();
+      return json(res, result.ok ? 200 : 400, result);
+    }
+
+    // ── D-049: standing rules — replace the formation's if-then reflexes ──
+    const sideRules = path.match(/^\/api\/side\/([^/]+)\/rules$/);
+    if (sideRules && req.method === 'POST') {
+      const b = await readBody(req);
+      const sideId = sideRules[1];
+      if (url.searchParams.get('t') !== tokenFor(sideId)) return json(res, 403, { ok: false, reason: 'bad token' });
+      const f = campaign.truth.formations[b.formationId];
+      if (!f || f.sideId !== sideId) return json(res, 400, { ok: false, reason: 'not your formation' });
+      if (!Array.isArray(b.rules)) return json(res, 400, { ok: false, reason: 'rules must be an array' });
+      const theaterId = f.pos.kind === 'ground' ? f.pos.theaterId : '';
+      const rules = b.rules.map((r: any) => ({
+        trigger: { when: r.when, param: r.param },
+        thenOrder: {
+          id: 'ph', sideId, formationId: b.formationId, issuedTick: 0, effectiveTick: 0,
+          kind: r.then.kind,
+          ...(r.then.path ? { path: r.then.path.map((p: any) =>
+            ({ kind: 'ground' as const, theaterId, q: p.q, r: p.r })) } : {}),
+          ...(r.then.targetHex ? { targetHex: { kind: 'ground' as const,
+            theaterId: r.then.targetHex.theaterId || theaterId,
+            q: Number(r.then.targetHex.q), r: Number(r.then.targetHex.r) } } : {}),
+          ...(r.then.targetContactId ? { targetContactId: r.then.targetContactId } : {}),
+          ...(r.then.emconOverride ? { emconOverride: r.then.emconOverride } : {}),
+        } as Order,
+        ...(r.repeat ? { repeat: true } : {}),
+      }));
+      const result = campaign.setRules(b.formationId, rules);
       if (result.ok) broadcast();
       return json(res, result.ok ? 200 : 400, result);
     }

@@ -23,6 +23,11 @@ export interface OwnFormationView {
   currentOrder?: { id: Id; kind: string; completed: boolean;
                    stall?: string /* ext: why it's waiting, in plain words */;
                    path?: Array<{ q: number; r: number }> };
+  /** D-049: queued plan steps after the current order, in execution order. */
+  plan?: Array<{ kind: string; dest?: { q: number; r: number } }>;
+  /** D-049: standing rules — persistent if-then reflexes, shown & edited in the panel. */
+  rules?: Array<{ when: string; param: number | string; thenKind: string;
+                  armed: boolean; repeat: boolean; targetHex?: { q: number; r: number } }>;
   units: OwnUnitView[];
   inSupply: boolean;
   // ext: carrier ops — your own bays and rides, always visible

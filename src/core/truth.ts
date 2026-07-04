@@ -2,7 +2,8 @@
  * core/truth.ts — campaign lifecycle: genesis, replay, the run loop with compression.
  */
 import type {
-  AirPos, BattleResult, Emcon, Engagement, GroundPos, HandoffPackage, Id, Order, TruthState,
+  AirPos, BattleResult, Emcon, Engagement, GroundPos, HandoffPackage, Id, Order, StandingRule,
+  TruthState,
 } from './types.js';
 import {
   airHexOver, airQR, climbFp, isFlight, landingFp, takeoffFp,
@@ -207,6 +208,50 @@ export class Campaign {
     const stamped: Order = { ...order, issuedTick: this.truth.tick,
                              effectiveTick: this.truth.tick + 1 };
     const e: GameEvent = { type: 'ORDER_ISSUED', order: stamped };
+    this.store.append(e);
+    applyEvent(this.truth, e);
+    return { ok: true };
+  }
+
+  /**
+   * D-049: issue a PLAN — a queue of orders executed in sequence. All steps share
+   * this tick's issuedTick (so a later plan cancels them as a unit); each step
+   * after the first carries afterOrderId and only becomes due when its
+   * predecessor completes. One net check covers the whole transmission.
+   */
+  issuePlan(orders: Order[]): { ok: true } | { ok: false; reason: string } {
+    if (!orders.length) return { ok: false, reason: 'empty plan' };
+    const f = this.truth.formations[orders[0].formationId];
+    if (!f || f.destroyed) return { ok: false, reason: 'no such formation' };
+    if (f.routUntilTick != null && this.truth.tick < f.routUntilTick) {
+      return { ok: false, reason: 'formation is routed and uncommandable (core 3.2/7.4)' };
+    }
+    if (!isFormationOnNet(this.truth, f)) {
+      return { ok: false, reason: 'formation is off-net: plan undeliverable (core 4.2) — '
+        + 'extend the net with a relay (a Mobile HQ pushed forward, or a COMM_RELAY mast)' };
+    }
+    let prevId: string | undefined;
+    for (const order of orders) {
+      const stamped: Order = { ...order, formationId: f.id, sideId: f.sideId,
+        issuedTick: this.truth.tick, effectiveTick: this.truth.tick + 1,
+        ...(prevId ? { afterOrderId: prevId } : {}) };
+      const e: GameEvent = { type: 'ORDER_ISSUED', order: stamped };
+      this.store.append(e);
+      applyEvent(this.truth, e);
+      prevId = stamped.id;
+    }
+    return { ok: true };
+  }
+
+  /** D-049: replace a formation's standing rules (net-gated like any transmission). */
+  setRules(formationId: Id, rules: StandingRule[]):
+      { ok: true } | { ok: false; reason: string } {
+    const f = this.truth.formations[formationId];
+    if (!f || f.destroyed) return { ok: false, reason: 'no such formation' };
+    if (!isFormationOnNet(this.truth, f)) {
+      return { ok: false, reason: 'formation is off-net: new rules undeliverable (core 4.2)' };
+    }
+    const e: GameEvent = { type: 'RULES_SET', formationId, rules, tick: this.truth.tick };
     this.store.append(e);
     applyEvent(this.truth, e);
     return { ok: true };

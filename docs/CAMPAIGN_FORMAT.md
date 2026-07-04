@@ -196,6 +196,28 @@ map. `secret: true` (pirate points) hides the node from players until surveyed.
 `objective: { vpPerDay, ownerSideId }` makes a held node score VP/day. Lanes need
 `distanceAU > 0` and both ends to exist.
 
+### Standing rules (D-049)
+
+A formation can carry **rules** — persistent if-then reflexes evaluated every step,
+whatever order it is running, even off-net:
+
+```jsonc
+{ "id": "red-sap-0", "...": "...",
+  "rules": [
+    { "when": "CONTACT_WITHIN", "param": 2,
+      "then": { "kind": "DEMOLISH", "targetHex": { "q": 21, "r": 33 } } },
+    { "when": "RDY_BELOW", "param": 4, "then": { "kind": "REST" }, "repeat": true }
+  ] }
+```
+
+`when`/`param` use the trigger vocabulary below; `then` takes `kind` plus optional
+`path`, `targetHex`, `targetContactId`, `emconOverride`. A fired rule spawns its
+then-order (which supersedes the current order and cancels any queued plan) and
+disarms; `repeat: true` re-arms it when the trigger goes false again (edge-triggered).
+Rules are the right home for wired demolition charges, registered fire missions, and
+fall-back reflexes — they survive order changes, where conditionals die with their
+order.
+
 ## `orders[]` — pre-plotted opening moves (optional)
 
 ```jsonc
@@ -226,9 +248,12 @@ DEMOLISH/BUILD_BRIDGE (the work site — must be in or beside the engineer's hex
 DETECTED_SELF TICK_REACHED HEX_REACHED FUEL_BELOW RDY_BELOW ALLY_ENGAGED`, with
 `param`); a `then` order may carry `path`, `targetContactId`, or `targetHex` (a wired
 demolition charge is a conditional with `then: { "kind": "DEMOLISH", "targetHex":
-{...} }`). Two gotchas: conditionals die with their order, and instant orders (HIDE,
-DEMOLISH) complete immediately — a stationary formation that must keep a trigger armed
-wants a one-waypoint `PATROL` of its own hex as its standing order.
+{...} }`). An order may carry `afterOrderId` naming another order in the file: it becomes a
+PLAN STEP that only activates once the named order completes (D-049 — steps of one plan
+share an issuedTick; any newer activation cancels the stale remainder). Gotcha:
+conditionals die with their order, and instant orders (HIDE, DEMOLISH) complete
+immediately — a trigger that must outlive its order belongs in the formation's
+`rules[]`, not in `conditionals[]`.
 
 ## `markers[]` — battlefield furniture (optional)
 

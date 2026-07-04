@@ -239,7 +239,27 @@ more than losing a lance; losing a mid-chain relay can hurt more than either.
 
 A fired conditional replaces the current order with its embedded then-order. This is
 how you script a picket that runs home when spotted, or a reserve that marches to the
-guns.
+guns. **Gotcha**: conditionals live on their order and die when it completes — for a
+reflex that must persist, use a standing rule instead.
+
+**Standing rules** (D-049) are the better tool for most of this: if-then reflexes that
+live on the **formation**, not on any order. Edit them in the ⚡ panel under the order
+form (plain-language triggers, a kind picker, 📍 to aim at your last map click). Rules:
+
+- fire **whatever the unit is doing** — mid-plan, idle, or sitting on a completed order;
+- fire **off-net**, like conditionals (they're pre-programmed);
+- **interrupt** the current order and cancel any queued plan when they trip;
+- are **one-shot** by default; a `repeat` rule re-arms when its trigger goes false
+  again (edge-triggered — no order spam while a condition stays true);
+- are **replaced as a set** when you save (and re-arm) — changing them needs the unit
+  on-net, like any transmission.
+
+**Plans** (D-049): the ➕ *then…* button queues the current form as the next step —
+*march there → dig in → rest* — and 🚀 sends the whole queue. Each step activates when
+the previous completes; auto-route plots later legs from the previous step's
+destination. Any newer order (yours, or a fired rule/conditional) abandons the rest of
+the plan — cancelled steps never resurrect. Plans + rules compose: the itinerary is the
+plan, the reflexes are the rules.
 
 ---
 

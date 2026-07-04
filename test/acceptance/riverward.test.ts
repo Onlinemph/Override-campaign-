@@ -57,22 +57,25 @@ describe.skipIf(!has)('OPERATION RIVERWARD — the bridge war on a generated con
     expect(Object.values(t.units).find(u => u.name === 'Merlin 1')?.class).toBe('VTOL');
     expect(tagsOf('Argent Span Post')).toContain('HQ');
 
-    // every demo team stands watch at its bridgehead, charges wired on a real span
+    // every demo team hides at its bridgehead, charges wired on a real span as a
+    // STANDING RULE (D-049) — it survives any order and fires off-net
     for (const i of [0, 1, 2]) {
-      const o = t.orders[`o-sap-${i}`];
-      expect(o.kind).toBe('PATROL'); // the standing order that keeps conditionals armed
-      expect(o.conditionals[0].trigger.when).toBe('CONTACT_WITHIN');
-      const then = o.conditionals[0].thenOrder;
-      expect(then.kind).toBe('DEMOLISH');
-      const wired = hexAt(t, then.targetHex as GroundPos);
+      expect(t.orders[`o-sap-${i}`].kind).toBe('HIDE'); // they can genuinely hide now
+      const rule = t.formations[`red-sap-${i}`].rules![0];
+      expect(rule.trigger.when).toBe('CONTACT_WITHIN');
+      expect(rule.thenOrder.kind).toBe('DEMOLISH');
+      const wired = hexAt(t, rule.thenOrder.targetHex as GroundPos);
       expect(wired.terrain).toBe('WATER');
       expect(wired.infra).toContain('BRIDGE');
     }
+    // the battery's registered fires are a rule too — it needs no order at all
+    expect(t.formations['red-arty'].rules![0].trigger.when).toBe('ALLY_ENGAGED');
+    expect(t.formations['red-arty'].rules![0].thenOrder.kind).toBe('FIRE');
 
     // the route to the capital crosses the great river on a wired span
     const span = contestedSpan(t);
     const wiredSpans = [0, 1, 2].map(i =>
-      t.orders[`o-sap-${i}`].conditionals[0].thenOrder.targetHex as GroundPos);
+      t.formations[`red-sap-${i}`].rules![0].thenOrder.targetHex as GroundPos);
     expect(wiredSpans.some(w => w.q === span.q && w.r === span.r)).toBe(true);
   });
 

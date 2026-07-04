@@ -1151,3 +1151,33 @@ bridgehead — byte-exact replay throughout.
    mast and watches the Argent bridgehead go dark, orders bouncing with the relay hint.
    Motivation on the record: before this, the whole river line was off-net and the red
    players could not re-order their own bridge guards at all.
+
+## D-049 ✅ Plans & standing rules: command that reads like intent
+The command model grew the two things every session kept wanting: sequence and reflex.
+1. **Plans (order queues)**: an order may carry `afterOrderId` — it becomes due only
+   when the named order completes. The player UI builds these with a ➕ *then…* button
+   (steps strip, 🚀 send): *march there → dig in → rest* is now three clicks, and
+   auto-route plots later legs from the PREVIOUS step's destination (the route API
+   takes fromQ/fromR). All steps of a plan share an issuedTick; activating any NEWER
+   instruction cancels the stale remainder (ORDER_CANCELLED) — without that, a finished
+   new order would resurrect a two-day-old itinerary. One net check covers the whole
+   transmission (Campaign.issuePlan).
+2. **Standing rules**: `formation.rules[]` — if-then reflexes that live on the UNIT,
+   not on any order. Evaluated every step whatever the formation is doing, they fire
+   off-net (pre-programmed, like conditionals), spawn their then-order (which
+   interrupts the current order AND cancels any queued plan), and disarm; `repeat`
+   rules re-arm when the trigger goes false again (edge-triggered, so "enemy within 3"
+   can't spam an order per tick). RULES_SET replaces a formation's set (net-gated,
+   re-armed); RULE_FIRED/RULE_REARMED keep every transition in the log — replay
+   byte-exact, no hidden state.
+3. **The UI explains itself**: the ⚡ rules panel edits rules with plain-language
+   trigger dropdowns ("an enemy contact closes within N hexes"), the ORDER_META kind
+   picker, 📍 aim-at-last-click, and a live sentence preview of each rule; the forces
+   panel shows every unit's 📋 queued plan and ⚡ rules, spent ones marked. Conditionals
+   remain (order-scoped by design) but the guide now routes persistent reflexes to
+   rules.
+4. **RIVERWARD retrofit**: the PATROL-in-place hack is dead. The demo teams' charges,
+   the battery's registered fires, and the screen's been-seen fallback are all standing
+   rules on their formations — the sappers genuinely HIDE now, the battery needs no
+   order at all, and the whole opening act replays identically (the acceptance test
+   runs the same beats on the new machinery).
