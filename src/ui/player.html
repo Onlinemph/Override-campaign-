@@ -238,7 +238,14 @@ function notifyIntel(nReports, nContacts) {
 }
 async function refresh() {
   const v = await (await fetch(`/api/side/${sideId}/view?${q}`)).json();
-  if (v.error) { document.getElementById('title').textContent = 'OVERRIDE — ' + v.error; return; }
+  if (v.error) {
+    document.getElementById('title').textContent = 'OVERRIDE — ' + v.error;
+    const n = document.getElementById('notify');
+    n.style.display = '';
+    n.textContent = '⚠ This link is not valid for the campaign the GM is running now ' +
+      '(links change when the scenario changes). Ask the GM for your new link.';
+    return;
+  }
   // new-intel notification (reports accumulate; contacts may rise)
   const rc = v.reports.length, cc = v.contacts.length;
   if (prevReportCount !== null) {

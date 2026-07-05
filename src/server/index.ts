@@ -311,7 +311,17 @@ const server = createServer(async (req, res) => {
     const playerPage = path.match(/^\/player\/([^/]+)(?:\/([^/]+))?$/);
     if (playerPage) {
       const sideId = playerPage[1], token = playerPage[2];
-      if (!campaign.truth.sides[sideId]) return json(res, 404, { error: 'no such side' });
+      if (!campaign.truth.sides[sideId]) {
+        // D-054.2: links die when the GM switches scenarios (each campaign has its
+        // own sides AND tokens) — say so instead of a bare JSON shrug
+        const safe = sideId.replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+        res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' });
+        return res.end('<body style="font:14px monospace;background:#0b0e13;color:#c8d0da;padding:40px">' +
+          `<h2>No side “${safe}” in the current campaign</h2>` +
+          `<p>The GM is running <b>${campaign.truth.config.name.replace(/[&<>]/g, '')}</b>, ` +
+          'which has different sides. Links change whenever the campaign changes — ' +
+          'ask the GM for your new link (their screen lists them under <b>Player links</b>).</p></body>');
+      }
       if (token !== tokenFor(sideId)) {
         res.writeHead(403, { 'content-type': 'text/html' });
         return res.end('<body style="font:14px monospace;background:#0b0e13;color:#c8d0da;padding:40px">' +
@@ -438,6 +448,9 @@ const server = createServer(async (req, res) => {
         campaign = Campaign.create(truth);          // fresh in-memory session
         activeLogPath = undefined;                  // not persisted unless restarted with --log
         broadcast();
+        // D-054.2: sides AND tokens just changed — hand the GM the new links
+        console.log(`\nCampaign switched to "${truth.config.name}" — the player links have CHANGED:`);
+        printLinks();
         return json(res, 200, { ok: true, name: truth.config.name });
       } catch (e: any) {
         return json(res, 200, { ok: false, reason: String(e?.message ?? e).slice(0, 400) });
@@ -903,7 +916,7 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 const PORT = Number(process.env.PORT ?? 8420);
-server.listen(PORT, () => {
+function printLinks() {
   // D-054: the shareable-links banner — hosting for friends means handing out URLs
   // that work from THEIR machines, so lead with the LAN address, not localhost.
   const lanIps = Object.values(networkInterfaces()).flat()
@@ -929,4 +942,5 @@ server.listen(PORT, () => {
     console.log(`  │ Other addresses on this machine: ${lanIps.slice(1).join(', ')}`);
   }
   console.log('  └─────────────────────────────────────────────────────────────');
-});
+}
+server.listen(PORT, printLinks);

@@ -198,18 +198,18 @@ let curTheater = null;
 attachPanZoom(document.getElementById('map'));
 attachPanZoom(document.getElementById('sysmap'));
 
-let linksLoaded = false;
-async function loadLinks() {
+let linksFor = ''; // seed the links were fetched for — a switch invalidates them (D-054.2)
+async function loadLinks(seed) {
   const links = await (await fetch('/api/gm/links')).json();
   document.getElementById('links').innerHTML = links.map(l =>
     `<div class="report">${l.name} <small>[${l.sideId}]</small><br>` +
     `<a href="${l.url}" target="_blank">${location.origin}${l.url}</a></div>`).join('');
-  linksLoaded = true;
+  linksFor = seed;
 }
 
 async function refresh() {
-  if (!linksLoaded) loadLinks();
   const s = await (await fetch('/api/gm/state')).json();
+  if (linksFor !== s.truth.seed) loadLinks(s.truth.seed);
   lastState = s;
   const t = s.truth;
   const modeNote = { WATCH: '6-hour skips', PULSE: '1-hour steps', CONTACT: '6-min turns' }[t.clockMode] || '';
