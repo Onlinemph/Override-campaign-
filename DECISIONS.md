@@ -1327,3 +1327,26 @@ fixed in the other direction).
    extractTags matches the weapon names as printed on the sheet ("Long Tom",
    "Sniper Artillery/Cannon", "Arrow IV"…), so authoring a Mobile Long Tom by model
    name gives the formation its tubes, range, and now its strength automatically.
+
+## D-053 ✅ The shell falls mainly on the morale: suppression, rare direct hits, cruise missiles
+D-052 left artillery a reliable kill engine — with a spotter and a decent battery,
+nearly every mission stepped a unit down the damage ladder. The user's ruling: an
+18 km operational hex is a DISPERSED formation, and shellfire's real job at this
+scale is to slow and rattle, with even direct hits being very rare.
+1. **Suppression is the product**: a mission that lands (same 2d6 + BR/5 + intel roll)
+   pins every enemy formation in the target hex AND its six neighbors —
+   `suppressedUntil` = now + SUPPRESS_TICKS (1 hour), movement × SUPPRESS_OMP_FACTOR
+   (half pace) in movementPass — and shaves SUPPRESS_RDY (soft targets double) in the
+   sheaf itself. A standing FIRE mission re-pins every step while ammo holds: the
+   registered barrage is now a genuine area-denial tool that slows an assault
+   without deleting it.
+2. **Direct hits are rare and separate**: per formation under the sheaf, one 2d6 ≥
+   DIRECT_HIT_TN (11; massed batteries +1) — ~8%. On a hit, one unit takes one step
+   (soft targets two). A 24-seed test asserts the rarity holds.
+3. **Buildings are the exception** — they can't disperse, so facility bombardment
+   keeps its D-052 teeth (1 + massed + margin steps per hit).
+4. **Cruise missiles wired** (the last D-052 fossil): CRUISE_50/70/90/120 tags derive
+   from the card ("Cruise Missile/90"), ranges 25/35/45/60 halved hexes, battery
+   weight 4 per bird — the biggest tag on the sheet wins.
+5. Player surface: 💥 suppressed line on own forces (with the half-pace explanation),
+   war-diary lines for pinned formations, FIRES.DIRECT_HIT_TN live in the manual.

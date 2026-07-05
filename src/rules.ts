@@ -216,7 +216,7 @@ export const ARTILLERY_RANGE_HEXES = {
   SNIPER: 9,
   THUMPER: 10,
   LONG_TOM: 15,
-  CRUISE_50: 25, CRUISE_70: 35, CRUISE_90: 45, CRUISE_120: 60, // still unwired (no tag)
+  CRUISE_50: 25, CRUISE_70: 35, CRUISE_90: 45, CRUISE_120: 60,
 } as const;
 /** Unit tags that mark an artillery piece, mapped to its operational range key. */
 export const ARTILLERY_TAG_RANGE: Record<string, number> = {
@@ -224,6 +224,11 @@ export const ARTILLERY_TAG_RANGE: Record<string, number> = {
   SNIPER: ARTILLERY_RANGE_HEXES.SNIPER,
   THUMPER: ARTILLERY_RANGE_HEXES.THUMPER,
   LONG_TOM: ARTILLERY_RANGE_HEXES.LONG_TOM,
+  // D-053: cruise missiles finally wired (tags derive from the card like the tubes)
+  CRUISE_50: ARTILLERY_RANGE_HEXES.CRUISE_50,
+  CRUISE_70: ARTILLERY_RANGE_HEXES.CRUISE_70,
+  CRUISE_90: ARTILLERY_RANGE_HEXES.CRUISE_90,
+  CRUISE_120: ARTILLERY_RANGE_HEXES.CRUISE_120,
 };
 export const COUNTER_BATTERY_AUTO_CONTACT_LEVEL = 3; // firing hex revealed at CONTACT
 // ── Combat drops (core §8.3) ─────────────────────────────────────────────────
@@ -245,6 +250,12 @@ export const FIRES = {
   // D-052: sustained fire drains the magazine — after each shot, 2d6 ≤ this walks
   // every firing tube one ammo state down (FULL → PARTIAL → DRY; ~12-shot states)
   AMMO_DEPLETION_ON: 3,
+  // D-053 (user ruling): operational artillery mostly SLOWS and RATTLES a dispersed
+  // formation — destroying units with it is rare, even under a good sheaf.
+  SUPPRESS_TICKS: 10,       // a shelled formation stays suppressed for an hour
+  SUPPRESS_RDY: 1,          // readiness shaved per barrage (soft targets double)
+  SUPPRESS_OMP_FACTOR: 0.5, // movement halved under shellfire (target hex + adjacent)
+  DIRECT_HIT_TN: 11,        // per formation under the sheaf: 2d6 (+1 massed) ≥ this
 } as const;
 
 // ── Engineers & minefields (core §9.3) — parked for M2 ─────────────────────

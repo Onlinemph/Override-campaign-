@@ -91,7 +91,8 @@ export function artyStrengthFromWeapons(parsed: ParsedCardLike): number {
     const mult = label.match(/^x(\d+)\b/i);
     const count = mult ? Number(mult[1]) : 1;
     const n = label.toLowerCase();
-    if (/long\s*tom/.test(n)) total += 3 * count;
+    if (/cruise\s*missile/.test(n)) total += 4 * count; // D-053: a city-killer round
+    else if (/long\s*tom/.test(n)) total += 3 * count;
     else if (/sniper\s*(artillery|cannon)|arrow\s*iv/.test(n)) total += 2 * count;
     else if (/thumper\s*(artillery|cannon)/.test(n)) total += 1 * count;
   }
@@ -140,6 +141,11 @@ export function extractTags(text: string, motionType?: string): string[] {
   if (has(/sniper\s*(artillery|cannon)/i)) tags.add('SNIPER');
   if (has(/thumper\s*(artillery|cannon)/i)) tags.add('THUMPER');
   if (has(/arrow\s*iv/i)) tags.add('ARROW_IV');
+  // D-053: cruise missiles wired — the biggest tag on the sheet wins
+  if (has(/cruise\s*missile\s*\/?\s*120/i)) tags.add('CRUISE_120');
+  else if (has(/cruise\s*missile\s*\/?\s*90/i)) tags.add('CRUISE_90');
+  else if (has(/cruise\s*missile\s*\/?\s*70/i)) tags.add('CRUISE_70');
+  else if (has(/cruise\s*missile\s*\/?\s*50/i)) tags.add('CRUISE_50');
 
   if ((motionType ?? '').toLowerCase().includes('wheeled')) tags.add('WHEELED');
   if (/hover|wige/.test((motionType ?? '').toLowerCase())) tags.add('HOVER');
@@ -172,7 +178,8 @@ export function deriveUnitFields(
   // D-050: a battery's punch comes from its actual guns
   const flak = tags.includes('AA') ? flakStrengthFromWeapons(parsed) : undefined;
   // D-052: same treatment for artillery — the tubes on the sheet grade the battery
-  const arty = tags.some(t => ['ARROW_IV', 'SNIPER', 'THUMPER', 'LONG_TOM'].includes(t))
+  const arty = tags.some(t => ['ARROW_IV', 'SNIPER', 'THUMPER', 'LONG_TOM',
+                               'CRUISE_50', 'CRUISE_70', 'CRUISE_90', 'CRUISE_120'].includes(t))
     ? artyStrengthFromWeapons(parsed) : undefined;
   const base = { bv, tags, ...(tonnage !== undefined ? { tonnage } : {}),
                  ...(flak !== undefined ? { flak } : {}),

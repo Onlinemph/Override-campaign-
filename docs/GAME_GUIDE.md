@@ -335,21 +335,32 @@ spotter holds LOS to the target — or the hex holds an enemy facility your side
 **spotted** (D-052: buildings hold still; a photographed base is a surveyed grid).
 A waiting battery explains itself: no tubes, dry magazines, no target, or out of range.
 
-**The guns are real now (D-052):**
+**The guns are real now (D-052/D-053):**
 - **Ranges (halved from the 500 m mapsheet printings — D-052):** Arrow IV **4** hexes,
-  Sniper **9**, Thumper **10**, Long Tom **15** (a Long Tom still throws 270 km).
+  Sniper **9**, Thumper **10**, Long Tom **15** (a Long Tom still throws 270 km);
+  cruise missiles are wired too — **25/35/45/60** for the /50–/120 birds.
+- **What a barrage does to troops (D-053)**: an 18 km hex is a dispersed column, not a
+  parking lot, so shellfire **suppresses** rather than kills. A mission that lands pins
+  every enemy formation in the target hex **and its six neighbors** at **half movement
+  for an hour**, and shaves **readiness −1** in the sheaf itself (soft targets −2).
+  Actual unit damage needs a separate **direct hit** roll per formation — 2d6 ≥ **11**
+  (massed batteries +1) — about an 8% chance: rare, exactly as it should be. Sustained
+  fire under a standing FIRE mission re-pins every step: artillery's operational job is
+  to slow, rattle, and canalize an approach; the killing is done on the tabletop.
 - **Batteries are graded by their tubes**: each unit's `arty` strength derives from the
-  card (Long Tom 3, Sniper/Arrow IV 2, Thumper 1, counted per mount); a **massed
-  battery (strength ≥ 6) tears an extra damage step** out of everything it lands on.
+  card (cruise missile 4, Long Tom 3, Sniper/Arrow IV 2, Thumper 1, counted per mount);
+  a **massed battery (strength ≥ 6)** adds +1 to direct-hit rolls and tears an extra
+  step out of buildings.
 - **Magazines are finite**: every fire mission risks (2d6 ≤ 3) walking the battery's
   tubes one ammo state down — FULL → PARTIAL → DRY, roughly a dozen missions per
   state. A dry battery falls silent until it REARMs from a depot, factory, or convoy.
-- **Shells flatten buildings**: enemy facilities in the target hex take bombardment
-  damage on the same ladder (OK → DAMAGED → CRIPPLED → DESTROYED). A **DESTROYED**
-  facility is out of the war: its capital battery is silenced, its radar goes dark,
-  it drops off the command net, its runway is cratered (VSTOL only), and its supply
-  points are gone. This is the standoff counter to a photographed capital emplacement —
-  the fourth answer alongside burning its magazine, routing around it, and taking the
+- **Shells flatten buildings** — the exception to the rarity rule, because buildings
+  can't disperse: enemy facilities in the target hex take bombardment damage on the
+  ladder (OK → DAMAGED → CRIPPLED → DESTROYED) on every hit. A **DESTROYED** facility
+  is out of the war: its capital battery is silenced, its radar goes dark, it drops
+  off the command net, its runway is cratered (VSTOL only), and its supply points are
+  gone. This is the standoff counter to a photographed capital emplacement — the
+  fourth answer alongside burning its magazine, routing around it, and taking the
   ground.
 
 ### Air orders (flights, VTOL-carriers excluded — flights are ASF/conventional fighters and DropShips)

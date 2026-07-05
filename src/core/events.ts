@@ -37,6 +37,7 @@ export type GameEvent =
   | { type: 'HEXES_SCOUTED'; sideId: Id; keys: string[] }
   | { type: 'FACILITY_SPOTTED'; facilityId: Id; sideId: Id; tick: Tick } // D-051.1
   | { type: 'FACILITY_DAMAGED'; facilityId: Id; damage: DamageState; tick: Tick } // D-052
+  | { type: 'FORMATION_SUPPRESSED'; formationId: Id; untilTick: Tick; tick: Tick } // D-053
   | { type: 'SAT_PASS'; satelliteId: Id; tick: Tick; nextPassTick: Tick }
   | { type: 'FORMATION_DESTROYED'; formationId: Id; reason: string; tick: Tick }
   | { type: 'GM_NOTE'; text: string; tick: Tick }
@@ -302,6 +303,12 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
       if (fac && !(fac.knownTo ?? []).includes(e.sideId)) {
         fac.knownTo = [...(fac.knownTo ?? []), e.sideId];
       }
+      break;
+    }
+
+    case 'FORMATION_SUPPRESSED': {
+      const f = s.formations[e.formationId];
+      if (f) f.suppressedUntil = e.untilTick;
       break;
     }
 

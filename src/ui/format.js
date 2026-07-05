@@ -103,6 +103,8 @@
     let line = head.join(' · ');
     // why the order is waiting, straight from the engine (ext)
     if (f.currentOrder && f.currentOrder.stall) line += `\n   ⏳ ${f.currentOrder.stall}`;
+    // D-053: pinned under shellfire — half pace until the barrage lifts
+    if (f.suppressed) line += `\n   💥 suppressed — under shellfire, moving at half pace`;
     // D-049: the queued plan and standing rules, so the programming is visible
     if (f.plan && f.plan.length) {
       line += `\n   📋 then: ` + f.plan.map(s =>
@@ -232,6 +234,7 @@
       case 'HEXES_SCOUTED': return { cls: 'noise', icon: '·', msg: `${up(e.sideId)} scouts ${e.keys.length} hex(es)` };
       case 'FACILITY_SPOTTED': return { cls: '', icon: '📸', msg: `${up(e.sideId)} spots enemy installation ${FAC(e.facilityId)}` };
       case 'FACILITY_DAMAGED': return { cls: 'warn', icon: '💥', msg: `${FAC(e.facilityId)} hit by bombardment — ${e.damage}` };
+      case 'FORMATION_SUPPRESSED': return { cls: 'noise', icon: '💥', msg: `${F(e.formationId)} pinned under shellfire (half pace)` };
       case 'SAT_PASS': return { cls: 'noise', icon: '🛰', msg: `satellite ${e.satelliteId} sweeps overhead` };
       case 'FORMATION_FIRED': return { cls: 'noise', icon: '✸', msg: `${F(e.formationId)} fires (gives away its hex)` };
 

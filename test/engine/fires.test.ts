@@ -1,6 +1,9 @@
 /** M7 — artillery fire missions, counter-battery, the spotter loop (core §9.1–9.2). */
 import { describe, expect, it } from 'vitest';
 import { batteryRange, batteryStrength, firesPass } from '../../src/engine/fires.js';
+import { movementPass } from '../../src/engine/movement.js';
+import { extractTags } from '../../src/roster/derive.js';
+import { FIRES } from '../../src/rules.js';
 import { capitalBatteriesNear } from '../../src/engine/flak.js';
 import { netNodesOf } from '../../src/engine/net.js';
 import { artyStrengthFromWeapons } from '../../src/roster/derive.js';
@@ -22,7 +25,7 @@ function fireOrder(truth: TruthState, fId: string, o: Partial<Order>): void {
 }
 
 describe('M7 — fire missions', () => {
-  it('a Long Tom battery damages an enemy in the target hex, within its 15-hex range', () => {
+  it('a barrage on the target hex SUPPRESSES — damage only on the rare direct hit (D-053)', () => {
     const truth = baseTruth('FIRE-1');
     const bat = addMechFormation(truth, { id: 'blue-arty', sideId: 'blue', pos: gp(2, 2), br: 20 },
       1, { tags: ['LONG_TOM'], class: 'SUPPORT' });
@@ -34,10 +37,15 @@ describe('M7 — fire missions', () => {
 
     const uid = truth.formations['red-1'].unitIds[0];
     const before = truth.units[uid].damage;
-    run(truth);
-    const after = truth.units[uid].damage;
+    const rdyBefore = truth.formations['red-1'].rdy;
+    const ev = run(truth);
     expect(batteryRange(truth, truth.formations['blue-arty'])).toBe(15); // D-052 halved
-    expect(after).not.toBe(before); // OK → worse
+    // the barrage lands: the column is pinned and rattled
+    expect(truth.formations['red-1'].suppressedUntil).toBe(truth.tick + FIRES.SUPPRESS_TICKS);
+    expect(truth.formations['red-1'].rdy).toBe(rdyBefore - FIRES.SUPPRESS_RDY); // hard target
+    // units only take damage on the separate, rare direct-hit roll
+    const directHit = ev.some(e => e.type === 'GM_NOTE' && /direct hit/.test((e as any).text));
+    expect(truth.units[uid].damage !== before).toBe(directHit);
     // the battery is flagged as having fired (SIG −3 this turn)
     expect(truth.formations['blue-arty'].transient?.fired).toBe(true);
   });
@@ -128,17 +136,17 @@ describe('D-052 — the guns are real', () => {
     expect(batteryStrength(truth, bat)).toBe(3);
   });
 
-  it('a massed battery tears an extra step out of the same seeded hit', () => {
+  it('a massed battery tears an extra step out of a BUILDING — units disperse, walls don\'t', () => {
     const mk = (arty: number) => {
       const truth = baseTruth('GUNS-2');
       const bat = addMechFormation(truth, { id: 'bat', sideId: 'blue', pos: gp(2, 2), br: 20 },
         2, { tags: ['LONG_TOM'], class: 'SUPPORT' });
       for (const uid of bat.unitIds) truth.units[uid].arty = arty;
-      addMechFormation(truth, { id: 'tgt', sideId: 'red', pos: gp(10, 2) });
-      addMechFormation(truth, { id: 'spot', sideId: 'blue', pos: gp(9, 2) });
+      truth.facilities['depot'] = mkFacility({ id: 'depot', sideId: 'red', name: 'Depot',
+        pos: gp(10, 2), knownTo: ['blue'] });
       fireOrder(truth, 'bat', { targetHex: gp(10, 2) });
       run(truth);
-      return DMG.indexOf(truth.units[truth.formations['tgt'].unitIds[0]].damage);
+      return DMG.indexOf(truth.facilities['depot'].damage ?? 'OK');
     };
     const light = mk(1);   // strength 2
     const massed = mk(3);  // strength 6 — same seed, same roll
@@ -187,5 +195,76 @@ describe('D-052 — the guns are real', () => {
     expect(truth.facilities['silo'].supplyPoints).toBe(0); // rubble stores nothing
     expect(capitalBatteriesNear(truth, 'blue', { q: 10, r: 2 })).toHaveLength(0); // guns silent
     expect(netNodesOf(truth, 'red')).toHaveLength(0); // node + relay both gone
+  });
+});
+
+describe('D-053 — the shell falls mainly on the morale', () => {
+  it('the sheaf pins hard; the neighbors keep their nerve but lose their pace', () => {
+    const truth = baseTruth('SUPP-1');
+    addMechFormation(truth, { id: 'bat', sideId: 'blue', pos: gp(2, 2), br: 20 },
+      1, { tags: ['LONG_TOM'], class: 'SUPPORT' });
+    addMechFormation(truth, { id: 'spot', sideId: 'blue', pos: gp(9, 2) });
+    addMechFormation(truth, { id: 'center', sideId: 'red', pos: gp(10, 2) });
+    const soft = addMechFormation(truth, { id: 'trucks', sideId: 'red', pos: gp(10, 2) },
+      2, { class: 'VEHICLE' });
+    addMechFormation(truth, { id: 'next-door', sideId: 'red', pos: gp(11, 2) });
+    addMechFormation(truth, { id: 'far', sideId: 'red', pos: gp(13, 2) });
+    fireOrder(truth, 'bat', { targetHex: gp(10, 2) });
+    run(truth);
+
+    const until = truth.tick + FIRES.SUPPRESS_TICKS;
+    expect(truth.formations['center'].suppressedUntil).toBe(until);
+    expect(truth.formations['center'].rdy).toBe(10 - FIRES.SUPPRESS_RDY);
+    expect(truth.formations['trucks'].rdy).toBe(10 - FIRES.SUPPRESS_RDY * 2); // soft: double
+    expect(truth.formations['next-door'].suppressedUntil).toBe(until); // spillover: pinned…
+    expect(truth.formations['next-door'].rdy).toBe(10);                // …but not rattled
+    expect(truth.formations['far'].suppressedUntil).toBeUndefined();   // out of the sheaf
+    void soft;
+  });
+
+  it('a suppressed column moves at half pace until the barrage lifts', () => {
+    const march = (suppress: boolean) => {
+      const truth = baseTruth('SUPP-2', [], 40, 10);
+      const f = addMechFormation(truth, { id: 'col', sideId: 'red', pos: gp(2, 5), omp: 4 });
+      if (suppress) f.suppressedUntil = truth.tick + 1000;
+      truth.orders['m'] = { id: 'm', sideId: 'red', formationId: 'col', issuedTick: 0,
+        effectiveTick: 0, kind: 'MOVE', conditionals: [], path: [gp(30, 5)] };
+      f.currentOrderId = 'm';
+      const events: GameEvent[] = [];
+      movementPass(truth, 10, e => { events.push(e); applyEvent(truth, e); }); // one pulse
+      return (truth.formations['col'].pos as { q: number }).q - 2;
+    };
+    const free = march(false);
+    const pinned = march(true);
+    expect(free).toBeGreaterThan(0);
+    expect(pinned).toBe(free / 2); // FIRES.SUPPRESS_OMP_FACTOR
+  });
+
+  it('direct hits are genuinely rare — most seeded barrages find dirt', () => {
+    let hits = 0;
+    const TRIALS = 24;
+    for (let t = 0; t < TRIALS; t++) {
+      const truth = baseTruth(`RARE-${t}`);
+      addMechFormation(truth, { id: 'bat', sideId: 'blue', pos: gp(2, 2), br: 20 },
+        1, { tags: ['LONG_TOM'], class: 'SUPPORT' });
+      addMechFormation(truth, { id: 'spot', sideId: 'blue', pos: gp(9, 2) });
+      addMechFormation(truth, { id: 'tgt', sideId: 'red', pos: gp(10, 2) });
+      fireOrder(truth, 'bat', { targetHex: gp(10, 2) });
+      const ev = run(truth);
+      if (ev.some(e => e.type === 'GM_NOTE' && /direct hit/.test((e as any).text))) hits++;
+    }
+    expect(hits).toBeLessThan(TRIALS / 4); // TN 11: ~8% per barrage, not a kill engine
+  });
+
+  it('cruise missiles are wired: tag, range, and battery weight come off the card', () => {
+    const tags = extractTags('Cruise Missile/90 Launcher');
+    expect(tags).toContain('CRUISE_90');
+    const truth = baseTruth('CRUISE-1', [], 60, 10);
+    const bat = addMechFormation(truth, { id: 'bat', sideId: 'blue', pos: gp(2, 2) },
+      1, { tags: ['CRUISE_90'], class: 'SUPPORT' });
+    expect(batteryRange(truth, bat)).toBe(45); // halved printed 90
+    const parsed = { kind: 'vehicle', card: { weapons: [
+      { label: 'Cruise Missile/90' }] } } as never;
+    expect(artyStrengthFromWeapons(parsed)).toBe(4);
   });
 });

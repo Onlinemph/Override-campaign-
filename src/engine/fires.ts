@@ -14,6 +14,15 @@
  * has spotted is a surveyed grid — no intel penalty. Ranges are halved from the
  * printed mapsheet values (500 m hexes read 1:1 onto 18 km was generous — D-052).
  *
+ * D-053 — what shellfire actually does to a moving formation (user ruling): an
+ * 18 km hex is a dispersed march column, not a parking lot — so a barrage that
+ * lands SUPPRESSES (movement halved in the sheaf and the adjacent hexes, readiness
+ * shaved in the sheaf itself) and only RARELY destroys: each formation under the
+ * sheaf risks a direct hit on a separate 2d6 ≥ DIRECT_HIT_TN (massed batteries +1).
+ * Artillery's operational job is to slow, rattle, and canalize; the killing is done
+ * on the tabletop. Buildings are the exception — they can't disperse, so facility
+ * bombardment keeps its D-052 teeth.
+ *
  * Set-piece batteries belong on the table; this Quick Resolution only runs when no
  * battle is pending (the engine is frozen during engagements anyway).
  */
@@ -137,25 +146,47 @@ export function firesPass(s: TruthState, emit: (e: GameEvent) => void): void {
       dice: '2d6', result: r.result, seedCursor: r.nextCursor - 2 } });
     emit({ type: 'FORMATION_FIRED', formationId: battery.id, tick: s.tick });
 
-    // damage whoever is actually in the hex (a stale fix lands on empty ground);
-    // a massed battery (D-052) tears an extra step out of everything it lands on
+    // D-053: a barrage that lands SUPPRESSES the sheaf — movement halved in the
+    // target hex and its six neighbors, readiness shaved in the target hex itself
+    // (soft targets double: trucks and infantry hate shellfire). A stale fix still
+    // lands on empty ground and suppresses nobody.
     const massed = strength >= FIRES.MASSED_STRENGTH ? 1 : 0;
     if (total >= FIRES.HIT_TN) {
-      const victims = Object.values(s.formations).filter(o => !o.destroyed &&
-        o.sideId !== battery.sideId && o.pos.kind === 'ground' &&
+      const until = s.tick + FIRES.SUPPRESS_TICKS;
+      const enemiesNear = Object.values(s.formations).filter(o => !o.destroyed &&
+        !o.mounted && o.sideId !== battery.sideId && o.pos.kind === 'ground' &&
         (o.pos as GroundPos).theaterId === tgt.theaterId &&
-        (o.pos as GroundPos).q === tgt.q && (o.pos as GroundPos).r === tgt.r);
-      for (const victim of victims) {
-        const steps = 1 + massed + (total - FIRES.HIT_TN >= FIRES.BIG_MARGIN ? 1 : 0)
-          + (FIRES.SOFT_DOUBLE && isSoft(s, victim) ? 1 : 0);
-        const uid = victim.unitIds.find(u => s.units[u]?.damage !== 'DESTROYED'
-          && s.units[u]?.damage !== 'SALVAGE');
-        if (uid) {
-          emit({ type: 'UNIT_STATE_CHANGED', unitId: uid,
-            damage: worsen(s.units[uid].damage, steps), ammoState: s.units[uid].ammoState });
+        hexDistance(o.pos as GroundPos, tgt) <= 1);
+      for (const victim of enemiesNear) {
+        const inSheaf = hexDistance(victim.pos as GroundPos, tgt) === 0;
+        emit({ type: 'FORMATION_SUPPRESSED', formationId: victim.id,
+               untilTick: until, tick: s.tick });
+        if (!inSheaf) continue; // adjacent: heads down, keep crawling
+
+        emit({ type: 'RDY_CHANGED', formationId: victim.id,
+               delta: -(FIRES.SUPPRESS_RDY * (FIRES.SOFT_DOUBLE && isSoft(s, victim) ? 2 : 1)),
+               reason: 'shelled' });
+        // the rare direct hit: one 2d6 per formation under the sheaf, massed +1.
+        // An 18 km hex is a dispersed column; even a good sheaf mostly finds dirt.
+        const dh = rollDice(s.seed, s.seedCursor, '2d6');
+        emit({ type: 'DIE_ROLLED', roll: { id: `roll:${s.seedCursor}`, tick: s.tick,
+          purpose: `direct hit? ${battery.name} → ${victim.name} `
+            + `(2d6 ${dh.result}${massed ? ' +1 massed' : ''} vs ${FIRES.DIRECT_HIT_TN})`,
+          dice: '2d6', result: dh.result, seedCursor: dh.nextCursor - 2 } });
+        if (dh.result + massed >= FIRES.DIRECT_HIT_TN) {
+          const steps = 1 + (FIRES.SOFT_DOUBLE && isSoft(s, victim) ? 1 : 0);
+          const uid = victim.unitIds.find(u => s.units[u]?.damage !== 'DESTROYED'
+            && s.units[u]?.damage !== 'SALVAGE');
+          if (uid) {
+            emit({ type: 'UNIT_STATE_CHANGED', unitId: uid,
+              damage: worsen(s.units[uid].damage, steps), ammoState: s.units[uid].ammoState });
+            emit({ type: 'GM_NOTE', tick: s.tick,
+              text: `direct hit: ${battery.name} lands one on ${victim.name}` });
+          }
         }
       }
-      // D-052: shells flatten buildings too — the standoff answer to a capital battery
+      // D-052: shells flatten buildings — they can't disperse, so bombardment of a
+      // fixed installation keeps its teeth (the standoff answer to a capital battery)
       for (const fac of facTargets) {
         const steps = 1 + massed + (total - FIRES.HIT_TN >= FIRES.BIG_MARGIN ? 1 : 0);
         const after = worsen(fac.damage ?? 'OK', steps);

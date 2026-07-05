@@ -20,6 +20,7 @@ export interface OwnFormationView {
   /** This formation's own sensor reach in op-hexes (best unit incl. probe/HQ). */
   sensor?: { passive: number; active: number };
   routed?: boolean; // RDY≤1: uncommandable until it rallies (core §3.2/§7.4)
+  suppressed?: boolean; // D-053: under shellfire — movement halved until it clears
   currentOrder?: { id: Id; kind: string; completed: boolean;
                    stall?: string /* ext: why it's waiting, in plain words */;
                    path?: Array<{ q: number; r: number }> };

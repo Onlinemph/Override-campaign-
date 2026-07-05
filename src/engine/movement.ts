@@ -8,7 +8,7 @@
  *    collapses to the road/off-road distinction (impassable hexes still block).
  * Fractional progress toward the next hex is carried on the formation between steps.
  */
-import { CLOCK, MOVEMENT, RECON_TRICKS, ROAD_MIN_COST, ROAD_COST_FACTOR, TERRAIN } from '../rules.js';
+import { CLOCK, FIRES, MOVEMENT, RECON_TRICKS, ROAD_MIN_COST, ROAD_COST_FACTOR, TERRAIN } from '../rules.js';
 import { findRoute } from './route.js';
 import type { Formation, GroundPos, Hex, Order, TruthState } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
@@ -215,7 +215,10 @@ export function movementPass(
     // VTOLs cruise above the ground clutter at ×2 OMP (core §5.3) and take no road
     // bonus — a flight line is already the shortest predictable path.
     const flies = motionFamily(s, f) === 'VTOL';
-    const mult = speedMult(order.kind) * (flies ? MOVEMENT.VTOL_OMP_MULT : 1);
+    // D-053: a column under shellfire keeps its head down — half pace until it clears
+    const suppressed = f.suppressedUntil !== undefined && s.tick < f.suppressedUntil;
+    const mult = speedMult(order.kind) * (flies ? MOVEMENT.VTOL_OMP_MULT : 1)
+      * (suppressed ? FIRES.SUPPRESS_OMP_FACTOR : 1);
 
     // Available budget for this step:
     //  CONTACT mode: OMP points (1 contact turn's worth × dt ticks)

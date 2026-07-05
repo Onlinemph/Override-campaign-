@@ -150,6 +150,8 @@ export interface Formation {
   renetAtTick?: Tick | null;      // pending re-net after decapitation
   transient?: { moved: 'NONE' | 'NORMAL' | 'CAUTIOUS' | 'FORCED' | 'SPRINT';
                 onRoad: boolean; fired: boolean };
+  /** D-053: under shellfire until this tick — movement halved, nerves shot. */
+  suppressedUntil?: Tick;
   // ext (M2): rout & combat bookkeeping
   routUntilTick?: Tick | null;    // RDY≤1: uncommandable until this tick (core §3.2/§7.4)
   digInPulseAcc?: number;         // accumulates pulses toward DUG_IN (core §4.1)
