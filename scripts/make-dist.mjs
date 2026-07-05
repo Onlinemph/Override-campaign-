@@ -101,9 +101,14 @@ function fetchRuntime(target) {
 /** Extract just the node binary out of the runtime archive into `destDir`. */
 function installRuntime(target, archivePath, destDir) {
   mkdirSync(destDir, { recursive: true });
-  const inner = archivePath.split('/').pop().replace(/\.(zip|tar\.(xz|gz))$/, '');
+  const inner = archivePath.split(/[\\/]/).pop().replace(/\.(zip|tar\.(xz|gz))$/, '');
   if (target === 'win-x64') {
-    execFileSync('unzip', ['-qo', archivePath, `${inner}/node.exe`, '-d', destDir]);
+    // Windows hosts have no `unzip`, but their tar.exe (bsdtar) reads zips fine
+    if (process.platform === 'win32') {
+      execFileSync('tar', ['-xf', archivePath, '-C', destDir, `${inner}/node.exe`]);
+    } else {
+      execFileSync('unzip', ['-qo', archivePath, `${inner}/node.exe`, '-d', destDir]);
+    }
     cpSync(join(destDir, inner, 'node.exe'), join(destDir, 'node.exe'));
     rmSync(join(destDir, inner), { recursive: true });
   } else {
@@ -206,7 +211,12 @@ for (const target of TARGETS) {
 
   console.log(`zipping ${name}.zip…`);
   rmSync(join(releaseDir, `${name}.zip`), { force: true });
-  execFileSync('zip', ['-qry', `${name}.zip`, name], { cwd: releaseDir });
+  if (process.platform === 'win32') {
+    // bsdtar picks the zip format from the extension; no `zip` CLI on Windows
+    execFileSync('tar', ['-acf', `${name}.zip`, name], { cwd: releaseDir });
+  } else {
+    execFileSync('zip', ['-qry', `${name}.zip`, name], { cwd: releaseDir });
+  }
   rmSync(stage, { recursive: true });
 }
 
