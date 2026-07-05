@@ -15,7 +15,10 @@ import type { GameEvent } from '../core/events.js';
 import { headingDeg, hexDistance, hexLine } from '../hex/axial.js';
 import { hexKey } from '../core/types.js';
 
-const MOVE_KINDS = new Set(['MOVE', 'FORCED_MARCH', 'MOVE_CAUTIOUS']);
+// D-059: PATROL is a mover — the UI sells it as "walk a loop with sharpened
+// sensors" and it plots a path, but it was never in this set, so patrol columns
+// stood still forever. It loops: route exhausted ⇒ pathIndex resets to 0.
+const MOVE_KINDS = new Set(['MOVE', 'FORCED_MARCH', 'MOVE_CAUTIOUS', 'PATROL']);
 
 /**
  * Where is a STRIKE heading? Toward the latest delivered estimate of its target contact
@@ -148,6 +151,9 @@ export function movementPass(
         continue; // loaded — or waiting at the ramp for a bay
       }
       if (carrier.pos.kind !== 'ground') continue; // carrier aloft: wait for it to land
+      // D-059: a carrier on ANOTHER MAP can't be marched to — routing to the same
+      // (q,r) in the wrong theater sent columns to a meaningless hex
+      if (carrier.pos.theaterId !== (f.pos as GroundPos).theaterId) continue;
       // fall through to the movement machinery, marching on the carrier's hex
     }
 
@@ -228,6 +234,7 @@ export function movementPass(
     let avail = contactScale
       ? f.omp * mult * dt / CLOCK.TICKS_PER_PULSE
       : dt / CLOCK.TICKS_PER_PULSE;
+    const availStart = avail;
 
     let moved = false;
     let forcedPulses = 0;
@@ -305,9 +312,13 @@ export function movementPass(
       emit({ type: 'MOVE_PROGRESS', formationId: f.id, moveProgress: progress, pathIndex });
     }
 
-    // Forced march fatigue: RDY −1 per pulse of marching (core §3.2 / §4.1)
+    // Forced march fatigue: RDY −1 per pulse of MARCHING (core §3.2 / §4.1).
+    // D-059: prorated by budget actually spent — a column stalled against a river
+    // in contact mode used to bleed readiness while standing still.
     if (order.kind === 'FORCED_MARCH') {
-      const pulsesThisStep = contactScale ? dt / CLOCK.TICKS_PER_PULSE : forcedPulses;
+      const pulsesThisStep = contactScale
+        ? (availStart > 0 ? (availStart - avail) / availStart : 0) * dt / CLOCK.TICKS_PER_PULSE
+        : forcedPulses;
       let acc = (f.forcedMarchPulseAcc ?? 0) + pulsesThisStep;
       while (acc >= 1 - 1e-9) {
         emit({ type: 'RDY_CHANGED', formationId: f.id,
@@ -325,7 +336,12 @@ export function movementPass(
     // (battle if the enemy is present, completion-with-miss if the estimate was stale).
     // EMBARK completes at the top of the pass, once co-located and actually loaded.
     // SHADOW is a standing order: the tail follows until superseded.
-    if (!isStrike && !isEmbark && !isShadow && pathIndex >= wps.length) {
+    // PATROL loops: back to the first plotted hex, and around again (D-059).
+    if (order.kind === 'PATROL') {
+      if (wps.length > 0 && pathIndex >= wps.length) {
+        emit({ type: 'MOVE_PROGRESS', formationId: f.id, moveProgress: progress, pathIndex: 0 });
+      }
+    } else if (!isStrike && !isEmbark && !isShadow && pathIndex >= wps.length) {
       emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
     }
   }

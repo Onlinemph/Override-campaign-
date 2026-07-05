@@ -235,6 +235,7 @@
       case 'REPORTS_LOST': return { cls: 'noise', icon: '✕', msg: `${e.reportIds.length} report(s) lost — ${e.reason}` };
 
       case 'NET_CHANGED':
+        if (e.switchOnly) return null; // D-059: a node handover, not a state change
         return { cls: e.onNet ? '' : 'warn', icon: e.onNet ? '📡' : '⚠',
           msg: `${F(e.formationId)} ${e.onNet ? 'is back on-net' : 'drops off-net'}` };
       case 'EMCON_CHANGED': return { cls: '', icon: '·', msg: `${F(e.formationId)} goes EMCON ${e.emcon}` };

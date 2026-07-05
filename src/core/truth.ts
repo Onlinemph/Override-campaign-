@@ -33,6 +33,36 @@ export function replay(events: LoggedEvent[]): TruthState {
   return truth;
 }
 
+/**
+ * D-059: every theater needs its own patch of the global air grid. The origins are
+ * optional in authored campaigns, and the fallback is {0,0} — which stacks EVERY
+ * theater's air region on the same spot, so groundHexUnder() resolves air positions
+ * over theater B into theater A (whichever sorts first): recon corridors reveal the
+ * wrong map, RTB and radio umbrellas misresolve. Fill in origins for any theater the
+ * author didn't place, stacked in disjoint rows below everything already assigned.
+ * Authored origins are always respected.
+ */
+function normalizeAirRegions(t: TruthState): void {
+  const ids = Object.keys(t.theaters).sort();
+  if (ids.length < 2) return;
+  const cfg = t.config.airHexByTheater ?? (t.config.airHexByTheater = {});
+  const rowsOf = (tid: Id): number => {
+    let m = 0;
+    for (const k of Object.keys(t.theaters[tid].hexes)) {
+      const r = Number(k.split(',')[1]);
+      if (r + 1 > m) m = r + 1;
+    }
+    return m;
+  };
+  let nextR = 0;
+  for (const tid of ids) {
+    if (cfg[tid]) nextR = Math.max(nextR, cfg[tid].r + rowsOf(tid) + 8);
+  }
+  for (const tid of ids) {
+    if (!cfg[tid]) { cfg[tid] = { q: 0, r: nextR }; nextR += rowsOf(tid) + 8; }
+  }
+}
+
 export class Campaign {
   truth: TruthState;
   constructor(public store: EventStore, truth?: TruthState) {
@@ -41,6 +71,7 @@ export class Campaign {
 
   static create(initial: TruthState, store: EventStore = new MemoryEventStore()): Campaign {
     if (store.length() > 0) throw new Error('store is not empty');
+    normalizeAirRegions(initial); // baked into CAMPAIGN_INIT, so replay agrees
     store.append({ type: 'CAMPAIGN_INIT', state: structuredClone(initial) });
     const campaign = new Campaign(store, structuredClone(initial));
     // initialize nets & scouted terrain at tick 0, through the log like everything else
@@ -406,6 +437,11 @@ export class Campaign {
                  jumpDrives: import('./types.js').JumpDrive[] = []): void {
     this.inject({ type: 'FORMATION_SPAWNED', formation, units, pilots, jumpDrives,
                   tick: this.truth.tick });
+    // D-059: net & eyes come up NOW, not at the next clock step — a reinforcement
+    // spawned in umbrella range used to refuse orders ("off-net") until the GM
+    // advanced the clock. Both passes run through the log, so replay agrees.
+    netPass(this.truth, e => this.inject(e));
+    scoutPass(this.truth, e => this.inject(e));
   }
 
   /**
@@ -803,9 +839,22 @@ export class Campaign {
       airHexOver(this.truth, target), 'drop pass'); // D-050
     this.inject({ type: 'FORMATION_MOVED', formationId: payloadId, to: landing,
                   movedKind: 'NORMAL', onRoad: false, headingDeg: 0, tick: this.truth.tick });
-    // "dropping troops arrive at LOCK-level visibility to anyone watching the sky"
+    // "dropping troops arrive at LOCK-level visibility to anyone watching the sky" —
+    // D-059: "watching the sky" requires EYES: a side with no live formation or
+    // facility in the theater learns nothing (it used to be handed a free LOCK)
     for (const sideId of Object.keys(this.truth.sides)) {
       if (sideId === payload.sideId) continue;
+      const watching =
+        Object.values(this.truth.formations).some(f => f.sideId === sideId &&
+          !f.destroyed && !f.mounted &&
+          ((f.pos.kind === 'ground' && f.pos.theaterId === landing.theaterId) ||
+           f.pos.kind === 'air')) ||
+        Object.values(this.truth.facilities).some(fc => fc.sideId === sideId &&
+          fc.pos.kind === 'ground' && fc.pos.theaterId === landing.theaterId &&
+          fc.damage !== 'DESTROYED') ||
+        Object.values(this.truth.satellites).some(st => st.sideId === sideId &&
+          st.alive && st.theaterId === landing.theaterId);
+      if (!watching) continue;
       this.inject({ type: 'CONTACT_UPGRADED', contact: this.contactAt(sideId, payloadId, LADDER.MAX_LEVEL),
                     tick: this.truth.tick });
     }

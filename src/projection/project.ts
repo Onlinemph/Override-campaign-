@@ -11,7 +11,7 @@
 import type { GroundPos, Id, Tick, TruthState } from '../core/types.js';
 import { DEEPSKY, LADDER_NAMES } from '../rules.js';
 import { isNight } from '../engine/clock.js';
-import { netNodesOf } from '../engine/net.js';
+import { isFormationOnNet, netNodesOf } from '../engine/net.js';
 import { supplyEnvelope } from '../engine/logistics.js';
 import { formationSensors } from '../engine/detection.js';
 import { groundHexUnder, isFlight, jokerBingo, minFp } from '../engine/air.js';
@@ -33,7 +33,9 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
         pos: f.pos.kind === 'ground' ? { ...f.pos } : null,
         omp: f.omp, br: f.br, rdy: f.rdy,
         emcon: f.emcon, posture: f.posture,
-        onNet: f.onNet,
+        // D-059: the LIVE gate (EMCON-DARK, hostile ECM cut), not the cached flag —
+        // order acceptance uses isFormationOnNet, and the screen must agree with it
+        onNet: isFormationOnNet(truth, f),
         routed: f.routUntilTick != null && now < f.routUntilTick,
         ...(f.suppressedUntil != null && now < f.suppressedUntil ? { suppressed: true } : {}),
         currentOrder: f.currentOrderId && truth.orders[f.currentOrderId]
@@ -179,7 +181,10 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
 
   const scoutedTerrain: ScoutedHexView[] = (truth.scoutedHexes[sideId] ?? [])
     .map(key => {
-      const [theaterId, qr] = key.split(':');
+      // split on the LAST ':' — a theater id may itself contain one, and the q,r
+      // part never does; a plain split(':') would silently drop every scouted hex
+      const cut = key.lastIndexOf(':');
+      const theaterId = key.slice(0, cut), qr = key.slice(cut + 1);
       const hex = truth.theaters[theaterId]?.hexes[qr];
       if (!hex) return null;
       const v: ScoutedHexView = {

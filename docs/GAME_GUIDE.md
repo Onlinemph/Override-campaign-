@@ -178,7 +178,12 @@ passive sensing, rain +1, Guardian ECM +1, Angel ECM +2, stealth armor +2, EMCON
 +2, EMCON ACTIVE −2, terrain (woods/swamp +1, urban +2, infantry in urban +3).
 
 **Searcher modifiers (change your roll):** EMCON ACTIVE +2, a PATROL order +1, lean
-loiter −1 (a fuel-sipping flight searches badly).
+loiter −1 (a fuel-sipping flight searches badly), **point-blank +2 / close +1**
+(within 1 / 2 hexes of the target — D-059: closing the range is how you find the
+quiet ones; entering the target's own hex is still an automatic mutual LOCK).
+Sweep doctrine: a hidden, dug-in post can survive a passive drive-by — PATROL
+adjacent (+1 and +2), go ACTIVE (+2 more, but you're a lighthouse), or roll your
+column *through* the suspect hex to clear it for certain.
 
 **Sensor ranges (op-hexes, passive/active):** standard mech 2/4, Beagle-probe-equipped
 3/5, recon VTOL 4/8, Mobile HQ or sensor vehicle 4/8, fixed sensor station 6/12, the
@@ -306,7 +311,7 @@ stall reason.
 | **MOVE_CAUTIOUS** | half speed, keeps HIDE-grade concealment (+2 SIG, no moving penalty) |
 | **HIDE** | posture → HIDE immediately (SIG +2). Breaks the moment you move |
 | **DIG_IN** | posture → DIGGING; DUG_IN after 2 pulses (1 with engineers). Fortified at the table |
-| **PATROL** | active sweep: +1 on all this formation's detection rolls |
+| **PATROL** | walk the plotted circuit on repeat (never completes) with +1 on all this formation's detection rolls (D-059: it MOVES now — plot the loop you want walked) |
 | **SCREEN** | tripwire: any enemy moving within reach triggers an interception battle |
 | **STRIKE** | march on a *contact* (≥ SHADOW): re-paths every step toward the latest delivered estimate; arrival forces a battle — or completes with a miss if the intel was stale. Blind = holds with "no usable fix" |
 | **SHADOW** | tail a contact at 2-hex standoff: closes when the trail stretches, holds when near, never enters the ring (no battle). Standing order; a faded contact just parks the tail |
@@ -384,7 +389,7 @@ state; the climb-out pays flak under the departure path.
 | **CAP** | fly to a station, loiter (paying the ledger), engage anything hostile resolved in your hex — CAP and SWEEP have standing intercept intent |
 | **SWEEP** | as CAP but prowling a route |
 | **STRIKE_AIR / CAS** | fly a ground-attack mission; while holding one within 24 air hexes of a battle, you appear in its handoff as **off-board air support** with arrival timing |
-| **ESCORT / FERRY / INTERDICTION / RECON / SAR / TANKER** | fly the plotted route/station; RECON photographs a 5-hex corridor under the track (terrain + contacts; film delivers on landing — D-051); TANKER transfers fuel 1 ton delivered per 2 carried (GM action); SAR recovers downed crew markers |
+| **ESCORT / FERRY / INTERDICTION / RECON / SAR / TANKER** | fly the plotted route/station; FERRY **lands at its destination** and rebases to a friendly strip there (D-059 — it used to fly home again); RECON photographs a 5-hex corridor under the track (terrain + contacts; film delivers on landing — D-051); TANKER transfers fuel 1 ton delivered per 2 carried (GM action); SAR recovers downed crew markers |
 | **ORBITAL_STANDBY** | hold ready in orbit (responds in ~3 ticks) |
 | **LIFT_OFF** | (DropShips) get airborne and *hold* — a standing hover until your next order |
 | **LAND** | put down on any **passable** hex — no facility needed. Water refuses the landing. Outranks a fuel-forced RTB: putting down now is how a bingo ship saves itself |

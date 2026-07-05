@@ -9,8 +9,9 @@
 import { CAREER, SKYWATCH, SUPPLY, TERRAIN } from '../rules.js';
 import type { Formation, GroundPos, TruthState } from '../core/types.js';
 import { hexKey } from '../core/types.js';
-import { hexDistance } from '../hex/axial.js';
+import { hexDistance, hexLine } from '../hex/axial.js';
 import { hexEntryCost, strikeTargetHex } from './movement.js';
+import { findRoute } from './route.js';
 import { AIR_MISSIONS, launchTickFor } from './air.js';
 import { batteryRange } from './fires.js';
 
@@ -56,6 +57,11 @@ export function stallReason(s: TruthState, f: Formation): string | undefined {
       if (!target) return 'holding — no usable fix on the target (need SHADOW or better)';
       const hex = s.theaters[target.theaterId]?.hexes[hexKey(target.q, target.r)];
       if (!hex) return 'holding — target estimate is off the map';
+      // D-059: the column also holds when NO ROUTE exists (river, mountains) — it
+      // used to sit silent with a valid fix and no way to march to it
+      if (hexDistance(f.pos, target) > 1 && !findRoute(s, f, target)?.path.length) {
+        return 'holding — no route to the target for this formation (water/mountains in the way)';
+      }
       return undefined;
     }
     case 'SHADOW': {
@@ -172,16 +178,26 @@ export function stallReason(s: TruthState, f: Formation): string | undefined {
       return undefined;
     }
     default: {
-      // move-family: an impassable hex directly ahead stalls the column silently.
+      // move-family: an impassable hex on the INTERPOLATED line stalls the column
+      // silently — with sparse hand-plotted waypoints the blocking hex is almost
+      // never the waypoint itself, so walk the same hexLine the mover walks (D-059).
       // hexEntryCost knows the motion family — water stops a tank column, not a VTOL wing.
-      if (f.pos.kind === 'ground' && ['MOVE', 'FORCED_MARCH', 'MOVE_CAUTIOUS'].includes(order.kind)) {
+      if (f.pos.kind === 'ground' &&
+          ['MOVE', 'FORCED_MARCH', 'MOVE_CAUTIOUS', 'PATROL'].includes(order.kind)) {
         const wps = (order.path ?? []).filter((p): p is GroundPos => p.kind === 'ground');
-        const next = wps[f.pathIndex ?? 0];
-        if (next) {
-          const hex = s.theaters[next.theaterId]?.hexes[hexKey(next.q, next.r)];
-          if (hex && hexEntryCost(s, f, hex) === null) {
-            return `stalled — ${hex.terrain.toLowerCase()} ahead is impassable for this formation; re-plot the route`;
+        let cc: { q: number; r: number } = f.pos;
+        outer:
+        for (let wi = f.pathIndex ?? 0; wi < wps.length; wi++) {
+          const seg = hexLine(cc, wps[wi]);
+          for (let i = 1; i < seg.length; i++) {
+            const hex = s.theaters[f.pos.theaterId]?.hexes[hexKey(seg[i].q, seg[i].r)];
+            if (!hex) break outer; // route runs off the map: mover stops there too
+            if (hexEntryCost(s, f, hex) === null) {
+              return `stalled — ${hex.terrain.toLowerCase()} at ${seg[i].q},${seg[i].r} is ` +
+                'impassable for this formation; re-plot the route';
+            }
           }
+          cc = wps[wi];
         }
       }
       // air-side launch gates

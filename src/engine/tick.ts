@@ -5,7 +5,7 @@
  * emits events (each applied immediately so later subsystems see fresh state),
  * and returns the events plus whether anything "interesting" happened (compression).
  */
-import type { ClockMode, TruthState } from '../core/types.js';
+import type { ClockMode, GroundPos, TruthState } from '../core/types.js';
 import { applyEvent, isInterestingEvent, type GameEvent } from '../core/events.js';
 import { chooseClockMode, ticksFor } from './clock.js';
 import { movementPass } from './movement.js';
@@ -49,8 +49,22 @@ function applyDueOrders(s: TruthState, emit: (e: GameEvent) => void): void {
     const next = orders[orders.length - 1]; // the most recently plotted plan wins
     const f = s.formations[formationId];
     const cur = f.currentOrderId ? s.orders[f.currentOrderId] : undefined;
+    if (cur && !cur.completed && next.effectiveTick < cur.effectiveTick) {
+      // every due order predates the one already running: all stale, all dead
+      for (const o of orders) {
+        emit({ type: 'ORDER_CANCELLED', orderId: o.id, formationId, tick: s.tick });
+      }
+      continue;
+    }
+    // D-059: the LOSERS of this race must die too. They used to linger un-completed
+    // in s.orders, come due again the moment the winner finished, and march the unit
+    // back along a path the player had already corrected away from.
+    for (const o of orders) {
+      if (o.id !== next.id) {
+        emit({ type: 'ORDER_CANCELLED', orderId: o.id, formationId, tick: s.tick });
+      }
+    }
     if (cur && !cur.completed) {
-      if (next.effectiveTick < cur.effectiveTick) continue; // stale order: ignore
       emit({ type: 'ORDER_SUPERSEDED', orderId: cur.id, formationId, tick: s.tick });
     }
     // D-049: activating a NEWER instruction abandons the old plan — its still-
@@ -96,7 +110,17 @@ export function step(truth: TruthState, forceMode?: ClockMode): StepResult {
   satellitePass(work, emit);
   fadePass(work, emit);
   deliverReportsPass(work, emit);
-  scoutPass(work, emit);
+  // D-059: sweep the hexes each formation moved THROUGH this step, not just where
+  // it ended up — a fast column used to leave dark stripes along its own path
+  const visited = new Map<string, GroundPos[]>();
+  for (const e of events) {
+    if (e.type === 'FORMATION_MOVED' && e.to.kind === 'ground') {
+      const list = visited.get(e.formationId) ?? [];
+      list.push(e.to);
+      visited.set(e.formationId, list);
+    }
+  }
+  scoutPass(work, emit, visited);
   maintenancePass(work, dt, emit);
   careerPass(work, emit);       // pilots heal, repairs finish, refits deliver (ext)
   scoringPass(work, emit);      // objective control, daily VP, endings (M6)

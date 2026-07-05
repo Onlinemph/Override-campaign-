@@ -534,6 +534,11 @@ function flyStep(
     return;
   }
 
+  // D-059: fly LEGS until the step's speed budget runs out — one leg per step
+  // discarded the leftover budget at every waypoint, so a hand-drawn route with
+  // short legs crawled at 1-2 hexes per step instead of the aircraft's real speed.
+  let budget = atmoHexesPerTick(s, f, speed) * dt;
+  while (true) {
   const dest = destAirHex(s, f, order, dt);
   if (dest === null) {
     if (order) {
@@ -543,22 +548,25 @@ function flyStep(
     if (f.air?.phase !== 'RTB') {
       emit({ type: 'AIR_PHASE', formationId: f.id, phase: 'RTB', tick: s.tick });
     }
+    // no home to fly to (a descended DropShip, a stranded flight): hold here —
+    // holding aloft awaiting orders is the design for orderless carriers, and
+    // FERRY now lands at its destination, so this is a deliberate hover
     return;
   }
 
   const cur = airQR(f.pos);
-  let budget = atmoHexesPerTick(s, f, speed) * dt;
   const dist = hexDistance(cur, dest);
   const hexesFlown = Math.min(budget, dist);
 
   if (hexesFlown > 0) {
     const line = hexLine(cur, dest);
     const newQR = line[Math.min(hexesFlown, line.length - 1)];
-    const pos: AirPos = { ...f.pos, gridQ: newQR.q, gridR: newQR.r,
+    const pos: AirPos = { ...f.pos as AirPos, gridQ: newQR.q, gridR: newQR.r,
                           velocity: speed === 'DASH' ? minSafeThrust(s, f) : SKYWATCH.ENTRY_VELOCITY_CRUISE,
                           vectorDeg: Math.round(headingDeg(cur, dest)) };
     emit({ type: 'AIR_MOVED', formationId: f.id, pos,
            fpPaid: hexesFlown * transitFpPerHex(s, f, speed), speed, tick: s.tick });
+    budget -= hexesFlown;
     // D-051: a recon sortie photographs the leg it just flew — cameras run the
     // whole track, not just the endpoint, so a fast pass can't skip over targets
     if (order?.kind === 'RECON') {
@@ -566,7 +574,8 @@ function flyStep(
     }
   }
 
-  if (hexesFlown >= dist) {
+  if (hexesFlown < dist) return; // speed budget exhausted mid-leg: airborne until next step
+  {
     // arrived
     // LAND (ext): put down on the plotted hex — no facility needed, any passable ground.
     // Water/impassable terrain refuses the landing: the order completes and the ship
@@ -640,15 +649,46 @@ function flyStep(
              patch: { air: { loiterTicksRemaining: order.loiterTicks ?? -1 } } });
       return;
     }
-    // waypoint route: advance the index; route exhausted ⇒ mission complete, RTB
+    // waypoint route: advance the index; route exhausted ⇒ mission complete
     const wp = (order.path ?? []).filter(p => p.kind === 'air');
     const idx = (f.pathIndex ?? 0) + 1;
     emit({ type: 'MOVE_PROGRESS', formationId: f.id, moveProgress: 0, pathIndex: idx });
     if (idx >= wp.length) {
       emit({ type: 'ORDER_COMPLETED', orderId: order.id, formationId: f.id, tick: s.tick });
+      // D-059: FERRY means "fly the route and LAND" — it used to boomerang: the
+      // order completed, RTB kicked in, and the ship flew all the way back to its
+      // ORIGINAL base (or hovered forever if it had none). Put down at the
+      // destination; landing on an own friendly strip rebases the flight there.
+      if (order.kind === 'FERRY') {
+        const under = groundHexUnder(s, airQR(f.pos as AirPos));
+        const uHex = under ? s.theaters[under.theaterId]?.hexes[hexKey(under.q, under.r)] : undefined;
+        if (under && uHex && TERRAIN[uHex.terrain]?.ompCost !== null) {
+          const strip = Object.values(s.facilities).find(fac =>
+            fac.sideId === f.sideId && fac.pos.kind === 'ground' &&
+            fac.pos.theaterId === under.theaterId &&
+            fac.pos.q === under.q && fac.pos.r === under.r &&
+            (fac.tags.includes('AIRSTRIP') || fac.tags.includes('SPACEPORT')) &&
+            fac.damage !== 'DESTROYED');
+          flakGauntlet(s, emit, f, { ...under }, 'final approach');
+          capitalGauntlet(s, emit, f, airQR(f.pos as AirPos), 'final approach');
+          emit({ type: 'AIR_LANDED', formationId: f.id,
+                 ...(strip ? { facilityId: strip.id } : {}),
+                 pos: { ...under }, fpPaid: landingFp(!!strip), tick: s.tick });
+          if (strip && !f.air?.homeCarrierId) {
+            emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id,
+                   patch: { air: { homeFacilityId: strip.id } } });
+          }
+          return;
+        }
+        // water or a wall below the last waypoint: nowhere to put down — head home
+      }
       emit({ type: 'AIR_PHASE', formationId: f.id, phase: 'RTB', tick: s.tick });
+      return;
     }
+    // more route ahead: keep flying this step with the remaining budget
+    if (budget <= 0) return;
   }
+  } // while (true)
 }
 
 /** JOKER warning / BINGO auto-RTB, recomputed continuously from live position (§7.4). */
@@ -740,6 +780,13 @@ export function airPass(s: TruthState, dt: number, emit: (e: GameEvent) => void)
     const order = activeAirOrder(s, f);
     if (f.pos.kind === 'ground') {
       if (order) tryLaunch(s, f, order, emit);
+      else if (f.air?.launchAtTick != null) {
+        // D-059: the order this prep clock was set for is gone (superseded or
+        // cancelled mid-prep). Left in place it pinned the campaign in CONTACT
+        // mode forever and let the NEXT order launch instantly, skipping its prep.
+        emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id,
+               patch: { air: { launchAtTick: null } } });
+      }
     } else if (f.pos.kind === 'air') {
       flyStep(s, f, order, dt, emit);
       thresholds(s, f, emit);
@@ -851,11 +898,13 @@ export function airDetectionPass(s: TruthState, emit: (e: GameEvent) => void): v
  */
 export function isLaunchPending(s: TruthState, f: Formation): boolean {
   if (f.destroyed || f.pos.kind !== 'ground' || !isFlight(s, f)) return false;
-  if (f.air?.launchAtTick != null) return true;
   const due = Object.values(s.orders).find(o =>
     !o.completed && o.formationId === f.id && AIR_MISSIONS.has(o.kind) &&
     o.effectiveTick <= s.tick + 1);
+  // D-059: a leftover prep clock with no live order pins nothing — airPass clears
+  // it next step; without the `due` gate it held the clock in CONTACT mode forever
   if (!due) return false;
+  if (f.air?.launchAtTick != null) return true;
   if (f.air?.turnaroundReadyTick != null && s.tick < f.air.turnaroundReadyTick) return false;
   const fatigues = f.unitIds.flatMap(uid =>
     (s.units[uid]?.pilotIds ?? []).map(pid => s.pilots[pid]?.fatigue ?? 0));

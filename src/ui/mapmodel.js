@@ -82,7 +82,9 @@
                  ` · ${f.flight.fpMin} FP (joker ${f.flight.jokerFp} / bingo ${f.flight.bingoFp})` });
         return;
       }
-      if (!f.pos) return;
+      // D-059: only draw what stands in THIS theater — without the filter a unit
+      // in theater B ghosted onto theater A's map at the same coordinates
+      if (!f.pos || f.pos.theaterId !== th.id) return;
       const gear = [...new Set((f.units || []).flatMap(u => (u.tags || [])
         .filter(t => ['ECM', 'ANGEL_ECM', 'BEAGLE', 'STEALTH', 'C3M', 'HQ', 'RECON'].includes(t))))];
       markers.push({ q: f.pos.q, r: f.pos.r, kind: 'formation', side: v.sideId,
@@ -92,6 +94,7 @@
                (gear.length ? ` · ${gear.join(',')}` : '') });
     });
     (v.ownFacilities || []).forEach(fc => {
+      if (fc.pos.theaterId !== th.id) return;
       markers.push({ q: fc.pos.q, r: fc.pos.r, kind: 'facility', side: v.sideId,
         label: fc.capitalBattery ? '☄'
              : fc.tags.includes('AIRSTRIP') ? 'A' : fc.tags.includes('SPACEPORT') ? 'P'
@@ -139,7 +142,7 @@
     const paths = [];
     (v.ownFormations || []).forEach(f => {
       const wp = (f.currentOrder && f.currentOrder.path) || [];
-      if (!f.pos || wp.length === 0) return;
+      if (!f.pos || f.pos.theaterId !== th.id || wp.length === 0) return;
       paths.push({ points: routeThrough(f.pos, wp), color: '#7ad07a' });
     });
     const zones = [];

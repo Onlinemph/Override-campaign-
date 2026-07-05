@@ -33,7 +33,8 @@ export type GameEvent =
   | { type: 'REPORT_EDITED'; reportId: Id; text: string }   // M5: GM noise injection
   | { type: 'REPORTS_LOST'; reportIds: Id[]; reason: string }
   | { type: 'NET_CHANGED'; formationId: Id; onNet: boolean;
-      netNodeId: Id | null; renetAtTick: Tick | null }
+      netNodeId: Id | null; renetAtTick: Tick | null;
+      switchOnly?: boolean } // D-059: node handover while already on-net (not news)
   | { type: 'HEXES_SCOUTED'; sideId: Id; keys: string[] }
   | { type: 'FACILITY_SPOTTED'; facilityId: Id; sideId: Id; tick: Tick } // D-051.1
   | { type: 'FACILITY_DAMAGED'; facilityId: Id; damage: DamageState; tick: Tick } // D-052
@@ -262,7 +263,26 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
     case 'REPORT_DELIVERED': {
       const r = s.reports[e.reportId];
       r.deliveredTick = e.tick;
-      const c = s.contacts[r.contactId];
+      let c = r.contactId ? s.contacts[r.contactId] : undefined;
+      // D-059: the truth ladder can fade to CONTACT_REMOVED while a courier report
+      // rides home (recon film outlives the live track). The film is still good:
+      // recreate the contact as a COLD track (level 0 — fadePass ignores it) that
+      // carries the delivered picture, so the side gets its marker, not silence.
+      if (!c && r.contactId && r.snapshot) {
+        const i1 = r.contactId.indexOf(':');
+        const i2 = r.contactId.indexOf(':', i1 + 1);
+        c = s.contacts[r.contactId] = {
+          id: r.contactId, observerSideId: r.sideId,
+          targetFormationId: r.contactId.slice(i2 + 1),
+          kind: r.contactId.startsWith('haze:') ? 'ECM_HAZE' : 'STANDARD',
+          level: 0, lastConfirmedTick: r.generatedTick, lastFadeTick: e.tick,
+          estPos: structuredClone(r.snapshot.estPos),
+          posErrorHexes: r.snapshot.posErrorHexes,
+          estVector: r.snapshot.estVector, estSizeClass: r.snapshot.estSizeClass,
+          estComposition: r.snapshot.estComposition,
+          staleAsOfTick: r.snapshot.asOfTick,
+        };
+      }
       // merge into the side's received picture if newer than what they have (D-008.5)
       if (c && (!c.delivered || r.snapshot.asOfTick >= c.delivered.asOfTick)) {
         c.delivered = r.snapshot;

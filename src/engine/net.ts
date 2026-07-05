@@ -13,6 +13,7 @@ import { CLOCK, NET } from '../rules.js';
 import type { ContactReport, Facility, Formation, GroundPos, Id, TruthState } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
 import { hexDistance } from '../hex/axial.js';
+import { formationSensors } from './sensors.js';
 
 export interface NetNode {
   id: Id; pos: GroundPos; radius: number; theaterWide: boolean;
@@ -77,20 +78,24 @@ export function commandNodesOf(s: TruthState, sideId: Id): NetNode[] {
 
 /** Relay candidates for a side: HQ-carrying formations + COMM_RELAY facilities. */
 function relayCandidates(s: TruthState, sideId: Id): NetNode[] {
+  // D-059: relays umbrella at the same per-campaign radius as command nodes — the
+  // hardcoded constant here ignored `netGroundRadius`, so a formation 15 hexes from
+  // a relay was off-net in a campaign whose nodes reach 18.
+  const groundR = s.config.netGroundRadius ?? NET.GROUND_NODE_RADIUS;
   const out: NetNode[] = [];
   for (const f of Object.values(s.formations)) {
     if (f.destroyed || f.sideId !== sideId || f.pos.kind !== 'ground' || f.mounted) continue;
     if (f.emcon === 'DARK') continue; // radio off relays nothing
     if (inHostileEcmBubble(s, f)) continue; // a jammed relay drops out of the chain
     if (!f.unitIds.some(uid => s.units[uid]?.tags.includes('HQ'))) continue;
-    out.push({ id: f.id, pos: f.pos, radius: NET.GROUND_NODE_RADIUS,
+    out.push({ id: f.id, pos: f.pos, radius: groundR,
                theaterWide: false, relay: true });
   }
   for (const fac of Object.values(s.facilities)) {
     if (fac.sideId !== sideId || fac.pos.kind !== 'ground') continue;
     if (!fac.tags.includes('COMM_RELAY')) continue;
     if (fac.damage === 'DESTROYED') continue; // D-052: a downed mast relays nothing
-    out.push({ id: fac.id, pos: fac.pos, radius: NET.GROUND_NODE_RADIUS,
+    out.push({ id: fac.id, pos: fac.pos, radius: groundR,
                theaterWide: false, relay: true });
   }
   return out;
@@ -193,7 +198,10 @@ export function netPass(s: TruthState, emit: (e: GameEvent) => void): void {
     const node = gateCut ? null : reachableNode(s, f, nodes);
     const prevNodeAlive = f.netNodeId !== undefined && (
       (s.formations[f.netNodeId] && !s.formations[f.netNodeId].destroyed) ||
-      s.facilities[f.netNodeId] !== undefined ||
+      // D-059: FACILITY_DAMAGED never deletes the record — a flattened HQ must
+      // count as a LOST node (1-pulse blackout), same as a destroyed mobile HQ
+      (s.facilities[f.netNodeId] !== undefined &&
+       s.facilities[f.netNodeId].damage !== 'DESTROYED') ||
       (s.satellites[f.netNodeId]?.alive ?? false));
 
     if (node) {
@@ -207,9 +215,13 @@ export function netPass(s: TruthState, emit: (e: GameEvent) => void): void {
         continue;
       }
       if (f.netNodeId === node.id || prevNodeAlive || f.netNodeId === undefined) {
-        // own node still valid (or first assignment): immediate (D-008.2)
+        // own node still valid (or first assignment): immediate (D-008.2).
+        // D-059: a node HANDOVER while already on-net is bookkeeping, not news —
+        // `switchOnly` keeps the feed from shouting "back on-net" every time a
+        // mobile node wanders and coverage silently re-homes.
         emit({ type: 'NET_CHANGED', formationId: f.id, onNet: true,
-               netNodeId: node.id, renetAtTick: null });
+               netNodeId: node.id, renetAtTick: null,
+               ...(f.onNet ? { switchOnly: true } : {}) });
       } else {
         emit({ type: 'NET_CHANGED', formationId: f.id, onNet: false, netNodeId: null,
                renetAtTick: s.tick + NET.RENET_PULSES * CLOCK.TICKS_PER_PULSE });
@@ -285,31 +297,57 @@ export function deliverReportsPass(s: TruthState, emit: (e: GameEvent) => void):
   }
 }
 
-/** Hexes currently inside a side's passive sensor envelopes become scouted terrain. */
-export function scoutPass(s: TruthState, emit: (e: GameEvent) => void): void {
+/**
+ * Hexes currently inside a side's passive sensor envelopes become scouted terrain.
+ *
+ * D-059 (bug pass): three fixes here.
+ *  - Radius comes from formationSensors() — the DERIVED suite (Beagle, Mobile HQ,
+ *    recon VTOL), not the raw authored stat, so the terrain a unit reveals matches
+ *    the sensor ring the map draws for it.
+ *  - `visited` carries every hex a formation MOVED THROUGH this step (from the
+ *    step's FORMATION_MOVED events): a fast column sweeps its whole path instead
+ *    of leaving dark stripes between endpoint discs.
+ *  - A side's own sensor stations reveal the ground they watch: the coverage ring
+ *    the player sees is scouted terrain, not a ring drawn over darkness.
+ */
+export function scoutPass(
+  s: TruthState, emit: (e: GameEvent) => void,
+  visited?: Map<Id, GroundPos[]>,
+): void {
   for (const sideId of Object.keys(s.sides)) {
     const known = new Set(s.scoutedHexes[sideId] ?? []);
     const fresh: string[] = [];
-    for (const f of Object.values(s.formations)) {
-      if (f.destroyed || f.sideId !== sideId || f.pos.kind !== 'ground') continue;
-      const range = Math.max(f.sns.passive, 2);
-      const theater = s.theaters[f.pos.theaterId];
-      if (!theater) continue;
+    const sweep = (theaterId: Id, cq: number, cr: number, range: number): void => {
+      const theater = s.theaters[theaterId];
+      if (!theater) return;
       for (let dq = -range; dq <= range; dq++) {
         for (let dr = Math.max(-range, -dq - range); dr <= Math.min(range, -dq + range); dr++) {
-          const q = f.pos.q + dq, r = f.pos.r + dr;
+          const q = cq + dq, r = cr + dr;
           if (!theater.hexes[`${q},${r}`]) continue;
-          const key = `${f.pos.theaterId}:${q},${r}`;
+          const key = `${theaterId}:${q},${r}`;
           if (!known.has(key)) { known.add(key); fresh.push(key); }
         }
       }
+    };
+    for (const f of Object.values(s.formations)) {
+      if (f.destroyed || f.sideId !== sideId || f.pos.kind !== 'ground') continue;
+      if (f.mounted) continue; // stowed in a bay: the carrier's eyes are the eyes
+      const range = Math.max(formationSensors(s, f).passive, 2);
+      const stops: GroundPos[] = [...(visited?.get(f.id) ?? []), f.pos];
+      for (const at of stops) sweep(at.theaterId, at.q, at.r, range);
       // D-051.1: eyes that scout the ground also log the base sitting on it
       for (const fac of Object.values(s.facilities)) {
         if (fac.sideId === sideId || fac.pos.kind !== 'ground') continue;
-        if (fac.pos.theaterId !== f.pos.theaterId) continue;
-        if (hexDistance(fac.pos, f.pos) > range) continue;
+        if (!stops.some(at => fac.pos.kind === 'ground' &&
+              fac.pos.theaterId === at.theaterId &&
+              hexDistance(fac.pos, at) <= range)) continue;
         spotFacility(s, emit, sideId, fac, { id: f.id, name: f.name, alwaysOnNet: false });
       }
+    }
+    for (const fac of Object.values(s.facilities)) {
+      if (fac.sideId !== sideId || fac.pos.kind !== 'ground') continue;
+      if (!fac.sensorStation || fac.damage === 'DESTROYED') continue;
+      sweep(fac.pos.theaterId, fac.pos.q, fac.pos.r, fac.sensorStation.passive);
     }
     if (fresh.length) emit({ type: 'HEXES_SCOUTED', sideId, keys: fresh });
   }

@@ -35,7 +35,8 @@ import { hashPick } from '../core/rng.js';
 import { checkLatestRelease, type AppUpdate } from './update.js';
 import {
   ARTILLERY_RANGE_HEXES, ATMO, CAPITAL_TN_BY_BAND, CAPITAL_WEAPONS, CAREER, CLOCK,
-  COMBAT_DROP, FIRES, FLAK, LADDER, NET, RDY, RECON_TRICKS, SENSOR_RANGES, SKYWATCH, SUPPLY,
+  COMBAT_DROP, FIRES, FLAK, LADDER, MOVEMENT, NET, RDY, RECON_TRICKS, SENSOR_RANGES,
+  SKYWATCH, SUPPLY,
 } from '../rules.js';
 import {
   validateCampaign, TERRAINS, INFRA, NODE_TYPES, UNIT_CLASSES, EMCONS, POSTURES,
@@ -750,8 +751,13 @@ const server = createServer(async (req, res) => {
         { q: Number(url.searchParams.get('q')), r: Number(url.searchParams.get('r')) }, sideId,
         fromQ !== null && fromR !== null ? { q: Number(fromQ), r: Number(fromR) } : undefined);
       if (!route) return json(res, 200, { path: [], etaTicks: 0 });
+      // D-059: the ETA respects the order's pace — a cautious march takes twice the
+      // promised time, a forced march two-thirds; the router itself is pace-blind
+      const kind = String(url.searchParams.get('kind') ?? '');
+      const paceMult = kind === 'FORCED_MARCH' ? MOVEMENT.FORCED_MARCH_MULT
+        : kind === 'MOVE_CAUTIOUS' ? MOVEMENT.CAUTIOUS_SPEED_FACTOR : 1;
       return json(res, 200, { path: route.path.map(p => ({ q: p.q, r: p.r })),
-                              etaTicks: route.etaTicks });
+                              etaTicks: Math.round(route.etaTicks / paceMult) });
     }
     const sideDiary = path.match(/^\/api\/side\/([^/]+)\/diary$/);
     if (sideDiary) {
@@ -796,10 +802,18 @@ const server = createServer(async (req, res) => {
           ...(b.conditional.emconOverride ? { emconOverride: b.conditional.emconOverride } : {}),
         } as Order,
       }] : [];
-      // M3: air-mission extras — a station on the high-altitude grid, speed, loiter
+      // M3: air-mission extras — a station on the high-altitude grid, speed, loiter.
+      // D-059: the station is a MAP CLICK (ground coords) but is consumed in air-grid
+      // space — lift it through airHexOver like the path, or a nonzero theater origin
+      // displaces every CAP/CAS station into the wrong sky.
       const airStation = b.station
-        ? { kind: 'air' as const, gridQ: b.station.q, gridR: b.station.r,
-            band: (b.station.band ?? 'HIGH') as 'HIGH', altLevel: 6, velocity: 0, vectorDeg: 0 }
+        ? (() => {
+            const over = airHexOver(campaign.truth,
+              { theaterId: airTheater, q: Number(b.station.q), r: Number(b.station.r) });
+            return { kind: 'air' as const, gridQ: over.q, gridR: over.r,
+                     band: (b.station.band ?? 'HIGH') as 'HIGH', altLevel: 6,
+                     velocity: 0, vectorDeg: 0 };
+          })()
         : undefined;
       const order: Order = {
         id: `order:${sideId}:${campaign.truth.tick}:${b.formationId}`,
@@ -837,12 +851,23 @@ const server = createServer(async (req, res) => {
       const theaterId = f.pos.kind === 'ground' ? f.pos.theaterId : '';
       const toPath = (pts: { q: number; r: number }[] = []): GroundPos[] =>
         pts.map(p => ({ kind: 'ground', theaterId, q: p.q, r: p.r }));
+      // D-059: plan steps that are AIR MISSIONS need air-grid waypoints too — the
+      // single-order endpoint got this in D-056, but a planned FERRY/RECON still
+      // launched with ground waypoints, saw an empty route, and turned straight home
+      const airTheater = theaterId || Object.keys(campaign.truth.theaters)[0];
+      const toAirPath = (pts: { q: number; r: number }[] = []) =>
+        pts.map(p => {
+          const over = airHexOver(campaign.truth,
+            { theaterId: airTheater, q: Number(p.q), r: Number(p.r) });
+          return { kind: 'air' as const, gridQ: over.q, gridR: over.r,
+                   band: 'HIGH' as const, altLevel: 6, velocity: 0, vectorDeg: 0 };
+        });
       const tick = campaign.truth.tick;
       const orders: Order[] = b.steps.map((st: any, i: number) => ({
         id: `plan:${sideId}:${tick}:${b.formationId}:${i}`,
         sideId, formationId: b.formationId, issuedTick: tick, effectiveTick: tick + 1,
         kind: st.kind,
-        path: toPath(st.path),
+        path: AIR_MISSIONS.has(st.kind) ? toAirPath(st.path) : toPath(st.path),
         conditionals: [],
         ...(st.targetContactId ? { targetContactId: st.targetContactId } : {}),
         ...(st.targetFormationId ? { targetFormationId: st.targetFormationId } : {}),

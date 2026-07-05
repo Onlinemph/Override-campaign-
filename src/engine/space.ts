@@ -200,6 +200,9 @@ export function lightLagPass(s: TruthState, emit: (e: GameEvent) => void): void 
           { id: `lightcone:${sideId}`, name: em.kind === 'JUMP_FLASH' ? 'K-F flash watch' : 'drive plume watch',
             alwaysOnNet: true },
           { staleAsOfTick: em.tick, setLevel: true,  // light gives a floor, not a climb
+            // D-059: the light carries where the ship WAS at emission — snapshotting
+            // its live position leaked a track no light cone could deliver
+            posAsObserved: structuredClone(em.pos),
             note: `${em.massClass}${em.vectorNote ? ' — ' + em.vectorNote : ''}` });
       }
     }
@@ -413,9 +416,19 @@ export function spaceDetectionPass(s: TruthState, emit: (e: GameEvent) => void):
         dice: '2d6', result: r.result, seedCursor: r.nextCursor - 2 } });
       if (r.result + mod >= tn) {
         const lag = lightLagTicks(positionDistanceAU(s, searcher.pos, target.pos));
+        // D-059: the snapshot must show the target where the LIGHT left it, not
+        // where it is now. For a lane transit, rewind its progress by the lag;
+        // a node target was (to the best physics we track) at the node then too.
+        let posThen: typeof target.pos | undefined;
+        if (target.pos.kind === 'lane') {
+          const AU_KM = 1.496e8, TICK_SECONDS = 360; // 6-minute ticks
+          const dAU = (target.pos.velocityKps * lag * TICK_SECONDS) / AU_KM;
+          posThen = { ...target.pos, progressAU: Math.max(0, target.pos.progressAU - dAU) };
+        }
         registerDetection(s, emit, searcher.sideId, target, LADDER.CLIMB_PER_SUCCESS,
           { id: searcher.id, name: searcher.name, alwaysOnNet: true },
-          { staleAsOfTick: Math.max(0, s.tick - lag) });
+          { staleAsOfTick: Math.max(0, s.tick - lag),
+            ...(posThen ? { posAsObserved: posThen } : {}) });
       }
     }
   }

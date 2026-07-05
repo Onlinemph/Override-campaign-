@@ -474,6 +474,9 @@ async function plotHex(q, r) {
     const from = planSteps.length ? planDest(planSteps[planSteps.length - 1]) : null;
     const res = await fetch(`/api/side/${sideId}/route?t=${encodeURIComponent(token)}` +
         `&formationId=${encodeURIComponent(selId)}&q=${q}&r=${r}` +
+        // D-059: tell the router the intended pace so the ETA is honest
+        // (cautious = twice the time, forced march = two-thirds)
+        `&kind=${encodeURIComponent(document.getElementById('o-kind').value || '')}` +
         (from ? `&fromQ=${from.q}&fromR=${from.r}` : ''))
       .then(x => x.json()).catch(() => null);
     if (res && res.path && res.path.length) {

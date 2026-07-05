@@ -1507,3 +1507,114 @@ listening.
    have, then printed "✗ no route there for this formation". Air-domain
    formations fly straight lines: for them a click now plots the raw waypoint
    directly, exactly what FERRY/RECON expect.
+
+## D-059 ✅ The big bug pass: movement, sensors, hex revealing, command net
+User report: "movement, sensors, hex revealing, and network issues seem to be
+rampant." Four parallel audits over those subsystems plus live probes on
+RIVERWARD. Nineteen defects confirmed and fixed; each carries a regression test
+in test/engine/bugpass59.test.ts. The keepers:
+
+**Movement**
+1. **Stale orders resurrected.** When two orders for the same formation came due
+   together (plot, then correct before the GM advances), only the winner
+   activated — the loser lingered un-completed and REACTIVATED the moment the
+   winner finished, marching the unit back along the corrected-away-from path.
+   Losers of the race are now cancelled on the spot. (Root cause of "units
+   moving wrong / doubling back".)
+2. **PATROL never moved.** The UI sold "walk a loop"; the engine only granted
+   the +1 detection bonus. PATROL is now a mover: it walks the plotted circuit
+   and loops (pathIndex resets), as a standing order.
+3. **Air routes flew one leg per step.** flyStep discarded the leftover speed
+   budget at every waypoint — a hand-drawn route with short legs crawled at
+   1-2 hexes/step regardless of the aircraft. It now flies legs until the
+   step's budget is spent.
+4. **FERRY boomeranged.** On route completion RTB kicked in and the ship flew
+   all the way back to its ORIGINAL base (or hovered forever if homeless).
+   FERRY now lands at its destination; touching down on an own strip rebases
+   the flight there. Verified live: a Union ferried 76,69 → 60,60 and landed AT
+   60,60.
+5. **A cancelled mission's prep clock pinned the campaign.** air.launchAtTick
+   survived order cancellation: the clock stayed in 6-minute CONTACT mode
+   forever ("something gets overloaded") and the next order launched instantly,
+   skipping its prep. Cleared when no order remains; isLaunchPending requires a
+   live order.
+6. **Plans gave flights ground waypoints** (D-056 fixed the single-order
+   endpoint only): a planned FERRY/RECON launched, saw an empty route, turned
+   home. Plan steps now lift air-mission paths onto the air grid; CAP/CAS
+   stations get the same lift.
+7. Forced-march fatigue prorated by movement actually performed (a column
+   stalled at a river no longer bleeds RDY standing still); EMBARK toward a
+   carrier in another theater holds instead of marching to a meaningless hex;
+   the route ETA respects pace (cautious ×2, forced ×⅔ — pass the order kind);
+   stall reasons now walk the INTERPOLATED path (the blocking river between
+   waypoints is named, with its hex) and STRIKE reports "no route".
+
+**Sensors**
+8. **No range term in detection.** A scout parked NEXT TO a dug-in ECM garrison
+   rolled the same TN as one at maximum range — verified live: blue cavalry sat
+   1 hex from two enemy formations for hours, saw nothing, and got LOCKed
+   itself. New searcher mods: point-blank +2 (≤1 hex), close +1 (≤2). Same-hex
+   auto-LOCK unchanged. Sweep doctrine documented in the guide.
+9. **Courier reports delivered into a deleted contact.** The truth ladder fades
+   (−1/pulse); if it hit zero while a recon flight carried its film home,
+   REPORT_DELIVERED silently no-opped: feed text, no map contact — for EVERY
+   sighting whose round trip beat the fade clock. The reducer now recreates the
+   contact as a cold (level-0) track carrying the delivered picture.
+10. **Continuously observed targets aged as "stale".** Silent re-confirmations
+    refreshed the truth ladder but never the delivered snapshot, so a LOCK
+    under live observation showed hours-old ageTicks. On-net observers now
+    re-stamp the delivered picture every confirmation.
+11. **ECM haze froze at first sighting** — re-reported only when new, so the
+    marker pinned at the first-seen hex while the ECM lance crossed the map.
+    Now re-reports whenever the bubble moves.
+12. **Light-lag leaked live positions** (DEEP SKY): an observer "seeing the
+    flash" of an hours-old emission received the ship's CURRENT position merely
+    stamped as old. Snapshots now use the position as-observed (emission point;
+    lane transits rewound by the lag).
+13. **Combat drops were omniscient**: every enemy side got a free LOCK on the
+    landing, eyes or no eyes. Now gated on the side having a live formation,
+    facility, or satellite in (or over) the theater.
+
+**Hex revealing**
+14. **Terrain reveal used the raw authored sensor stat**, not the derived suite
+    — a recon VTOL / Mobile HQ / Beagle formation showed a 4-hex sensor ring on
+    the map but revealed terrain at radius 2 ("dark inside my own sensor
+    ring"). scoutPass now shares formationSensors() (new engine/sensors.ts).
+15. **Multi-hex moves revealed only the endpoint.** A pulse-mode column moving
+    6-16 hexes left dark stripes along its own path. The step now feeds every
+    hex MOVED THROUGH (from FORMATION_MOVED events) to the sweep.
+16. **Sensor stations and satellites revealed nothing.** A side's own
+    fixed radar sat on permanently dark terrain; recon satellites photographed
+    formations but not the ground. Both now scout their coverage
+    (station envelope; satellite corridor per pass).
+17. Player map theater filters: own formations, own facilities, and route lines
+    from OTHER theaters no longer ghost onto the current map at the same
+    coordinates.
+
+**Command net**
+18. **A flattened facility HQ was still "alive" for re-netting** — formations
+    re-homed instantly with no D-008.2 blackout, making decapitation strikes on
+    fixed HQs strictly weaker than on mobile ones. Destroyed facilities now
+    count as lost nodes (1-pulse re-net).
+19. **Relays ignored netGroundRadius** — hardcoded 12 while command nodes
+    honored the campaign override: "units wrongly off-net" in any campaign with
+    a custom radio range (starter.json uses 18). Relays now share the override.
+20. The player screen's ON-NET flag now uses the same live gate as order
+    acceptance (EMCON-DARK / hostile-ECM cuts included) — the two could
+    disagree, showing "on-net" while orders bounced. Node HANDOVERS while
+    already on-net are no longer announced as "back on-net" (feed noise that
+    read as flicker). GM-spawned reinforcements net & scout immediately instead
+    of refusing orders until the next clock step.
+
+**Multi-theater hardening** (latent, no shipped scenario affected): theaters
+without an authored air-grid origin now get disjoint origins at campaign
+creation (they all defaulted to {0,0}, collapsing every theater's sky onto the
+alphabetically-first map — recon corridors, radio umbrellas, and RTB all
+misresolved); scouted-hex keys parse from the LAST colon so theater ids
+containing ':' don't drop the whole terrain set.
+
+Reviewed and deliberately unchanged: the satellite swath is centerline ±5
+(11 wide vs the printed 10 — generous, harmless); LOW-band nap-of-earth ingress
+remains unimplemented (no code path creates a non-HIGH band — future feature,
+not a bug); a DropShip descended from orbit still holds in the sky awaiting
+orders (that hover is the design; only FERRY's terminal hover was a bug).

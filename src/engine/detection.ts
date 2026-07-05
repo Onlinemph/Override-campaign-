@@ -8,7 +8,7 @@ import {
 } from '../rules.js';
 import type {
   Contact, ContactReport, ContactSnapshot, Facility, Formation, GroundPos, Hex,
-  LadderLevel, Satellite, TruthState,
+  LadderLevel, Position, Satellite, TruthState,
 } from '../core/types.js';
 import { hexKey } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
@@ -16,6 +16,7 @@ import { rollDice, hashPick } from '../core/rng.js';
 import { AXIAL_DIRECTIONS, distanceToPath, hexDistance, hexLine } from '../hex/axial.js';
 import { isNight } from './clock.js';
 import { isChainRelay, isFormationOnNet } from './net.js';
+import { formationSensors } from './sensors.js';
 
 // ── Searchers ────────────────────────────────────────────────────────────────
 
@@ -34,24 +35,9 @@ export interface Searcher {
   alwaysOnNet: boolean; // facilities & satellites (D-008.9)
 }
 
-/** Best sensor suite in the formation (core §3 SNS: "best sensor suite"). */
-export function formationSensors(s: TruthState, f: Formation): { passive: number; active: number } {
-  let best: { passive: number; active: number } = { ...SENSOR_RANGES.MECH_STANDARD };
-  for (const uid of f.unitIds) {
-    const u = s.units[uid];
-    if (!u) continue;
-    const candidates: Array<{ passive: number; active: number }> = [];
-    if (u.tags.includes('BEAGLE')) candidates.push(SENSOR_RANGES.BEAGLE);
-    if (u.tags.includes('HQ')) candidates.push(SENSOR_RANGES.MOBILE_HQ);
-    if (u.tags.includes('RECON') && u.class === 'VTOL') candidates.push(SENSOR_RANGES.RECON_VTOL);
-    for (const c of candidates) if (c.passive > best.passive) best = { ...c };
-  }
-  // formation may carry explicit sns overrides from setup
-  if (f.sns.passive > best.passive || f.sns.active > best.active) {
-    best = { passive: Math.max(f.sns.passive, best.passive), active: Math.max(f.sns.active, best.active) };
-  }
-  return best;
-}
+// D-059: formationSensors moved to sensors.ts (net.ts needs it too and detection.ts
+// already imports from net.ts). Re-exported here so existing importers keep working.
+export { formationSensors };
 
 function gatherSearchers(s: TruthState): Searcher[] {
   const out: Searcher[] = [];
@@ -279,6 +265,7 @@ export function registerDetection(
     staleAsOfTick?: number;  // light lag: when this information was TRUE (DEEP SKY §4.2)
     note?: string;           // narrative payload (mass class, vector readability)
     setLevel?: boolean;      // `by` is a floor (auto-detections), not a ladder climb
+    posAsObserved?: Position; // D-059: light lag — WHERE the target was when observed
   },
 ): void {
   const cid = contactId(observerSideId, target.id);
@@ -287,8 +274,16 @@ export function registerDetection(
     ? Math.max(existing?.level ?? 0, Math.min(LADDER.MAX_LEVEL, by))
     : Math.min(LADDER.MAX_LEVEL, (existing?.level ?? 0) + by)) as LadderLevel;
   const asOf = opts?.staleAsOfTick ?? s.tick;
-  const snap = buildSnapshot(s, cid, target, newLevel, s.tick);
+  // D-059: a light-lagged observation must snapshot the target where it WAS at
+  // emission time — snapshotting live pos leaked information no light cone carried
+  const snapTarget = opts?.posAsObserved
+    ? ({ ...target, pos: opts.posAsObserved } as Formation) : target;
+  const snap = buildSnapshot(s, cid, snapTarget, newLevel, s.tick);
   snap.asOfTick = asOf;
+
+  // on-net sources feed the player map in real time (core §4.2)
+  const onNet = source.alwaysOnNet ||
+    (s.formations[source.id] ? isFormationOnNet(s, s.formations[source.id]) : false);
 
   const contact: Contact = {
     id: cid, observerSideId, targetFormationId: target.id, kind: 'STANDARD',
@@ -299,6 +294,11 @@ export function registerDetection(
     staleAsOfTick: asOf,
     delivered: existing?.delivered,
   };
+  // D-059: a live on-net observer re-stamps the delivered picture even on a silent
+  // re-confirmation — a target under continuous observation must not age as "stale"
+  if (onNet && (!contact.delivered || snap.asOfTick >= contact.delivered.asOfTick)) {
+    contact.delivered = snap;
+  }
   emit({ type: 'CONTACT_UPGRADED', contact, tick: s.tick });
 
   // a report carries NEW information: a ladder climb or a position update.
@@ -316,10 +316,6 @@ export function registerDetection(
     snapshot: snap,
   };
   emit({ type: 'REPORT_QUEUED', report });
-
-  // on-net sources feed the player map in real time (core §4.2)
-  const onNet = source.alwaysOnNet ||
-    (s.formations[source.id] ? isFormationOnNet(s, s.formations[source.id]) : false);
   if (onNet) emit({ type: 'REPORT_DELIVERED', reportId: report.id, tick: s.tick });
 }
 
@@ -356,6 +352,12 @@ export function detectionPass(s: TruthState, emit: (e: GameEvent) => void): void
       let mod = 0;
       if (searcher.emconActive) mod += SEARCHER_MODS.EMCON_ACTIVE;
       if (searcher.patrol) mod += SEARCHER_MODS.PATROL_ORDER;
+      // D-059: proximity — the TN itself has no range term, so without this a
+      // scout PARKED NEXT TO a dug-in ECM garrison rolled the same 3% as one at
+      // maximum sensor range. Closing the distance is how you find the quiet ones.
+      const range = hexDistance(searcher.pos, tPos);
+      if (range <= 1) mod += SEARCHER_MODS.POINT_BLANK;
+      else if (range <= 2) mod += SEARCHER_MODS.CLOSE_RANGE;
 
       const r = rollDice(s.seed, s.seedCursor, '2d6');
       emit({
@@ -383,7 +385,12 @@ export function detectionPass(s: TruthState, emit: (e: GameEvent) => void): void
         if (hexDistance(searcher.pos, tPos) > searcher.active) continue;
         const cid = `haze:${searcher.sideId}:${target.id}`;
         if (s.contacts[cid]?.lastConfirmedTick === s.tick) continue;
-        const isNew = !s.contacts[cid];
+        const prev = s.contacts[cid];
+        // D-059: re-report when the bubble MOVES, not just on first sighting — the
+        // delivered haze marker used to freeze at its first-seen hex forever while
+        // the ECM lance crossed the map
+        const isNew = !prev || (prev.estPos as GroundPos).q !== tPos.q ||
+          (prev.estPos as GroundPos).r !== tPos.r;
         const haze: Contact = {
           id: cid, observerSideId: searcher.sideId, targetFormationId: target.id,
           kind: 'ECM_HAZE', level: 1, lastConfirmedTick: s.tick, lastFadeTick: s.tick,
@@ -437,6 +444,27 @@ export function satellitePass(s: TruthState, emit: (e: GameEvent) => void): void
         registerDetection(s, emit, sat.sideId, target, LADDER.CLIMB_PER_SUCCESS,
           { id: sat.id, name: `Satellite ${sat.id}`, alwaysOnNet: true });
       }
+    }
+    // D-059: the camera photographs the GROUND too — the corridor the player sees
+    // drawn on the map becomes scouted terrain on every pass, like air recon does
+    {
+      const half = Math.floor(SATELLITE.TRACK_WIDTH_HEXES / 2);
+      const th = s.theaters[sat.theaterId];
+      const known = new Set(s.scoutedHexes[sat.sideId] ?? []);
+      const freshKeys: string[] = [];
+      if (th) {
+        for (const c of sat.corridor) {
+          for (let dq = -half; dq <= half; dq++) {
+            for (let dr = Math.max(-half, -dq - half); dr <= Math.min(half, -dq + half); dr++) {
+              const q = c.q + dq, r = c.r + dr;
+              if (!th.hexes[hexKey(q, r)]) continue;
+              const key = `${sat.theaterId}:${q},${r}`;
+              if (!known.has(key)) { known.add(key); freshKeys.push(key); }
+            }
+          }
+        }
+      }
+      if (freshKeys.length) emit({ type: 'HEXES_SCOUTED', sideId: sat.sideId, keys: freshKeys });
     }
     emit({ type: 'SAT_PASS', satelliteId: sat.id, tick: s.tick,
            nextPassTick: sat.nextPassTick + sat.periodPulses * CLOCK.TICKS_PER_PULSE });

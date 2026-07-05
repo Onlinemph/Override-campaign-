@@ -72,6 +72,11 @@ export const SEARCHER_MODS = {
   EMCON_ACTIVE: 2,
   PATROL_ORDER: 1,
   LEAN_LOITER: -1,        // SKYWATCH §2: minimum-burn loiter degrades your own search
+  // D-059: proximity — the detection TN has no range term, so these reward closing
+  // in. Point-blank (≤1 hex ≈ 18 km) turns a "boxcars only" hidden garrison into a
+  // find-it-within-the-hour problem; ≤2 hexes helps. HIDE still matters at range.
+  POINT_BLANK: 2,         // searcher within 1 hex of the target
+  CLOSE_RANGE: 1,         // searcher within 2 hexes
 } as const;
 
 // ── Sensor ranges in operational hexes (core §6.2) ──────────────────────────
