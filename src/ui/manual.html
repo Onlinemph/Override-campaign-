@@ -132,7 +132,12 @@ they carry formations in bays (cargo rides along, invisible and fed by the ship)
 LIFT_OFF / LAND anywhere passable, and rearm their flights from ship stores.
 <b>Spheroids crawl</b> — <b data-rule="SKYWATCH.SPHEROID_ATMO_HEX_PER_TICK">1</b> air hex
 per turn in atmosphere; their fast lane is ASCEND → cross in space → DESCEND. Aerodynes
-fly full speed. <b>Flak:</b> AA units umbrella their hex +
+fly full speed. <b>Recon sorties:</b> a flight on a RECON order photographs a corridor
+<b data-rule="SENSOR_RANGES.RECON_AIR_CORRIDOR_WIDTH">5</b> ground hexes wide under its
+track — terrain becomes scouted, formations under the camera get a passive detection
+roll per turn — but the film rides home with the plane: reports deliver when it lands
+back inside the net, and are lost with the aircraft if it doesn't.
+<b>Flak:</b> AA units umbrella their hex +
 <b data-rule="FLAK.RANGE_HEXES">2</b>; every launch, landing, or drop pass inside it
 takes one shot per battery — and the battery is <b>graded by its real guns</b> (a
 Partisan's LB-X mounts count double): more strength = lower to-hit, and a massed

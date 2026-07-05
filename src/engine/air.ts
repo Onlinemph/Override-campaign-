@@ -7,15 +7,15 @@
  * Air combat is never simulated — interception produces an AIR engagement that freezes
  * the campaign for the tabletop merge (export in handoff/export.ts).
  */
-import { ATMO, CLOCK, LADDER, SKYWATCH, TERRAIN } from '../rules.js';
+import { ATMO, CLOCK, LADDER, SENSOR_RANGES, SKYWATCH, TERRAIN } from '../rules.js';
 import type {
   AirPos, Formation, GroundPos, Id, Order, TruthState,
 } from '../core/types.js';
 import { hexKey } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
-import { hexDistance, hexLine, headingDeg } from '../hex/axial.js';
+import { distanceToPath, hexDistance, hexLine, headingDeg } from '../hex/axial.js';
 import { isNight } from './clock.js';
-import { registerDetection } from './detection.js';
+import { computeDetectionTN, registerDetection } from './detection.js';
 import { capitalGauntlet, flakGauntlet } from './flak.js';
 import { hashPick, rollDice } from '../core/rng.js';
 
@@ -376,6 +376,64 @@ function ascentNodeFor(s: TruthState, f: Formation, order: Order): Id | null {
   return withTheater[0]?.id ?? null;
 }
 
+/**
+ * D-051: the recon sortie — a flight on a RECON order photographs the corridor it
+ * flies: SENSOR_RANGES.RECON_AIR_CORRIDOR_WIDTH ground hexes wide, centered on the
+ * track. Terrain under the corridor becomes scouted ground (the same fog layer the
+ * ground scouts feed), and every enemy ground formation under it gets one passive-
+ * channel look per step — the full signature stack applies, so a column moving on a
+ * road is film-ready while a dug-in lance under trees at night is nearly invisible.
+ * The photos ride home with the plane: an airborne flight is never on-net, so its
+ * reports queue and deliver when it lands back inside the net — and die with it if
+ * it doesn't (REPORTS_LOST). Flak, capital batteries, and interception are already
+ * waiting along the corridor; that is the price of the picture.
+ */
+export function reconSweep(
+  s: TruthState, emit: (e: GameEvent) => void,
+  f: Formation, track: Array<{ q: number; r: number }>,
+): void {
+  const half = Math.floor(SENSOR_RANGES.RECON_AIR_CORRIDOR_WIDTH / 2);
+  const night = isNight(s, s.tick);
+
+  // terrain: everything under the corridor is on the film
+  const known = new Set(s.scoutedHexes[f.sideId] ?? []);
+  const fresh: string[] = [];
+  const theaters = new Set<string>();
+  for (const t of track) {
+    const under = groundHexUnder(s, t);
+    if (!under) continue; // open sky beyond the mapped region
+    theaters.add(under.theaterId);
+    const theater = s.theaters[under.theaterId];
+    for (let dq = -half; dq <= half; dq++) {
+      for (let dr = Math.max(-half, -dq - half); dr <= Math.min(half, -dq + half); dr++) {
+        const q = under.q + dq, r = under.r + dr;
+        if (!theater.hexes[hexKey(q, r)]) continue;
+        const key = `${under.theaterId}:${q},${r}`;
+        if (!known.has(key)) { known.add(key); fresh.push(key); }
+      }
+    }
+  }
+  if (fresh.length) emit({ type: 'HEXES_SCOUTED', sideId: f.sideId, keys: fresh });
+
+  // formations: one passive look per enemy ground formation under the corridor
+  for (const target of Object.values(s.formations)) {
+    if (target.destroyed || target.mounted || target.sideId === f.sideId) continue;
+    if (target.pos.kind !== 'ground' || !theaters.has(target.pos.theaterId)) continue;
+    if (distanceToPath(airHexOver(s, target.pos), track) > half) continue;
+
+    const { tn } = computeDetectionTN(s, target, 'PASSIVE_SENSOR', night);
+    const r = rollDice(s.seed, s.seedCursor, '2d6');
+    emit({ type: 'DIE_ROLLED', roll: {
+      id: `roll:${s.seedCursor}`, tick: s.tick,
+      purpose: `air recon ${f.name} → ${target.name} (TN ${tn})`,
+      dice: '2d6', result: r.result, seedCursor: r.nextCursor - 2 } });
+    if (r.result >= tn) {
+      registerDetection(s, emit, f.sideId, target, LADDER.CLIMB_PER_SUCCESS,
+        { id: f.id, name: f.name, alwaysOnNet: false });
+    }
+  }
+}
+
 function flyStep(
   s: TruthState, f: Formation, order: Order | undefined, dt: number,
   emit: (e: GameEvent) => void,
@@ -434,6 +492,8 @@ function flyStep(
              fpPaid: loiterFpPerTick(s, f, !!f.air.lean) * loiterTicks,
              reason: 'loiter', tick: s.tick });
     }
+    // D-051: a recon flight holding station keeps its cameras on the hex below
+    if (order.kind === 'RECON') reconSweep(s, emit, f, [airQR(f.pos as AirPos)]);
     if (remaining >= 0) {
       const left = remaining - loiterTicks;
       emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id,
@@ -476,6 +536,11 @@ function flyStep(
                           vectorDeg: Math.round(headingDeg(cur, dest)) };
     emit({ type: 'AIR_MOVED', formationId: f.id, pos,
            fpPaid: hexesFlown * transitFpPerHex(s, f, speed), speed, tick: s.tick });
+    // D-051: a recon sortie photographs the leg it just flew — cameras run the
+    // whole track, not just the endpoint, so a fast pass can't skip over targets
+    if (order?.kind === 'RECON') {
+      reconSweep(s, emit, f, line.slice(0, Math.min(hexesFlown, line.length - 1) + 1));
+    }
   }
 
   if (hexesFlown >= dist) {

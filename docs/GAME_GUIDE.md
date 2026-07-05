@@ -185,8 +185,20 @@ loiter −1 (a fuel-sipping flight searches badly).
 Mk1 Eyeball 3 by day / 1 at night (needs line of sight — hills, mountains, and cities
 block it). EMCON DARK cuts your own passive range by 2.
 
-**Recon satellites** sweep a 10-hex-wide ground track every 4 pulses. **Comm satellites**
-make your net theater-wide.
+**Recon satellites** sweep a 10-hex-wide ground track every 4 pulses (passive optics —
+night applies), and their hits reach your map instantly. They are **tripwires, not
+cameras**: contacts fade faster than a 4-pulse orbit re-confirms, so a satellite tells
+you *something moved through the corridor* — developing the track is someone else's
+job. **Comm satellites** make your net theater-wide.
+
+**Recon sorties** (D-051): a flight on a RECON order photographs a corridor
+**5 ground hexes wide** under its track — terrain becomes scouted ground, and every
+enemy formation under the camera gets a passive-channel detection roll per turn (the
+full signature stack applies: a column on a road is film-ready, a dug-in lance under
+trees at night is nearly invisible). An airborne flight is **never on the net**, so
+the photos ride home with the plane: reports deliver when it lands back inside the
+net — and are **lost with the aircraft** if it doesn't. Flak, capital batteries, and
+interceptors are already waiting along the corridor; that's the price of the picture.
 
 **Deception**: a `DECOY` unit makes its formation read one size class *bigger* to
 everything below LOCK. A false transponder squawk in space holds until inspected
@@ -328,7 +340,7 @@ state; the climb-out pays flak under the departure path.
 | **CAP** | fly to a station, loiter (paying the ledger), engage anything hostile resolved in your hex — CAP and SWEEP have standing intercept intent |
 | **SWEEP** | as CAP but prowling a route |
 | **STRIKE_AIR / CAS** | fly a ground-attack mission; while holding one within 24 air hexes of a battle, you appear in its handoff as **off-board air support** with arrival timing |
-| **ESCORT / FERRY / INTERDICTION / RECON / SAR / TANKER** | fly the plotted route/station; RECON widens your search; TANKER transfers fuel 1 ton delivered per 2 carried (GM action); SAR recovers downed crew markers |
+| **ESCORT / FERRY / INTERDICTION / RECON / SAR / TANKER** | fly the plotted route/station; RECON photographs a 5-hex corridor under the track (terrain + contacts; film delivers on landing — D-051); TANKER transfers fuel 1 ton delivered per 2 carried (GM action); SAR recovers downed crew markers |
 | **ORBITAL_STANDBY** | hold ready in orbit (responds in ~3 ticks) |
 | **LIFT_OFF** | (DropShips) get airborne and *hold* — a standing hover until your next order |
 | **LAND** | put down on any **passable** hex — no facility needed. Water refuses the landing. Outranks a fuel-forced RTB: putting down now is how a bingo ship saves itself |

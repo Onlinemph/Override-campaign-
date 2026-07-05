@@ -1235,3 +1235,32 @@ ranges drop in **1:1**.
    operations' shape survives contact with the real numbers. Everything got longer
    legs and a graded bite (deadly close, harassment far) instead of a flat TN inside
    a small circle — the real numbers produce better play than the invented ones did.
+
+## D-051 ✅ The recon sortie: aerospace finally looks DOWN
+The gap, found while explaining scouting: the RECON air mission existed as an order
+but produced nothing — a flight flew the route, burned the fuel, ate the flak, and
+came home with no intel. The only air detection in the engine was ground radar
+looking up and fighters finding each other. The spec had already named the fix:
+`SENSOR_RANGES.RECON_AIR_CORRIDOR_WIDTH = 5` ("aerospace recon sortie corridor") sat
+in rules.ts referenced by exactly one table test. D-051 makes it real.
+1. **The camera runs the whole track** (`reconSweep` in engine/air.ts): each step, a
+   flight on a RECON order sweeps the corridor — 5 ground hexes wide, centered on the
+   leg it just flew (the full hexLine, so a fast pass can't skip over targets) or on
+   the hex below while holding station. Congruent-sky mapping via groundHexUnder /
+   airHexOver keeps it honest across theater air-grid offsets.
+2. **Terrain goes on the film**: hexes under the corridor are HEXES_SCOUTED into the
+   same fog layer the ground scouts feed — flying the river valley once means the
+   auto-router stops guessing about it.
+3. **Formations get one passive-channel look per step** — the standard 2d6 vs
+   computeDetectionTN, night applies, the whole signature stack in play: a battalion
+   marching a road at noon is film-ready (TN ~4), a dug-in lance under trees at night
+   is nearly invisible (TN ~11). Successes climb the normal contact ladder.
+4. **The photos ride home with the plane** — no new machinery, this simply FELL OUT
+   of the existing net rules: reachableNode() returns null for air positions, so an
+   airborne flight is never on-net, its reports queue, deliverReportsPass releases
+   them when it lands back inside the net, and REPORTS_LOST buries them if the plane
+   dies first. Risk/reward is structural: the corridor you must fly is exactly where
+   the flak, the capital umbrellas (D-050), and the interceptors are.
+5. **Scoped to the RECON order**: a CAP or STRIKE flight is not a camera — tasking
+   is a real choice. Satellites stay the tripwire (instant delivery, fades between
+   passes); the sortie is the developer you send when the tripwire fires.
