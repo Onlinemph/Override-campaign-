@@ -112,10 +112,15 @@ A `capitalBattery` makes the facility an **anti-capital emplacement** (D-050):
   "capitalBattery": { "weapon": "WHITE_SHARK", "shots": 8 } }
 ```
 
-`weapon` is one of `BARRACUDA WHITE_SHARK KILLER_WHALE NL45` (real capital-weapon
-stats in `rules.CAPITAL_WEAPONS`: TN, damage steps, air-hex range). It fires on
+`weapon` is any key in `rules.CAPITAL_WEAPONS` — 31 real Total Warfare capital and
+sub-capital weapons (capital missiles `BARRACUDA WHITE_SHARK KILLER_WHALE`, naval
+autocannons `NAC_10`…`NAC_40`, naval gauss/lasers/PPCs, mass drivers, and the
+sub-capital line), each carrying its printed damage steps and range **bands**
+(short/medium/long/extreme air hexes at the 1:1 18-km scale; to-hit 5/7/9/11 by
+band). Sub-capitals and the Barracuda also track fighters. It fires on
 capital hulls transitioning or flying inside its range — landing denial — with a
-finite magazine (`shots`; `NL45` is an energy mount and ignores it), and it is
+finite magazine (`shots`; energy mounts — naval lasers/PPCs, sub-capital lasers,
+mass drivers — ignore it), and it is
 silenced while an enemy ground formation stands in its hex. Units: an optional
 `"flak": N` on any unit overrides the derived flak battery strength (D-050 —
 normally graded automatically from the card's guns when it carries the

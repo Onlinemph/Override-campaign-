@@ -11,17 +11,19 @@
  * tactical flak still batters, it does not one-shot (caps at CRIPPLED). Firing
  * is loud: the battery is revealed at CONTACT, the counter-battery bargain.
  *
- * ANTI-CAPITAL EMPLACEMENTS: a facility with a `capitalBattery` mounts a real
- * capital weapon (rules.CAPITAL_WEAPONS — Barracuda / White Shark / Killer
- * Whale / NL45). It engages CAPITAL HULLS (DropShips, small craft, jump-capable
- * vessels — only the Barracuda can track fighters) transitioning through or
- * flying inside its air-hex umbrella, one shot per battery per step, and unlike
- * tactical flak it CAN destroy: a Killer Whale hit is three damage steps. The
- * magazine is finite (energy mounts excepted), and a battery whose hex is held
- * by an enemy ground formation is silenced — you take the guns by taking the
- * ground. This is what lets a defender deny landings on top of what matters.
+ * ANTI-CAPITAL EMPLACEMENTS (D-050.1 — REAL Total Warfare stats, 1:1: a TW
+ * space/high-altitude hex is 18 km, exactly our operational hex): a facility
+ * with a `capitalBattery` mounts an actual capital or sub-capital weapon from
+ * rules.CAPITAL_WEAPONS. It engages CAPITAL HULLS (DropShips, small craft,
+ * jump-capables — sub-capital weapons and the Barracuda can also track
+ * fighters) transitioning through or flying inside its printed range bands,
+ * one shot per battery per step, to-hit by band (short 5+ … extreme 11+), and
+ * unlike tactical flak it CAN destroy: a Killer Whale hit is three damage
+ * steps. Magazines are finite (energy mounts excepted), and a battery whose
+ * hex is held by an enemy ground formation is silenced — you take the guns by
+ * taking the ground. This is what denies a landing on top of what matters.
  */
-import { CAPITAL_WEAPONS, FLAK, LADDER } from '../rules.js';
+import { CAPITAL_TN_BY_BAND, CAPITAL_WEAPONS, FLAK, LADDER } from '../rules.js';
 import type { DamageState, Facility, Formation, GroundPos, TruthState } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
 import { hexDistance } from '../hex/axial.js';
@@ -132,6 +134,14 @@ function suppressed(s: TruthState, fac: Facility): boolean {
     o.pos.theaterId === at.theaterId && o.pos.q === at.q && o.pos.r === at.r);
 }
 
+/** D-050.1: which range band (0=short…3=extreme) a shot at `d` air hexes uses. */
+export function capitalBand(weapon: { bands: number[] }, d: number): number | null {
+  for (let i = 0; i < weapon.bands.length; i++) {
+    if (d <= weapon.bands[i]) return i;
+  }
+  return null; // beyond the weapon's printed maximum
+}
+
 /** Live enemy capital batteries whose umbrella covers the sky over `airHex`. */
 export function capitalBatteriesNear(
   s: TruthState, targetSideId: string, airHex: { q: number; r: number },
@@ -143,7 +153,7 @@ export function capitalBatteriesNear(
       if (!w) return false;
       if (!w.energy && fac.capitalBattery.shots <= 0) return false; // magazine dry
       if (suppressed(s, fac)) return false;
-      return hexDistance(airHexOver(s, fac.pos), airHex) <= w.rangeAirHexes;
+      return capitalBand(w, hexDistance(airHexOver(s, fac.pos), airHex)) !== null;
     })
     .sort((a, b) => a.id.localeCompare(b.id));
 }
@@ -159,33 +169,39 @@ export function capitalGauntlet(
   target: Formation, airHex: { q: number; r: number }, context: string,
 ): void {
   const batteries = capitalBatteriesNear(s, target.sideId, airHex);
+  const BAND_NAMES = ['short', 'medium', 'long', 'extreme'];
   for (const fac of batteries) {
     const w = CAPITAL_WEAPONS[fac.capitalBattery!.weapon];
     if (!isCapitalTarget(s, target, w.tracksFighters)) continue;
+    const d = fac.pos.kind === 'ground'
+      ? hexDistance(airHexOver(s, fac.pos), airHex) : Infinity;
+    const band = capitalBand(w, d);
+    if (band === null) continue;
+    const tn = CAPITAL_TN_BY_BAND[band];
 
     const r = rollDice(s.seed, s.seedCursor, '2d6');
     emit({ type: 'DIE_ROLLED', roll: {
       id: `roll:${s.seedCursor}`, tick: s.tick,
       purpose: `capital battery ${fac.name} [${fac.capitalBattery!.weapon}] → ${target.name} `
-        + `(${context}, TN ${w.tn})`,
+        + `(${context}, ${BAND_NAMES[band]} range ${d}, TN ${tn})`,
       dice: '2d6', result: r.result, seedCursor: r.nextCursor - 2 } });
     if (!w.energy) {
       emit({ type: 'CAPITAL_BATTERY_FIRED', facilityId: fac.id,
              shotsLeft: fac.capitalBattery!.shots - 1, tick: s.tick });
     }
 
-    if (r.result >= w.tn) {
+    if (r.result >= tn) {
       const uid = target.unitIds.find(id => {
         const u = s.units[id];
         return u && u.damage !== 'DESTROYED' && u.damage !== 'SALVAGE';
       });
       if (uid) {
         const u = s.units[uid];
-        const after = worsen(u.damage, w.damageSteps, 'DESTROYED');
+        const after = worsen(u.damage, w.steps, 'DESTROYED');
         emit({ type: 'UNIT_STATE_CHANGED', unitId: uid, damage: after, ammoState: u.ammoState });
         emit({ type: 'GM_NOTE', tick: s.tick,
           text: `capital battery: ${fac.name} [${fac.capitalBattery!.weapon}] hit `
-            + `${target.name} on the ${context} (${w.damageSteps} step${w.damageSteps > 1 ? 's' : ''})` });
+            + `${target.name} on the ${context} (${w.steps} step${w.steps > 1 ? 's' : ''})` });
       }
       // a ship with nothing left flying is gone — and so is everyone in its bays
       const allDead = target.unitIds.every(id => {

@@ -507,16 +507,28 @@ scatters +2 hexes. Firing reveals the battery at CONTACT — shoot and be seen, 
 like artillery. A lone Partisan (2× LB 5-X ⇒ strength 5) hits on 8+; a company of them
 hits on 6+ and shreds.
 
-**Anti-capital emplacements** (D-050) are the other tier: a facility with a
-`capitalBattery` mounts a **real capital weapon** and threatens DropShips at
-operational range — this is how a defender **denies landings** on top of what matters:
+**Anti-capital emplacements** (D-050, stats made real in D-050.1) are the other
+tier: a facility with a `capitalBattery` mounts a **real capital or sub-capital
+weapon at its printed Total Warfare stats**. A TW space/high-altitude hex is 18 km —
+exactly one operational hex — so the printed ranges translate **1:1**. To-hit runs by
+**range band**: short **5+**, medium **7+**, long **9+**, extreme **11+** (the TW
+range mods on a competent gun crew). This is how a defender **denies landings** on
+top of what matters. The full 31-weapon table lives in `rules.CAPITAL_WEAPONS`;
+representative entries:
 
-| Weapon | TN | Damage steps | Range (air hexes) | Notes |
-|---|---|---|---|---|
-| **BARRACUDA** | 6 | 1 | 20 | the only one that can track a fighter |
-| **WHITE_SHARK** | 7 | 2 | 16 | the standard landing-denial battery |
-| **KILLER_WHALE** | 8 | 3 | 12 | can gut a Union in two hits |
-| **NL45** (naval laser) | 8 | 1 | 8 | energy mount — no magazine |
+| Weapon | Damage steps | Bands S/M/L/E (air hexes) | Notes |
+|---|---|---|---|
+| **BARRACUDA** | 1 | 20 / 30 / 40 / 50 | light warhead, huge reach; the only capital missile that tracks fighters |
+| **WHITE_SHARK** | 2 | 12 / 24 / 36 / 48 | the standard landing-denial battery |
+| **KILLER_WHALE** | 3 | 7 / 14 / 21 / 28 | short-legged — but can gut a Union outright |
+| **NL45** (naval laser) | 3 | 12 / 24 / 36 / 48 | energy mount — no magazine |
+| **NGAUSS_LIGHT** | 3 | 14 / 28 / 40 / 56 | the longest gun on the table |
+| **SCL_1** (sub-capital laser) | 1 | 11 / 22 / 33 | sub-capitals track fighters; energy |
+| **MANTA_RAY** | 3 | 7 | one savage short-band punch, nothing past it |
+
+Sub-capital weapons (and the Barracuda) can also track **fighters**; everything
+tracks capital hulls. A weapon fires only inside its printed maximum (some, like the
+NAC/40 or the Manta Ray, simply have no long or extreme band).
 
 They engage **capital hulls** (DropShips, small craft, jump-capables) on every
 transition inside the umbrella — launch, final approach, drop pass — *and once per

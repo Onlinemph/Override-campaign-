@@ -101,7 +101,7 @@ describe('D-050 — anti-capital emplacements deny the sky', () => {
   }
 
   it('a DropShip inside the umbrella eats real weapon damage; the magazine drains', () => {
-    const truth = withBase('CAP-1', 'KILLER_WHALE', 2); // dmg 3 steps, range 12
+    const truth = withBase('CAP-1', 'KILLER_WHALE', 2); // 3 steps, bands 7/14/21/28
     const ds = dropship(truth, 'ds1', 12, 10); // 2 air hexes from the silo
     const before = truth.facilities['base'].capitalBattery!.shots;
     run(truth, emit => capitalGauntlet(truth, emit, ds, { q: 12, r: 10 }, 'overflight'));
@@ -116,9 +116,9 @@ describe('D-050 — anti-capital emplacements deny the sky', () => {
     const truth = withBase('CAP-2', 'KILLER_WHALE', 0); // dry
     expect(capitalBatteriesNear(truth, 'blue', { q: 11, r: 10 })).toHaveLength(0);
     const truth2 = withBase('CAP-2b', 'KILLER_WHALE', 8);
-    // Killer Whale reaches 12 air hexes: 13 out is empty sky
-    expect(capitalBatteriesNear(truth2, 'blue', { q: 23, r: 10 })).toHaveLength(1 - 1);
-    expect(capitalBatteriesNear(truth2, 'blue', { q: 22, r: 10 })).toHaveLength(1);
+    // real Killer Whale extreme band ends at 28 air hexes: 29 out is empty sky
+    expect(capitalBatteriesNear(truth2, 'blue', { q: 39, r: 10 })).toHaveLength(0);
+    expect(capitalBatteriesNear(truth2, 'blue', { q: 38, r: 10 })).toHaveLength(1);
   });
 
   it('only the Barracuda can track a fighter; everyone tracks a DropShip', () => {
@@ -144,7 +144,9 @@ describe('D-050 — anti-capital emplacements deny the sky', () => {
   });
 
   it('the denial umbrella fires every step a capital hull spends in the zone (through the step loop)', () => {
-    const truth = withBase('CAP-5', 'NL45', 0); // energy mount: no magazine to drain
+    // SCL/1: energy mount (no magazine to drain) and only 1 step — a hit can't
+    // destroy the ship mid-test and cut the second step's roll short
+    const truth = withBase('CAP-5', 'SCL_1', 0);
     dropship(truth, 'ds1', 12, 10);
     const c = Campaign.create(truth);
     c.step('CONTACT');
@@ -156,10 +158,9 @@ describe('D-050 — anti-capital emplacements deny the sky', () => {
   });
 
   it('a dead ship takes its embarked riders with it', () => {
-    // NL45 does 1 step: pre-damage the ship to CRIPPLED so a hit kills it
-    const truth = withBase('SALV-A', 'KILLER_WHALE'); // seed rolls 10 ⇒ hit at TN 8
+    const truth = withBase('SALV-A', 'KILLER_WHALE'); // seed rolls 10 ⇒ a short-band hit
     const ds = dropship(truth, 'ds1', 11, 10);
-    truth.units[ds.unitIds[0]].damage = 'DAMAGED'; // 3 steps from DAMAGED ⇒ DESTROYED
+    truth.units[ds.unitIds[0]].damage = 'DAMAGED'; // 3 real KW steps from DAMAGED ⇒ DESTROYED
     const riders = addMechFormation(truth, { id: 'riders', sideId: 'blue', pos: gp(2, 2) });
     riders.mounted = { carrierFormationId: 'ds1' };
     run(truth, emit => capitalGauntlet(truth, emit, ds, { q: 11, r: 10 }, 'overflight'));

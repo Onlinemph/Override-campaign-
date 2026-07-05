@@ -1211,3 +1211,27 @@ range or deny a landing zone.
    ground. Both showcase spaceports now mount a WHITE_SHARK (8 missiles) — which
    retroactively explains why both invasions landed at cold LZs 60+ hexes out and
    marched.
+
+## D-050.1 ✅ The capital weapons are the ACTUAL Total Warfare stats now
+D-050 shipped with ranges I invented ("translated to the op scale"). The user asked
+the right question — "are those ranges accurate or would you like the actual stats?" —
+and supplied MegaMek's warship-weapon table (Total Warfare / TacOps values). The
+answer: no translation was ever needed. A TW space/high-altitude hex is 18 km, and an
+operational ground hex is 18 km — the scales are literally the same, so the printed
+ranges drop in **1:1**.
+1. **`rules.CAPITAL_WEAPONS` is now 31 real weapons** (generated from the CSV, script
+   in the session scratchpad): the capital missiles, NAC/10–40, naval gauss, naval
+   lasers 35/45/55, naval PPCs, mass drivers, and the whole sub-capital line. Each
+   entry carries `damage` (printed capital damage), `steps` (damage → ladder steps:
+   ⌈dmg/1.5⌋ clamped 1–3), `bands` (the printed short/medium/long/extreme brackets in
+   air hexes — truncated at the weapon's printed max range, so a NAC/40 simply has no
+   long band), `energy` (no ammo feed = no magazine), and `tracksFighters`
+   (sub-capitals + the Barracuda, their canonical anti-fighter niche).
+2. **To-hit is by range band**, not per-weapon: `CAPITAL_TN_BY_BAND = [5, 7, 9, 11]` —
+   the TW range mods (+0/+2/+4/+6) on a competent 2d6 gun crew. A White Shark at short
+   band is lethal (5+); at extreme (48 hexes out) it is 11+ harassment fire.
+3. **Consequence check**: the White Shark's real reach is 48 air hexes, not my invented
+   16 — and both showcase LZs (70 and ~62 hexes out) still sit outside it, so the
+   operations' shape survives contact with the real numbers. Everything got longer
+   legs and a graded bite (deadly close, harassment far) instead of a flat TN inside
+   a small circle — the real numbers produce better play than the invented ones did.

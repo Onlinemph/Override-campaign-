@@ -286,25 +286,60 @@ export const FLAK = {
   REVEAL_LEVEL: 3,         // firing reveals the battery at CONTACT (counter-battery rule)
 } as const;
 
-// ── Anti-capital emplacements (D-050) ────────────────────────────────────────
-// Real capital-weapon stats (TW/SO), translated to the operational scale: capital
-// damage maps onto the DropShip's OK→DAMAGED→CRIPPLED→DESTROYED ladder, space-hex
-// reach maps to air hexes (18 km). These are the planetary batteries that DENY a
-// landing zone: they fire on capital hulls (DropShips, small craft, jump-capables)
-// transitioning or flying inside the umbrella — one shot per battery per step.
-// Missiles run out (`shots` in the facility); energy mounts don't. Only the
-// Barracuda can track something as small as a fighter (its anti-fighter niche).
-// Counterplay: burn the magazine down, land outside and march, or put a ground
-// formation ON the battery — an emplacement in enemy-occupied ground is silenced.
-export const CAPITAL_WEAPONS: Record<string, {
-  tn: number; damageSteps: number; rangeAirHexes: number;
-  tracksFighters: boolean; energy: boolean;
-}> = {
-  BARRACUDA:    { tn: 6, damageSteps: 1, rangeAirHexes: 20, tracksFighters: true,  energy: false }, // cap dmg 2, extreme reach, anti-fighter bonus
-  WHITE_SHARK:  { tn: 7, damageSteps: 2, rangeAirHexes: 16, tracksFighters: false, energy: false }, // cap dmg 3
-  KILLER_WHALE: { tn: 8, damageSteps: 3, rangeAirHexes: 12, tracksFighters: false, energy: false }, // cap dmg 4 — can gut a Union
-  NL45:         { tn: 8, damageSteps: 1, rangeAirHexes: 8,  tracksFighters: false, energy: true  }, // Naval Laser 45: no magazine
-} as const;
+// ── Anti-capital emplacements (D-050, real stats D-050.1) ───────────────────
+// ACTUAL Total Warfare capital/sub-capital weapon values, translated 1:1 — a TW
+// space/high-altitude hex is 18 km, exactly our operational hex, so the printed
+// ranges ARE our air-hex ranges. `bands` are the short/medium/long/extreme
+// brackets (a weapon with fewer entries simply cannot fire past its max range);
+// to-hit runs CAPITAL_TN_BY_BAND (the TW range mods on a gunnery-4 crew). Damage
+// steps map real capital damage onto the DropShip's OK→DAMAGED→CRIPPLED→DESTROYED
+// ladder (round(dmg/1.5), capped: 3 steps kills from clean). Energy mounts have no
+// magazine; everything else spends `shots` from the facility. Only sub-capital
+// weapons and the Barracuda can track something as small as a fighter.
+// Counterplay is unchanged: magazines, standoff routing, or a ground formation ON
+// the battery silences it.
+export interface CapitalWeapon {
+  damage: number;          // real TW capital damage (for the record)
+  steps: number;           // op-scale damage steps per hit
+  bands: number[];         // short/medium/long/extreme range in air hexes (18 km)
+  energy: boolean;         // true = no magazine
+  tracksFighters: boolean; // can engage ASF/conventional fighters
+}
+export const CAPITAL_TN_BY_BAND = [5, 7, 9, 11] as const; // short/medium/long/extreme
+
+export const CAPITAL_WEAPONS: Record<string, CapitalWeapon> = {
+  BARRACUDA:           { damage: 2, steps: 1, bands: [20, 30, 40, 50], energy: false, tracksFighters: true }, // Capital Missile Launcher (Barracuda)
+  KILLER_WHALE:        { damage: 4, steps: 3, bands: [7, 14, 21, 28], energy: false, tracksFighters: false }, // Capital Missile Launcher (Killer Whale)
+  WHITE_SHARK:         { damage: 3, steps: 2, bands: [12, 24, 36, 48], energy: false, tracksFighters: false }, // Capital Missile Launcher (White Shark)
+  MASS_DRIVER_HEAVY:   { damage: 140, steps: 3, bands: [12, 24, 40], energy: false, tracksFighters: false }, // Mass Driver (Heavy)
+  MASS_DRIVER_LIGHT:   { damage: 60, steps: 3, bands: [12, 24, 40], energy: false, tracksFighters: false }, // Mass Driver (Light)
+  MASS_DRIVER_MEDIUM:  { damage: 100, steps: 3, bands: [12, 24, 40], energy: false, tracksFighters: false }, // Mass Driver (Medium)
+  NAC_10:              { damage: 10, steps: 3, bands: [11, 22, 33], energy: false, tracksFighters: false }, // Naval Autocannon (NAC/10)
+  NAC_20:              { damage: 20, steps: 3, bands: [11, 21, 31], energy: false, tracksFighters: false }, // Naval Autocannon (NAC/20)
+  NAC_25:              { damage: 25, steps: 3, bands: [10, 20, 30], energy: false, tracksFighters: false }, // Naval Autocannon (NAC/25)
+  NAC_30:              { damage: 30, steps: 3, bands: [9, 18, 27], energy: false, tracksFighters: false }, // Naval Autocannon (NAC/30)
+  NAC_35:              { damage: 35, steps: 3, bands: [7, 14], energy: false, tracksFighters: false }, // Naval Autocannon (NAC/35)
+  NAC_40:              { damage: 40, steps: 3, bands: [6, 12], energy: false, tracksFighters: false }, // Naval Autocannon (NAC/40)
+  NGAUSS_HEAVY:        { damage: 30, steps: 3, bands: [12, 24, 36, 48], energy: false, tracksFighters: false }, // Naval Gauss (Heavy)
+  NGAUSS_LIGHT:        { damage: 15, steps: 3, bands: [14, 28, 40, 56], energy: false, tracksFighters: false }, // Naval Gauss (Light)
+  NGAUSS_MEDIUM:       { damage: 25, steps: 3, bands: [13, 26, 39, 52], energy: false, tracksFighters: false }, // Naval Gauss (Medium)
+  NL35:                { damage: 3, steps: 2, bands: [11, 22, 33], energy: true, tracksFighters: false }, // Naval Laser 35
+  NL45:                { damage: 4, steps: 3, bands: [12, 24, 36, 48], energy: true, tracksFighters: false }, // Naval Laser 45
+  NL55:                { damage: 5, steps: 3, bands: [13, 26, 39, 52], energy: true, tracksFighters: false }, // Naval Laser 55
+  NPPC_HEAVY:          { damage: 15, steps: 3, bands: [13, 26, 39, 52], energy: true, tracksFighters: false }, // Naval PPC (Heavy)
+  NPPC_LIGHT:          { damage: 7, steps: 3, bands: [11, 22, 33], energy: true, tracksFighters: false }, // Naval PPC (Light)
+  NPPC_MEDIUM:         { damage: 9, steps: 3, bands: [12, 24, 36, 48], energy: true, tracksFighters: false }, // Naval PPC (Medium)
+  SCC_HEAVY:           { damage: 7, steps: 3, bands: [11, 22], energy: false, tracksFighters: true }, // Sub-Capital Cannon (Heavy)
+  SCC_LIGHT:           { damage: 2, steps: 1, bands: [11, 22, 33], energy: false, tracksFighters: true }, // Sub-Capital Cannon (Light)
+  SCC_MEDIUM:          { damage: 5, steps: 3, bands: [11, 22], energy: false, tracksFighters: true }, // Sub-Capital Cannon (Medium)
+  SCL_1:               { damage: 1, steps: 1, bands: [11, 22, 33], energy: true, tracksFighters: true }, // Sub-Capital Laser /1
+  SCL_2:               { damage: 2, steps: 1, bands: [11, 22], energy: true, tracksFighters: true }, // Sub-Capital Laser /2
+  SCL_3:               { damage: 3, steps: 2, bands: [11, 22], energy: true, tracksFighters: true }, // Sub-Capital Laser /3
+  MANTA_RAY:           { damage: 5, steps: 3, bands: [7], energy: false, tracksFighters: true }, // Sub-Capital Missile Launcher (Manta Ray)
+  PIRANHA:             { damage: 3, steps: 2, bands: [7, 14, 21], energy: false, tracksFighters: true }, // Sub-Capital Missile Launcher (Piranha)
+  STINGRAY:            { damage: 3, steps: 2, bands: [7, 14], energy: false, tracksFighters: true }, // Sub-Capital Missile Launcher (Stingray)
+  SWORDFISH:           { damage: 4, steps: 3, bands: [7], energy: false, tracksFighters: true }, // Sub-Capital Missile Launcher (Swordfish)
+};
 
 // ── Atmospheric interface (ext): the orbit ↔ air seam ───────────────────────
 export const ATMO = {
