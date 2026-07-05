@@ -115,6 +115,14 @@
         `${r.armed ? '' : '(spent) '}when ${triggerWords(r.when, r.param)} → ${orderWords(r.thenKind)}` +
         (r.targetHex ? ` @${r.targetHex.q},${r.targetHex.r}` : '')).join(' · ');
     }
+    // D-056: the roster itself — every unit in the formation, with its model (the
+    // record-sheet name) and state. "What's in this lance" should never be a mystery.
+    if (f.units && f.units.length) {
+      line += '\n   ▸ ' + f.units.map(u =>
+        `${u.name} — ${u.model} · ${u.damage}` +
+        (u.ammoState && u.ammoState !== 'FULL' ? ` · ammo ${u.ammoState}` : '')
+      ).join('\n   ▸ ');
+    }
     // Notable gear derived from the record sheets (ECM raises enemy detection TN; a
     // probe or mobile HQ is what lifts the sensor reach shown above).
     const GEAR = { ECM: 'ECM', ANGEL_ECM: 'Angel ECM', BEAGLE: 'active probe',

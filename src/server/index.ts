@@ -26,6 +26,7 @@ import { buildMul } from '../handoff/mul.js';
 import { buildBattleRoster } from '../handoff/battle.js';
 import { buildBattlePack } from './print.js';
 import { findRoute } from '../engine/route.js';
+import { AIR_MISSIONS, airHexOver } from '../engine/air.js';
 import { collectNotifications, postWebhooks, webhookConfigFromEnv } from './notify.js';
 import { buildDiary } from './diary.js';
 import { enrichUnit } from '../roster/apply.js';
@@ -769,6 +770,18 @@ const server = createServer(async (req, res) => {
       const theaterId = f.pos.kind === 'ground' ? f.pos.theaterId : '';
       const toPath = (pts: { q: number; r: number }[] = []): GroundPos[] =>
         pts.map(p => ({ kind: 'ground', theaterId, q: p.q, r: p.r }));
+      // D-056: map clicks are GROUND hexes, but the air engine only follows AIR
+      // waypoints — an air mission's route must be lifted onto the air grid, or
+      // the flight sees an empty path, completes instantly, and turns home
+      // (this is why player-issued RECON/FERRY routes never flew).
+      const airTheater = theaterId || Object.keys(campaign.truth.theaters)[0];
+      const toAirPath = (pts: { q: number; r: number }[] = []) =>
+        pts.map(p => {
+          const over = airHexOver(campaign.truth,
+            { theaterId: airTheater, q: Number(p.q), r: Number(p.r) });
+          return { kind: 'air' as const, gridQ: over.q, gridR: over.r,
+                   band: 'HIGH' as const, altLevel: 6, velocity: 0, vectorDeg: 0 };
+        });
       // optional single conditional: { when, param, kind, path }
       const conditionals = b.conditional ? [{
         trigger: { when: b.conditional.when, param: b.conditional.param },
@@ -793,7 +806,7 @@ const server = createServer(async (req, res) => {
         sideId, formationId: b.formationId,
         issuedTick: campaign.truth.tick, effectiveTick: campaign.truth.tick + 1,
         kind: b.kind,
-        path: toPath(b.path),
+        path: AIR_MISSIONS.has(b.kind) ? toAirPath(b.path) : toPath(b.path),
         conditionals,
         ...(b.targetContactId ? { targetContactId: b.targetContactId } : {}),
         ...(b.emconOverride ? { emconOverride: b.emconOverride } : {}),

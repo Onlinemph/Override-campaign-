@@ -1436,3 +1436,22 @@ GITHUB_REF_NAME (v0.1.2 → 0.1.2), so the baked bundle version, the VERSION
 file, and the asset names always agree with the release tag — whatever the tag
 says, the zips say. package.json remains only the fallback for local and
 branch-artifact builds; OVERRIDE_DIST_VERSION overrides everything.
+
+## D-056 ✅ Live-play fix pack: RECON routes that fly, rosters you can read
+Three user reports from the first real hosted session.
+1. **"Recon for aircraft doesn't reveal hexes"** — root cause: the player order
+   API converted every map click to a GROUND waypoint, but the air engine only
+   follows AIR waypoints. A player-issued RECON (or FERRY) had an empty route as
+   far as flyStep could see: the mission completed on the spot and the flight
+   turned home without sweeping anything. D-051's engine was fine; no UI-issued
+   route-based air mission had ever actually flown. Fix: air-mission kinds lift
+   their clicked path onto the air grid (airHexOver per waypoint). Verified live
+   through the HTTP API: a demo Lightning flight flew base → (18,8) and the
+   whole corridor shows scouted.
+2. **"Impossible to see which unit is in which DropShip / what's in a lance"** —
+   the own-forces panel showed a formation's gear and orders but NEVER its
+   units. Now every own formation lists its roster: `▸ Anvil 1 — Lightning
+   LTN-G15 · OK` (ammo shown when below FULL). Combined with the existing
+   carrier lines (🚢 aboard: …) the chain DropShip → embarked formation → units
+   is fully visible. The full record sheets live in the battle tracker's
+   library (/battle → unit search), which ships in the box.
