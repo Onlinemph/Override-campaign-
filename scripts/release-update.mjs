@@ -46,10 +46,21 @@ if (TOKEN) headers.authorization = `Bearer ${TOKEN}`;
 
 const relRes = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers });
 if (!relRes.ok) {
-  console.error(`Could not reach GitHub releases (HTTP ${relRes.status}).`);
   if (relRes.status === 404) {
+    // 404 means EITHER "no releases published yet" or "private repo, no token" —
+    // the repo endpoint tells them apart
+    const repoRes = await fetch(`https://api.github.com/repos/${REPO}`, { headers });
+    if (repoRes.ok) {
+      console.log(`No releases have been published on ${REPO} yet — nothing to update to.`);
+      console.log('(CI artifacts are not releases: the repo owner publishes one by creating');
+      console.log(' a release with a v* tag on GitHub → Releases → "Create a new release".)');
+      process.exit(0);
+    }
+    console.error(`Could not see ${REPO} (HTTP ${repoRes.status}).`);
     console.error('If the repository is private, set OVERRIDE_UPDATE_TOKEN to a read-only token.');
+    process.exit(1);
   }
+  console.error(`Could not reach GitHub releases (HTTP ${relRes.status}).`);
   process.exit(1);
 }
 const rel = await relRes.json();

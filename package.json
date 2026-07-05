@@ -1,6 +1,6 @@
 {
   "name": "override-gm-tool",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "Double-blind campaign manager for tabletop BattleTech (OVERRIDE / SKYWATCH / DEEP SKY)",
