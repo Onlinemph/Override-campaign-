@@ -68,6 +68,8 @@ export interface SystemView {
 export interface OwnFacilityView {
   id: Id; name: string; pos: GroundPos; tags: string[];
   fuelFarmTons: number; supplyPoints: number; isCommandNode: boolean;
+  /** D-050: the emplacement's weapon + remaining magazine (own side only). */
+  capitalBattery?: { weapon: string; shots: number };
   sensor?: { passive: number; active: number };
 }
 export interface OwnSatelliteView {

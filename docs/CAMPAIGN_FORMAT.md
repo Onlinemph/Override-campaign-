@@ -62,7 +62,7 @@ exceptions. Each override:
 |---|---|---|
 | **q**, **r** | ✓ | must be inside `width`×`height` |
 | terrain | | `CLEAR WOODS ROUGH HILLS MOUNTAIN WATER SWAMP URBAN` |
-| infra | | array of `ROAD RAIL BRIDGE TOWN CITY FORT SPACEPORT FACTORY HPG DEPOT SENSOR_STATION AIRSTRIP` |
+| infra | | array of `ROAD RAIL BRIDGE TOWN CITY FORT SPACEPORT FACTORY HPG DEPOT SENSOR_STATION AIRSTRIP COMM_RELAY` |
 | objective | | `{ "vpPerDay": 3, "hidden": false, "fake": false, "ownerSideId": "blue" }` |
 
 **Objectives**: `vpPerDay` scores daily for whoever holds the hex (uncontested
@@ -103,6 +103,23 @@ distant garrison commandable, and an authored weak point for the enemy to cut.
 Formations relay too: any unit with an `HQ` tag (Mobile HQs derive it from the sheet)
 chains the same way while its formation is not EMCON DARK, not jammed, and not aboard
 a carrier.
+
+A `capitalBattery` makes the facility an **anti-capital emplacement** (D-050):
+
+```jsonc
+{ "id": "red-silo", "sideId": "red", "name": "Coastal Defense Silo",
+  "theaterId": "cavanaugh", "q": 10, "r": 8,
+  "capitalBattery": { "weapon": "WHITE_SHARK", "shots": 8 } }
+```
+
+`weapon` is one of `BARRACUDA WHITE_SHARK KILLER_WHALE NL45` (real capital-weapon
+stats in `rules.CAPITAL_WEAPONS`: TN, damage steps, air-hex range). It fires on
+capital hulls transitioning or flying inside its range — landing denial — with a
+finite magazine (`shots`; `NL45` is an energy mount and ignores it), and it is
+silenced while an enemy ground formation stands in its hex. Units: an optional
+`"flak": N` on any unit overrides the derived flak battery strength (D-050 —
+normally graded automatically from the card's guns when it carries the
+Anti-Aircraft Targeting quirk).
 
 ## `satellites[]`
 

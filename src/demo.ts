@@ -56,6 +56,7 @@ export function buildFormationEntities(f: any):
     const unit = mkUnit({
       id: `${f.id}-u${i + 1}`,
       sideId: f.sideId, name: u.name, model: u.model, class: u.class, tags: u.tags ?? [],
+      flak: u.flak,
       safeThrust: u.safeThrust, maxThrust: u.maxThrust,
       damage: u.damage, ammoState: u.ammoState,
       bv: u.bv, pv: u.pv, walkOrCruise: u.walkOrCruise, run: u.run, jump: u.jump,
@@ -158,6 +159,9 @@ export function buildCampaign(j: FixtureJson, source = 'campaign', enrich = true
       sensorStation: f.sensorStation,
       activeSweep: f.activeSweep ?? false,
       turnaroundCrews: { total: f.turnaroundCrews ?? 1, busyUntil: [] },
+      // D-050: an anti-capital emplacement — { weapon: 'WHITE_SHARK', shots: 8 }
+      ...(f.capitalBattery ? { capitalBattery: {
+        weapon: f.capitalBattery.weapon, shots: f.capitalBattery.shots ?? 0 } } : {}),
     });
   }
   for (const sat of j.satellites ?? []) {

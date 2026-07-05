@@ -494,12 +494,38 @@ A formation with a `carrier` block (bays, crews, av-fuel) is a physical transpor
 
 ## 13. Flak — the ground bites back
 
-Tactical AA (`AA`-tagged units, e.g. a Partisan) can't reach high-band transit — it
-kills at the **interface points**. Any launch, landing, final approach, drop pass, or
-deck scramble inside an AA umbrella (battery's hex + 2) takes **one 2d6 shot per
-battery, hitting on ≥ 8** for one damage step (OK→DAMAGED→CRIPPLED). Dropping through
-flak also scatters +2 hexes. Firing reveals the battery at CONTACT — shoot and be seen,
-exactly like artillery.
+**Tactical AA** kills at the **interface points**: any launch, landing, final
+approach, drop pass, or deck scramble inside an AA umbrella (battery's hex + 2) takes
+one 2d6 shot per battery. D-050: the `AA` capability is real now — it derives from the
+card's **Anti-Aircraft Targeting quirk** (the whole Partisan family carries it), and
+each unit's **flak strength comes from its actual guns** (LB-X / rotary AC / HAG count
+double, standard autocannons single; a bare authored `AA` tag is an improvised battery
+of 1). Battery strength = the sum over its units; the TN starts at 9 and drops 1 per
+3 strength (floor 6), and a **massed battery (strength ≥ 8) tears two damage steps per
+hit**. Flak batters but never one-shots (caps at CRIPPLED). Dropping through flak also
+scatters +2 hexes. Firing reveals the battery at CONTACT — shoot and be seen, exactly
+like artillery. A lone Partisan (2× LB 5-X ⇒ strength 5) hits on 8+; a company of them
+hits on 6+ and shreds.
+
+**Anti-capital emplacements** (D-050) are the other tier: a facility with a
+`capitalBattery` mounts a **real capital weapon** and threatens DropShips at
+operational range — this is how a defender **denies landings** on top of what matters:
+
+| Weapon | TN | Damage steps | Range (air hexes) | Notes |
+|---|---|---|---|---|
+| **BARRACUDA** | 6 | 1 | 20 | the only one that can track a fighter |
+| **WHITE_SHARK** | 7 | 2 | 16 | the standard landing-denial battery |
+| **KILLER_WHALE** | 8 | 3 | 12 | can gut a Union in two hits |
+| **NL45** (naval laser) | 8 | 1 | 8 | energy mount — no magazine |
+
+They engage **capital hulls** (DropShips, small craft, jump-capables) on every
+transition inside the umbrella — launch, final approach, drop pass — *and once per
+battery per step while one flies inside the zone*: crossing the umbrella is running a
+SAM belt, and unlike tactical flak these **can destroy outright** (a dead ship takes
+everything riding in its bays with it). Counterplay is built in: missile magazines are
+finite (`shots`), the umbrella can be flown around, and a battery whose hex is held by
+an **enemy ground formation is silenced** — you take the guns by taking the ground.
+Land outside the zone and march: that's the operational shape these create.
 
 ---
 

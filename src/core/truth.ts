@@ -18,7 +18,7 @@ import { ingestBattleResult } from '../handoff/import.js';
 import { rollDice } from './rng.js';
 import { CAREER, CLOCK, DEEPSKY, ENGAGEMENT, LADDER, SKYWATCH, SUPPLY } from '../rules.js';
 import { classifyEncounter, emitJumpFlash, type Classification } from '../engine/space.js';
-import { flakBatteriesNear, flakGauntlet } from '../engine/flak.js';
+import { capitalGauntlet, flakBatteriesNear, flakGauntlet } from '../engine/flak.js';
 import { COMBAT_DROP, FLAK } from '../rules.js';
 import { AXIAL_DIRECTIONS, hexDistance } from '../hex/axial.js';
 
@@ -799,6 +799,8 @@ export class Campaign {
 
     if (payload.mounted) this.inject({ type: 'MOUNT_CHANGED', formationId: payloadId, carrierFormationId: null });
     if (flakUp) flakGauntlet(this.truth, e => this.inject(e), payload, { ...target }, 'drop pass');
+    capitalGauntlet(this.truth, e => this.inject(e), payload,
+      airHexOver(this.truth, target), 'drop pass'); // D-050
     this.inject({ type: 'FORMATION_MOVED', formationId: payloadId, to: landing,
                   movedKind: 'NORMAL', onRoad: false, headingDeg: 0, tick: this.truth.tick });
     // "dropping troops arrive at LOCK-level visibility to anyone watching the sky"

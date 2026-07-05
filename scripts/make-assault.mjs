@@ -231,7 +231,10 @@ const campaign = {
   facilities: [
     { id: 'red-spaceport', sideId: 'liao', name: 'Port Menghao', theaterId: T, q: 10, r: 26,
       tags: ['SPACEPORT', 'DEPOT'], supplyPoints: 30, fuelFarmTons: 40, turnaroundCrews: 2,
-      isCommandNode: true, sensorStation: { passive: 8, active: 12 } },
+      isCommandNode: true, sensorStation: { passive: 8, active: 12 },
+      // D-050: the capital-missile battery that makes the eastern LZ the ONLY sane
+      // landing — nothing capital-hulled lives within 16 air hexes of the port
+      capitalBattery: { weapon: 'WHITE_SHARK', shots: 8 } },
     { id: 'red-airbase', sideId: 'liao', name: 'Chiang Airfield', theaterId: T, q: 13, r: 18,
       tags: ['AIRSTRIP'], supplyPoints: 6, fuelFarmTons: 25, turnaroundCrews: 2 },
     { id: 'red-depot', sideId: 'liao', name: 'Prefecture Depot', theaterId: T, q: 11, r: 30,

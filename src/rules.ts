@@ -272,13 +272,38 @@ export const RECON_TRICKS = {
 } as const;
 
 // ── Flak (ext): AA bites at the interface points ─────────────────────────────
-// The air layer is one hex per theater, so tactical AA cannot reach HIGH-band transit —
-// it engages aircraft coming LOW over a specific ground hex: launches, landings, drops.
+// Tactical AA engages aircraft coming LOW over a specific ground hex: launches,
+// landings, drops. D-050: batteries are graded by their REAL guns — each AA unit's
+// `flak` strength derives from the weapons on its card (LB-X/RAC/HAG double, ACs
+// single; Partisan AA ≈ 5, quad-RAC air-defense 6, a bare authored AA tag = 1).
 export const FLAK = {
   RANGE_HEXES: 2,          // an AA formation's umbrella: its hex + 2
-  TN: 8,                   // one logged 2d6 per battery; ≥ TN ⇒ a hit
+  TN_BASE: 9,              // a lone improvised gun connects on 9+
+  STRENGTH_PER_TN: 3,      // −1 TN per 3 battery strength (Σ unit flak values)…
+  TN_FLOOR: 6,             // …down to 6+ for a massed dedicated battery
+  HEAVY_STRENGTH: 8,       // ≥ this: a hit degrades TWO damage steps (still caps at CRIPPLED)
   DROP_SCATTER_EXTRA: 2,   // dropping through flak scatters worse (like a storm)
   REVEAL_LEVEL: 3,         // firing reveals the battery at CONTACT (counter-battery rule)
+} as const;
+
+// ── Anti-capital emplacements (D-050) ────────────────────────────────────────
+// Real capital-weapon stats (TW/SO), translated to the operational scale: capital
+// damage maps onto the DropShip's OK→DAMAGED→CRIPPLED→DESTROYED ladder, space-hex
+// reach maps to air hexes (18 km). These are the planetary batteries that DENY a
+// landing zone: they fire on capital hulls (DropShips, small craft, jump-capables)
+// transitioning or flying inside the umbrella — one shot per battery per step.
+// Missiles run out (`shots` in the facility); energy mounts don't. Only the
+// Barracuda can track something as small as a fighter (its anti-fighter niche).
+// Counterplay: burn the magazine down, land outside and march, or put a ground
+// formation ON the battery — an emplacement in enemy-occupied ground is silenced.
+export const CAPITAL_WEAPONS: Record<string, {
+  tn: number; damageSteps: number; rangeAirHexes: number;
+  tracksFighters: boolean; energy: boolean;
+}> = {
+  BARRACUDA:    { tn: 6, damageSteps: 1, rangeAirHexes: 20, tracksFighters: true,  energy: false }, // cap dmg 2, extreme reach, anti-fighter bonus
+  WHITE_SHARK:  { tn: 7, damageSteps: 2, rangeAirHexes: 16, tracksFighters: false, energy: false }, // cap dmg 3
+  KILLER_WHALE: { tn: 8, damageSteps: 3, rangeAirHexes: 12, tracksFighters: false, energy: false }, // cap dmg 4 — can gut a Union
+  NL45:         { tn: 8, damageSteps: 1, rangeAirHexes: 8,  tracksFighters: false, energy: true  }, // Naval Laser 45: no magazine
 } as const;
 
 // ── Atmospheric interface (ext): the orbit ↔ air seam ───────────────────────

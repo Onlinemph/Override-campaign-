@@ -123,3 +123,11 @@ lanes, brachistochrone burns, light lag, cold coast · false flags & inspection 
 gas-giant skimming · pirate points · blockades & imports · VP objectives (real, hidden,
 and fake) · endings · autopace + fog-scoped Discord pings · byte-exact replay of the
 whole war.
+
+## D-050 addendum — the port battery
+
+Port Menghao now mounts a **White Shark anti-capital battery** (8 missiles, 16 air
+hexes of landing denial): nothing capital-hulled survives loitering near the capital,
+which is why the invasion's cold LZ sits far out on the eastern plain. Burn the
+magazine down, route around the umbrella, or take the port with ground troops — an
+enemy formation standing on it silences the guns.

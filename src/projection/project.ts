@@ -216,7 +216,8 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
                  tags: [...f.tags], fuelFarmTons: f.fuelFarmTons,
                  supplyPoints: f.supplyPoints, isCommandNode: f.isCommandNode,
                  ...(f.sensorStation ? { sensor: { passive: f.sensorStation.passive,
-                                                   active: f.sensorStation.active } } : {}) }));
+                                                   active: f.sensorStation.active } } : {}),
+                 ...(f.capitalBattery ? { capitalBattery: { ...f.capitalBattery } } : {}) }));
   // own satellites plus any whose launch was witnessed (core §8.6: schedule around them)
   const ownSatellites: OwnSatelliteView[] = Object.values(truth.satellites)
     .filter(s => s.sideId === sideId || s.knownTo.includes(sideId))

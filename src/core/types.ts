@@ -108,6 +108,10 @@ export interface Unit {
    * opaque to the engine). Reseeded into the next handoff so the same boxes reappear
    * unless repaired. Cleared by repair (all), rearm (ammo), and pilot recovery (hits). */
   sheetDamage?: Record<string, unknown>;
+  /** D-050: flak battery strength graded from the unit's real guns (derived from
+   * the card's weapons when it carries the Anti-Aircraft Targeting quirk; authored
+   * values win). A bare AA tag without it counts as an improvised battery of 1. */
+  flak?: number;
   pilotIds: Id[]; ammoState: 'FULL' | 'PARTIAL' | 'DRY';
   tags: string[]; // 'ECM','ANGEL_ECM','BEAGLE','AA','C3M','MASH','HQ','ENGINEER',
                   // 'DECOY','SKYEYE','LF_BATTERY','SAIL','STEALTH','RECON','WHEELED'...
@@ -186,6 +190,11 @@ export interface Facility {
   isCommandNode: boolean;
   sensorStation?: { passive: number; active: number };
   activeSweep?: boolean; // ext: station running its active set (GM toggle)
+  /** D-050: an anti-capital weapon emplacement (real capital-weapon stats from
+   * rules.CAPITAL_WEAPONS). Fires on capital hulls transitioning or flying inside
+   * its air-hex range; `shots` is the missile magazine (energy mounts ignore it);
+   * silenced while an enemy ground formation stands in its hex. */
+  capitalBattery?: { weapon: string; shots: number };
 }
 export interface SalvageToken { id: Id; hex: GroundPos; sourceUnitId: Id; heldBy?: Id }
 

@@ -16,7 +16,7 @@ import type { GameEvent } from '../core/events.js';
 import { hexDistance, hexLine, headingDeg } from '../hex/axial.js';
 import { isNight } from './clock.js';
 import { registerDetection } from './detection.js';
-import { flakGauntlet } from './flak.js';
+import { capitalGauntlet, flakGauntlet } from './flak.js';
 import { hashPick, rollDice } from '../core/rng.js';
 
 export const AIR_MISSIONS = new Set([
@@ -268,6 +268,7 @@ function tryLaunch(s: TruthState, f: Formation, order: Order, emit: (e: GameEven
   };
   emit({ type: 'AIR_LAUNCHED', formationId: f.id, pos, fpPaid, tick: s.tick });
   flakGauntlet(s, emit, f, here, 'climb-out'); // AA under the departure path gets its shot
+  capitalGauntlet(s, emit, f, airHexOver(s, here), 'climb-out'); // D-050: the big guns too
   emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id,
          patch: { air: { speed: order.airSpeed ?? 'CRUISE', lean: order.lean ?? false,
                          jokerWarned: false, bingoCalled: false,
@@ -493,6 +494,7 @@ function flyStep(
           fac.pos.theaterId === t.theaterId && fac.pos.q === t.q && fac.pos.r === t.r &&
           (fac.tags.includes('AIRSTRIP') || fac.tags.includes('SPACEPORT')));
         flakGauntlet(s, emit, f, { ...t }, 'final approach'); // AA around the LZ fires first
+        capitalGauntlet(s, emit, f, airHexOver(s, t), 'final approach');
         emit({ type: 'AIR_LANDED', formationId: f.id, pos: { ...t },
                fpPaid: landingFp(runway), tick: s.tick });
       }
@@ -508,6 +510,7 @@ function flyStep(
         if (aboard < carrier.carrier.bays) {
           if (carrier.pos.kind === 'ground') {
             flakGauntlet(s, emit, f, carrier.pos, 'recovery approach');
+            capitalGauntlet(s, emit, f, airHexOver(s, carrier.pos), 'recovery approach');
           }
           emit({ type: 'FUEL_SPENT', formationId: f.id, fpPaid: landingFp(false),
                  reason: 'carrier recovery', tick: s.tick });
@@ -523,6 +526,7 @@ function flyStep(
       if (fac && fac.pos.kind === 'ground') {
         const runway = fac.tags.includes('AIRSTRIP') || fac.tags.includes('SPACEPORT');
         flakGauntlet(s, emit, f, fac.pos, 'final approach');
+        capitalGauntlet(s, emit, f, airHexOver(s, fac.pos), 'final approach');
         emit({ type: 'AIR_LANDED', formationId: f.id, facilityId: fac.id,
                pos: { ...fac.pos }, fpPaid: landingFp(runway), tick: s.tick });
       }
@@ -622,6 +626,7 @@ function scrambleFromBay(s: TruthState, f: Formation, emit: (e: GameEvent) => vo
   emit({ type: 'AIR_LAUNCHED', formationId: f.id, pos, fpPaid, tick: s.tick });
   if (carrier.pos.kind === 'ground') {
     flakGauntlet(s, emit, f, carrier.pos, 'deck launch'); // climbing off a grounded ship
+    capitalGauntlet(s, emit, f, airHexOver(s, carrier.pos), 'deck launch');
   }
   emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id,
          patch: { air: { speed: order.airSpeed ?? 'CRUISE', lean: order.lean ?? false,

@@ -47,6 +47,8 @@ export type GameEvent =
   | { type: 'RULE_REARMED'; formationId: Id; ruleIndex: number }
   // D-049: plan steps cancelled when a newer activation abandons the old plan
   | { type: 'ORDER_CANCELLED'; orderId: Id; formationId: Id; tick: Tick }
+  // D-050: an anti-capital emplacement spends a missile
+  | { type: 'CAPITAL_BATTERY_FIRED'; facilityId: Id; shotsLeft: number; tick: Tick }
   | { type: 'POSTURE_CHANGED'; formationId: Id; posture: Posture; tick: Tick }
   | { type: 'ENGAGEMENT_TRIGGERED'; engagement: Engagement }
   | { type: 'EVASION_RESOLVED'; engagementId: Id; success: boolean;
@@ -340,6 +342,12 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
       if (rule) rule.armed = true;
       break;
     }
+    case 'CAPITAL_BATTERY_FIRED': {
+      const fac = s.facilities[e.facilityId];
+      if (fac?.capitalBattery) fac.capitalBattery.shots = e.shotsLeft;
+      break;
+    }
+
     case 'ORDER_CANCELLED': {
       s.orders[e.orderId].completed = true;
       const f = s.formations[e.formationId];

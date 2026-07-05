@@ -27,6 +27,7 @@ interface Lib {
   index: Map<string, UnitIndexEntry>;
   bv: Record<string, number>;
   role: Record<string, string>;
+  quirk: Record<string, { u?: string[]; w?: string[] }>;
 }
 let cache: Lib | null = null;
 let loaded = false;
@@ -45,7 +46,8 @@ function lib(): Lib | null {
       };
       const bv = readJson<Record<string, number>>('bv-index.json', {});
       const role = readJson<Record<string, string>>('role-index.json', {});
-      cache = { root, index: buildNameIndex(entries), bv, role };
+      const quirk = readJson<Record<string, { u?: string[]; w?: string[] }>>('quirk-index.json', {});
+      cache = { root, index: buildNameIndex(entries), bv, role, quirk };
       return cache;
     } catch {
       /* try the next root */
@@ -76,6 +78,7 @@ export interface LoadedCard {
   parsed: ParsedCardLike;
   bv?: number;
   role?: string;
+  quirks?: string[];
 }
 
 /** Resolve a model name to a parsed card + its raw text + BV, or null. */
@@ -91,7 +94,9 @@ export function loadCardByModel(model: string): LoadedCard | null {
     const parsed = convertAny(text, hit.path) as unknown as ParsedCardLike;
     const bv = L.bv[bvKey(fileStem(hit.path))] ?? L.bv[bvKey(hit.name)];
     const role = L.role[bvKey(fileStem(hit.path))] ?? L.role[bvKey(hit.name)];
-    return { model, path: hit.path, text, parsed, ...(bv != null ? { bv } : {}), ...(role ? { role } : {}) };
+    const quirks = (L.quirk[bvKey(fileStem(hit.path))] ?? L.quirk[bvKey(hit.name)])?.u;
+    return { model, path: hit.path, text, parsed, ...(bv != null ? { bv } : {}),
+             ...(role ? { role } : {}), ...(quirks?.length ? { quirks } : {}) };
   } catch {
     return null; // unparseable / unsupported unit type — caller keeps its own data
   }
@@ -100,7 +105,7 @@ export function loadCardByModel(model: string): LoadedCard | null {
 /** Derive campaign Unit fields for a model name straight from the library. */
 export function deriveFieldsForModel(model: string): DerivedUnitFields | null {
   const c = loadCardByModel(model);
-  return c ? deriveUnitFields(c.parsed, c.text, c.bv, c.role) : null;
+  return c ? deriveUnitFields(c.parsed, c.text, c.bv, c.role, c.quirks) : null;
 }
 
 /**

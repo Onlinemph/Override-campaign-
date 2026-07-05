@@ -37,6 +37,10 @@ new bridges, new LZ — and every formation is still standing at the right kind 
   moving on the crossings get sampled; the LZ itself sits just outside the track.
 - **Riverwatch Station** (radar) on the hills behind Kingsbridge; the capital spaceport
   radar covers the home hex.
+- **Port Cascara mounts a White Shark battery** (D-050): real capital-missile stats,
+  16 air hexes of landing denial around the capital — the reason the Rangers put down
+  70 hexes away. Eight missiles, then it is capture-or-nothing; an enemy ground
+  formation standing on the port silences it.
 - **The Long Tom battery** is laid on Kingsbridge's far approach and holds fire — a
   standing rule opens the registered mission the moment a battle erupts within 20 hexes.
 - **The Po reserve company sits on the rail trunk**: 12 hexes/hour to either end of the
@@ -89,6 +93,7 @@ bridge, or not at all. Your tools:
 | Rail operational movement (D-037) | the Po reserve riding the trunk |
 | Hover/VTOL motion families (D-036) | the Loch Riders crossing where no bridge is |
 | Recon satellites | the river-corridor sweep that starts the clock |
+| Anti-capital landing denial (D-050) | the White Shark battery that forced the cold LZ |
 | Auto-routing + ETA (D-041) | every march you plot around that river |
 
 ## GM notes

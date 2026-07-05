@@ -442,7 +442,11 @@ const campaign = {
     { id: 'red-spaceport', sideId: 'marik', name: 'Port Cascara', theaterId: T,
       q: spaceport.q, r: spaceport.r, tags: ['SPACEPORT', 'DEPOT'], supplyPoints: 30,
       fuelFarmTons: 40, turnaroundCrews: 2, isCommandNode: true,
-      sensorStation: { passive: 8, active: 12 } },
+      sensorStation: { passive: 8, active: 12 },
+      // D-050: the reason the Rangers landed 70 hexes away — a White Shark battery
+      // (real capital-missile stats) denies any landing within 16 air hexes of the
+      // capital. Eight missiles; then it is capture-or-nothing.
+      capitalBattery: { weapon: 'WHITE_SHARK', shots: 8 } },
     { id: 'red-airbase', sideId: 'marik', name: 'Threshold Field', theaterId: T,
       q: airbase.q, r: airbase.r, tags: ['AIRSTRIP'], supplyPoints: 6, fuelFarmTons: 25,
       turnaroundCrews: 2 },

@@ -21,6 +21,7 @@ import { careerPass } from './career.js';
 import { scoringPass } from './scoring.js';
 import { firesPass } from './fires.js';
 import { engineeringPass } from './engineering.js';
+import { capitalDenialPass } from './flak.js';
 
 export interface StepResult {
   truth: TruthState;
@@ -85,6 +86,7 @@ export function step(truth: TruthState, forceMode?: ClockMode): StepResult {
   movementPass(work, dt, emit);
   engineeringPass(work, dt, emit); // minefield bites on movers + engineer toolkit (M7)
   airPass(work, dt, emit);      // flight ledgers, launches, chases, thresholds (M3)
+  capitalDenialPass(work, emit); // D-050: anti-capital umbrellas engage overflights
   spacePass(work, dt, emit);    // lanes, light lag, jump board, skimming (M4)
   carrierPass(work, emit);      // embarked units ride their carrier to its final position
   netPass(work, emit);          // positions changed: recompute nets before detection

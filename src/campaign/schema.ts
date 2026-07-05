@@ -20,6 +20,7 @@ export const AMMO_STATES = ['FULL', 'PARTIAL', 'DRY'] as const;
 export const WEATHERS = ['CLEAR', 'RAIN', 'STORM'] as const;
 export const SAIL_STATES = ['STOWED', 'DEPLOYED', 'DESTROYED'] as const;
 export const KF_DAMAGE = ['NONE', 'MINOR', 'MAJOR', 'DEAD'] as const;
+export const CAPITAL_WEAPON_NAMES = ['BARRACUDA', 'WHITE_SHARK', 'KILLER_WHALE', 'NL45'] as const;
 export const MARKER_KINDS = ['DOWNED_CREW', 'MINEFIELD', 'SENTINEL_DRONE', 'FUEL_CACHE', 'WRECK'] as const;
 export const GROUND_ORDERS = ['MOVE', 'FORCED_MARCH', 'MOVE_CAUTIOUS', 'HIDE', 'DIG_IN', 'PATROL',
   'SCREEN', 'STRIKE', 'SHADOW', 'RESUPPLY', 'REST', 'REARM', 'REPAIR',
@@ -137,6 +138,14 @@ export function validateCampaign(j: any): string[] {
     knownSide(f.sideId, `${at}.sideId`);
     inBounds(f.theaterId, f.q, f.r, at);
     for (const tag of f.tags ?? []) if (!oneOf(tag, INFRA)) err(`${at}: bad tag "${tag}"`);
+    if (f.capitalBattery) {
+      if (!oneOf(f.capitalBattery.weapon, CAPITAL_WEAPON_NAMES)) {
+        err(`${at}.capitalBattery: unknown weapon "${f.capitalBattery.weapon}" (one of ${CAPITAL_WEAPON_NAMES.join('/')})`);
+      }
+      if (f.capitalBattery.shots !== undefined && !isNum(f.capitalBattery.shots)) {
+        err(`${at}.capitalBattery.shots: must be a number`);
+      }
+    }
   }
 
   // ── formations & units ──
@@ -170,6 +179,7 @@ export function validateCampaign(j: any): string[] {
       if (!isStr(u.name)) err(`${au}: name required`);
       if (!oneOf(u.class, UNIT_CLASSES)) err(`${au}: bad class "${u.class}"`);
       if (u.damage !== undefined && !oneOf(u.damage, DAMAGE_STATES)) err(`${au}: bad damage "${u.damage}"`);
+      if (u.flak !== undefined && (!isNum(u.flak) || u.flak < 0)) err(`${au}: flak must be ≥ 0`);
       if (u.ammoState !== undefined && !oneOf(u.ammoState, AMMO_STATES)) err(`${au}: bad ammoState "${u.ammoState}"`);
       if (isObj(u.pilot)) {
         for (const sk of ['gunnery', 'piloting']) {

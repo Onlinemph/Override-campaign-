@@ -1181,3 +1181,33 @@ The command model grew the two things every session kept wanting: sequence and r
    rules on their formations — the sappers genuinely HIDE now, the battery needs no
    order at all, and the whole opening act replays identically (the acceptance test
    runs the same beats on the new machinery).
+
+## D-050 ✅ Real flak & anti-capital bases: the weapons come off the record sheets
+The honest starting point: flak was fully abstract — a hand-authored `AA` tag, one
+flat 2d6 vs TN 8, one damage step, and nothing anywhere could threaten a DropShip at
+range or deny a landing zone.
+1. **AA is derived, not taped on.** The card library's quirk-index carries the
+   'Anti-Aircraft Targeting' quirk (the entire Partisan family, the Rifleman, …) —
+   units with it derive the AA tag, and each derives a **flak strength graded from the
+   actual weapons on its card** (parsed weapon list, count-prefixed labels: LB-X /
+   rotary AC / HAG count double, standard autocannons single, capped at 6). Partisan
+   AA (2× LB 5-X) = 5; the quad-RAC air-defense variant = 6; a Rifleman = 3; a bare
+   authored tag = an improvised battery of 1. Authored `flak` values win, as always.
+2. **The gauntlet scales with the guns.** Battery strength = Σ unit flak; TN runs 9
+   down to 6 (−1 per 3 strength) and a massed battery (≥ 8) tears two steps per hit —
+   still capped at CRIPPLED: tactical flak batters, it does not one-shot.
+3. **Anti-capital emplacements** (`facility.capitalBattery`): real capital-weapon
+   stats translated to the op scale — BARRACUDA (TN 6, 1 step, 20 air hexes, the only
+   one that can track a fighter), WHITE_SHARK (7/2/16), KILLER_WHALE (8/3/12 — can gut
+   a Union in two hits), NL45 (8/1/8, energy — no magazine). They engage capital hulls
+   on every transition inside the umbrella AND once per battery per step while one
+   flies in the zone (capitalDenialPass) — crossing the umbrella is running a SAM
+   belt, and unlike tactical flak they CAN destroy outright; a dead ship takes its
+   embarked riders with it. This is landing denial: the defender of a planet can now
+   genuinely forbid a landing on top of what matters.
+4. **Counterplay is structural**: missile magazines are finite (CAPITAL_BATTERY_FIRED
+   decrements through the log), the umbrella can be routed around, and a battery whose
+   hex an enemy ground formation holds is SILENCED — you take the guns by taking the
+   ground. Both showcase spaceports now mount a WHITE_SHARK (8 missiles) — which
+   retroactively explains why both invasions landed at cold LZs 60+ hexes out and
+   marched.

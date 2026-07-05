@@ -16216,6 +16216,10 @@
       "sensorStation": {
         "passive": 8,
         "active": 12
+      },
+      "capitalBattery": {
+        "weapon": "WHITE_SHARK",
+        "shots": 8
       }
     },
     {

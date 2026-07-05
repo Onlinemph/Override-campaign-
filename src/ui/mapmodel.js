@@ -93,7 +93,8 @@
     });
     (v.ownFacilities || []).forEach(fc => {
       markers.push({ q: fc.pos.q, r: fc.pos.r, kind: 'facility', side: v.sideId,
-        label: fc.tags.includes('AIRSTRIP') ? 'A' : fc.tags.includes('SPACEPORT') ? 'P'
+        label: fc.capitalBattery ? '☄'
+             : fc.tags.includes('AIRSTRIP') ? 'A' : fc.tags.includes('SPACEPORT') ? 'P'
              : fc.tags.includes('SENSOR_STATION') ? '⌖'
              : fc.tags.includes('COMM_RELAY') ? '📡' : 'F',
         title: `${fc.name}${fc.fuelFarmTons ? ' · farm ' + fc.fuelFarmTons.toFixed(1) + 't' : ''}` +
@@ -190,7 +191,8 @@
     Object.values(t.facilities).forEach(fc => {
       if (fc.pos.kind !== 'ground' || fc.pos.theaterId !== th.id) return;
       markers.push({ q: fc.pos.q, r: fc.pos.r, kind: 'facility', side: fc.sideId,
-        label: fc.tags.includes('AIRSTRIP') ? 'A' : fc.tags.includes('SPACEPORT') ? 'P'
+        label: fc.capitalBattery ? '☄'
+             : fc.tags.includes('AIRSTRIP') ? 'A' : fc.tags.includes('SPACEPORT') ? 'P'
              : fc.tags.includes('SENSOR_STATION') ? '⌖'
              : fc.tags.includes('COMM_RELAY') ? '📡' : 'F',
         title: `${fc.name} [${fc.sideId}]` });

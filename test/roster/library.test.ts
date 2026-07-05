@@ -40,6 +40,25 @@ describe.skipIf(!has)('roster/library — real record sheets', () => {
   });
 });
 
+describe.skipIf(!has)('D-050 — real AA from the quirk index, graded by real guns', () => {
+  it('the Anti-Aircraft Targeting quirk makes an AA battery; strength comes from the card', () => {
+    const partisan = deriveFieldsForModel('Partisan AA Vehicle')!;   // 2× LB 5-X
+    expect(partisan.tags).toContain('AA');
+    expect(partisan.flak).toBe(5); // 1 + 2 heavy guns × 2
+
+    const quad = deriveFieldsForModel('Partisan Air Defense Tank (Quad RAC)')!;
+    expect(quad.flak).toBe(6); // capped
+
+    const rifleman = deriveFieldsForModel('Rifleman RFL-3N')!; // 2× AC/5
+    expect(rifleman.tags).toContain('AA');
+    expect(rifleman.flak).toBe(3);
+
+    const bulldog = deriveFieldsForModel('Bulldog Medium Tank')!; // no quirk
+    expect(bulldog.tags).not.toContain('AA');
+    expect(bulldog.flak).toBeUndefined();
+  });
+});
+
 describe.skipIf(has)('roster/library — no library present', () => {
   it('degrades to null so callers keep their own data', () => {
     expect(deriveFieldsForModel('Warhammer WHM-6R')).toBeNull();

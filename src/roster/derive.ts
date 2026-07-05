@@ -45,6 +45,32 @@ export interface DerivedUnitFields {
   bv?: number;
   tonnage?: number;
   tags: string[];
+  /** D-050: flak battery strength from the sheet's real guns (AA-quirked units). */
+  flak?: number;
+}
+
+/**
+ * D-050: grade an AA unit's flak strength from the weapons actually on its card.
+ * The premier flak systems (LB-X cluster, rotary ACs, HAGs) count double; standard
+ * autocannons count once; a unit with the AA quirk but no flak-class guns is still
+ * a battery of 1 (LRM/laser air-defense fits). Capped so one hull can't be an army.
+ */
+export function flakStrengthFromWeapons(parsed: ParsedCardLike): number {
+  const list = ((parsed.card as { weapons?: unknown[] }).weapons ?? []) as Array<
+    { label?: string; name?: string }>;
+  let heavy = 0, guns = 0;
+  for (const w of list) {
+    const label = String(w.label ?? w.name ?? '');
+    const mult = label.match(/^x(\d+)\b/i);
+    const count = mult ? Number(mult[1]) : 1;
+    const n = label.toLowerCase();
+    if (/lb[\s-]?\d+[\s-]?x|rotary|\brac[\s/]?\d|hag[\s/]?\d|hyper[\s-]?assault/.test(n)) {
+      heavy += count;
+    } else if (/auto\s?cannon|\bac[\s/]?\d|\buac[\s/]?\d/.test(n)) {
+      guns += count;
+    }
+  }
+  return Math.min(6, 1 + heavy * 2 + guns);
 }
 
 /** Pull the first up-to-3 integers out of a printed move string ("5 / 8 / 5j"). */
@@ -107,15 +133,21 @@ export function extractTags(text: string, motionType?: string): string[] {
  * whether these overwrite anything.
  */
 export function deriveUnitFields(
-  parsed: ParsedCardLike, text: string, bv?: number, role?: string,
+  parsed: ParsedCardLike, text: string, bv?: number, role?: string, quirks?: string[],
 ): DerivedUnitFields {
   const c = parsed.card;
   const tags = extractTags(text, c.motionType);
   // MUL battlefield role → campaign mission tag. Only "Scout" maps cleanly to an
   // engine effect (RECON extends a VTOL's sensor range); other roles are advisory.
   if (role && /scout/i.test(role) && !tags.includes('RECON')) tags.push('RECON');
+  // D-050: the Anti-Aircraft Targeting quirk is the canonical mark of a real AA
+  // unit (the whole Partisan family carries it) — no more hand-taped tags
+  if (quirks?.some(q => /anti[\s-]?aircraft/i.test(q)) && !tags.includes('AA')) tags.push('AA');
   const tonnage = c.mass ?? c.tonnage;
-  const base = { bv, tags, ...(tonnage !== undefined ? { tonnage } : {}) };
+  // D-050: a battery's punch comes from its actual guns
+  const flak = tags.includes('AA') ? flakStrengthFromWeapons(parsed) : undefined;
+  const base = { bv, tags, ...(tonnage !== undefined ? { tonnage } : {}),
+                 ...(flak !== undefined ? { flak } : {}) };
 
   switch (parsed.kind) {
     case 'mech': {
