@@ -19,6 +19,17 @@ export interface NetNode {
   relay?: boolean; // D-048: a chained relay, not a command node in its own right
 }
 
+/** The ground hex under an air-grid hex, if any theater's region contains it.
+ * (Local copy of air.ts groundHexUnder — air.ts imports this module.) */
+function groundUnder(s: TruthState, air: { q: number; r: number }): GroundPos | null {
+  for (const tid of Object.keys(s.theaters).sort()) {
+    const o = s.config.airHexByTheater?.[tid] ?? { q: 0, r: 0 };
+    const q = air.q - o.q, r = air.r - o.r;
+    if (s.theaters[tid].hexes[`${q},${r}`]) return { kind: 'ground', theaterId: tid, q, r };
+  }
+  return null;
+}
+
 export function commandNodesOf(s: TruthState, sideId: Id): NetNode[] {
   const groundR = s.config.netGroundRadius ?? NET.GROUND_NODE_RADIUS;
   const baseR = s.config.netBaseRadius ?? NET.DROPSHIP_BASE_RADIUS;
@@ -26,9 +37,26 @@ export function commandNodesOf(s: TruthState, sideId: Id): NetNode[] {
   const side = s.sides[sideId];
   for (const nodeId of side.commandNodes) {
     const f = s.formations[nodeId];
-    if (f && !f.destroyed && f.pos.kind === 'ground') {
+    if (f && !f.destroyed) {
       const isDropship = f.unitIds.some(uid => s.units[uid]?.class === 'DROPSHIP');
-      out.push({ id: f.id, pos: f.pos, radius: isDropship ? baseR : groundR, theaterWide: false });
+      const radius = isDropship ? baseR : groundR;
+      if (f.pos.kind === 'ground') {
+        out.push({ id: f.id, pos: f.pos, radius, theaterWide: false });
+      } else if (f.pos.kind === 'air') {
+        // D-055: the flagship's radio — an AIRBORNE command ship projects its
+        // umbrella onto the ground below it (a hovering Overlord is a comms tower)
+        const under = groundUnder(s, { q: f.pos.gridQ, r: f.pos.gridR });
+        if (under) out.push({ id: f.id, pos: under, radius, theaterWide: false });
+      } else if (f.pos.kind === 'node') {
+        // D-055: a command ship AT A PLANET'S ORBIT NODE is the invasion's comms
+        // hub — theater-wide, exactly like a comm satellite (and just as killable).
+        // At a jump point there is no theater below: light-lag keeps it dark.
+        const theaterId = s.system.nodes[f.pos.nodeId]?.theaterId;
+        if (theaterId && s.theaters[theaterId]) {
+          out.push({ id: f.id, pos: { kind: 'ground', theaterId, q: 0, r: 0 },
+                     radius: Infinity, theaterWide: true });
+        }
+      }
     }
     const fac = s.facilities[nodeId];
     if (fac && fac.isCommandNode && fac.pos.kind === 'ground' &&
@@ -120,11 +148,25 @@ function inHostileEcmBubble(s: TruthState, f: Formation): boolean {
 
 /** Which node or chained relay (if any) could net this formation right now? */
 export function reachableNode(s: TruthState, f: Formation, nodes?: NetNode[]): NetNode | null {
-  if (f.pos.kind !== 'ground') return null;
+  // D-055: altitude is a radio horizon — an airborne formation talks to nodes in the
+  // theater under it at AIR_RADIO_MULT × their radius; a ship at a planet's orbit
+  // node reaches any node in that theater. Deep space stays dark (light lag).
+  let at: GroundPos | null = null;
+  let mult = 1;
+  if (f.pos.kind === 'ground') at = f.pos;
+  else if (f.pos.kind === 'air') {
+    at = groundUnder(s, { q: f.pos.gridQ, r: f.pos.gridR });
+    mult = NET.AIR_RADIO_MULT;
+  } else if (f.pos.kind === 'node') {
+    const theaterId = s.system.nodes[f.pos.nodeId]?.theaterId;
+    if (theaterId) { at = { kind: 'ground', theaterId, q: 0, r: 0 }; mult = Infinity; }
+  }
+  if (!at) return null;
   for (const node of nodes ?? netNodesOf(s, f.sideId)) {
-    if (node.theaterWide && node.pos.theaterId === f.pos.theaterId) return node;
-    if (!node.theaterWide && node.pos.theaterId === f.pos.theaterId &&
-        hexDistance(node.pos, f.pos) <= node.radius) return node;
+    if (node.pos.theaterId !== at.theaterId) continue;
+    if (node.theaterWide) return node;
+    if (mult === Infinity) return node; // orbit over the theater: anything below answers
+    if (hexDistance(node.pos, at) <= node.radius * mult) return node;
   }
   return null;
 }

@@ -1402,3 +1402,25 @@ engine under itself).
    kept its campaign log and a marker file, rebooted, resumed the war, and
    reported appVersion 0.1.1. The 404 path (private repo, no token) prints an
    actionable hint instead of a stack trace.
+
+## D-055 ✅ The flagship's radio: DropShip command nodes work aloft
+User bug report from live play: "the dropships are not in command network." Both
+showcases author the flagship as a command node (blue-flag) — but commandNodesOf
+and reachableNode both demanded pos.kind === 'ground', so the moment a DropShip
+lifted (or while burning in from the jump point) it stopped projecting the net
+AND fell off the net itself. An Overlord in orbit is a giant radio; that read as
+broken because it was.
+1. **Airborne command ships project down**: a command-node DropShip at altitude
+   nets the ground beneath it at its normal radius (a hovering Overlord is a
+   comms tower).
+2. **At the planet's orbit node it is the comms hub**: theater-wide, exactly like
+   a comm satellite — and just as killable, so decapitation stays on the table.
+   At a JUMP POINT there is no theater below: light-lag keeps it dark, preserving
+   DAGGERPOINT's fiction that the burn-in runs silent on standing orders until
+   the flag makes orbit.
+3. **Altitude is a radio horizon for everyone**: any airborne formation reaches a
+   friendly node at NET.AIR_RADIO_MULT (×4) its radius — mirroring the D-038.3
+   radar-horizon doctrine — so flights and lifted DropShips stay commandable at
+   operationally sane distances. Deep space stays dark.
+4. EMCON DARK and hostile ECM still cut everything (the gates run before
+   reachability); relays stay a ground-chain mechanic.

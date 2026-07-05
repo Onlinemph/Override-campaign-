@@ -219,6 +219,16 @@ chronicle of everything delivered.
 
 ## 6. The command net
 
+**The flagship's radio (D-055):** a DropShip named as a command node works from
+wherever it is. Landed, it nets 24 hexes. **Airborne**, it projects the same
+umbrella onto the ground beneath it — a hovering Overlord is a comms tower. At
+the planet's **orbit node**, it is the invasion's comms hub: theater-wide, exactly
+like a comm satellite (and just as killable — take the flagship, decapitate the
+landing). At a jump point there is no theater below it: light-lag keeps the net
+dark, which is why an incoming invasion runs on standing orders until the flag
+makes orbit. Altitude helps everyone: any **airborne** formation reaches a
+friendly node at **×4** its normal radius (the radio horizon).
+
 Orders only reach formations **on the net**: within reach of a command node — your HQ
 formation (radius 12), a grounded DropShip or fixed base (radius 24), facilities as
 authored, any comm satellite (theater-wide). Hostile ECM cuts the net in its own hex.

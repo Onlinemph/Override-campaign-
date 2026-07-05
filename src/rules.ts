@@ -145,6 +145,9 @@ export const NET = {
   GROUND_NODE_RADIUS: 12,       // default op-hexes a mobile command node nets
   DROPSHIP_BASE_RADIUS: 24,     // grounded DropShip / fixed base (per-campaign overridable)
   COMM_SAT_THEATER_WIDE: true,
+  // D-055: altitude is a radio horizon — an AIRBORNE formation reaches a node at a
+  // multiple of its ground radius (mirrors the D-038.3 radar-horizon ×4 doctrine)
+  AIR_RADIO_MULT: 4,
   RENET_PULSES: 1,              // per formation, after losing its node (D-008.2)
   ECM_NET_CUT_RADIUS: 0,        // D-008.1: hostile ECM cuts net in its own op-hex
   // D-048: command relays. A relay (any formation with an HQ-tagged unit, or a

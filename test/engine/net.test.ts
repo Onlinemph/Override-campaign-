@@ -4,7 +4,7 @@ import { deliverReportsPass, isFormationOnNet, netPass } from '../../src/engine/
 import { computeDetectionTN } from '../../src/engine/detection.js';
 import { applyEvent, type GameEvent } from '../../src/core/events.js';
 import { mkFacility } from '../../src/fixtures.js';
-import { addMechFormation, baseTruth, gp } from '../helpers.js';
+import { addMechFormation, addSystem, addVessel, baseTruth, gp } from '../helpers.js';
 import type { ContactReport, TruthState } from '../../src/core/types.js';
 
 function runNet(truth: TruthState): GameEvent[] {
@@ -261,5 +261,61 @@ describe('B8 — report delivery', () => {
     truth.tick = 12;
     deliverReportsPass(truth, e => applyEvent(truth, e));
     expect(truth.contacts['c-x'].delivered).toEqual(truth.reports['r1'].snapshot);
+  });
+});
+
+describe('D-055 — the flagship\'s radio: DropShip command nodes work aloft', () => {
+  function run(truth: TruthState) {
+    const events: GameEvent[] = [];
+    netPass(truth, e => { events.push(e); applyEvent(truth, e); });
+    return events;
+  }
+
+  it('an AIRBORNE command DropShip projects its umbrella onto the ground below', () => {
+    const truth = baseTruth('NET-AIR-1', [], 40, 20);
+    truth.sides['blue'].commandNodes = ['flag'];
+    const flag = addMechFormation(truth, { id: 'flag', sideId: 'blue', pos: gp(10, 10) },
+      1, { class: 'DROPSHIP' });
+    flag.pos = { kind: 'air', gridQ: 10, gridR: 10, band: 'HIGH', altLevel: 6,
+                 velocity: 2, vectorDeg: 0 };
+    // troops 20 hexes from the hex under the flag: inside the 24-hex DropShip radius
+    addMechFormation(truth, { id: 'troops', sideId: 'blue', pos: gp(30, 10) });
+    run(truth);
+    expect(truth.formations['troops'].onNet).toBe(true);
+    // and the flag itself is on-net (it IS the node)
+    expect(truth.formations['flag'].onNet).toBe(true);
+  });
+
+  it('an airborne flight stays on-net at the radio horizon — ×4 the node radius', () => {
+    const truth = baseTruth('NET-AIR-2', [], 60, 20);
+    truth.sides['blue'].commandNodes = ['hq'];
+    addMechFormation(truth, { id: 'hq', sideId: 'blue', pos: gp(2, 10) });
+    const flt = addMechFormation(truth, { id: 'flt', sideId: 'blue', pos: gp(2, 10) });
+    // 40 hexes out: far beyond the 12-hex ground radius, inside 48 (12 × 4) from altitude
+    flt.pos = { kind: 'air', gridQ: 42, gridR: 10, band: 'HIGH', altLevel: 6,
+                velocity: 2, vectorDeg: 0 };
+    const walker = addMechFormation(truth, { id: 'walker', sideId: 'blue', pos: gp(42, 10) });
+    void walker;
+    run(truth);
+    expect(truth.formations['flt'].onNet).toBe(true);    // sky: radio horizon
+    expect(truth.formations['walker'].onNet).toBe(false); // same spot on foot: off-net
+  });
+
+  it('a command ship at the planet\'s ORBIT node is theater-wide; at a jump point it is dark', () => {
+    const truth = baseTruth('NET-ORBIT', [], 60, 20);
+    addSystem(truth,
+      [{ id: 'orbit', type: 'PLANET', theaterId: 'theater-1' }, { id: 'jump', type: 'JUMP' }],
+      [['jump', 'orbit', 4]]);
+    addVessel(truth, { id: 'flag', sideId: 'blue', nodeId: 'orbit', klass: 'DROPSHIP' });
+    truth.sides['blue'].commandNodes = ['flag'];
+    addMechFormation(truth, { id: 'far', sideId: 'blue', pos: gp(55, 15) });
+    run(truth);
+    expect(truth.formations['far'].onNet).toBe(true);  // the flagship IS the comms hub
+    expect(truth.formations['flag'].onNet).toBe(true);
+
+    // burn it back out to the jump point: light-lag darkness returns
+    truth.formations['flag'].pos = { kind: 'node', nodeId: 'jump' };
+    run(truth);
+    expect(truth.formations['far'].onNet).toBe(false);
   });
 });
