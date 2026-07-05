@@ -184,9 +184,16 @@ The entire campaign is one append-only file: whatever your `--log` /
 it reproduces the campaign byte-exactly (including the audit trail and every
 die roll). Download it periodically; restore by putting it back and restarting.
 
-Updating to a new release: unzip it fresh, copy your `campaigns/` folder
-across, start — logs are append-only and replay through the new engine (check
-release notes for anything flagged save-breaking).
+**Updating**: the server checks GitHub once a day and shows a banner on the GM
+screen when a newer release exists (console too). To update: close the server,
+run **`Update OVERRIDE.bat`** (or `./update.sh`) — it downloads the latest zip
+and swaps the app files while leaving `campaigns/` (your saves) and the runtime
+untouched — then start as usual; the war resumes. Manual alternative: unzip a
+fresh release and copy your `campaigns/` folder across. Logs are append-only
+and replay through the new engine (check release notes for anything flagged
+save-breaking). If the GitHub repository is private, set
+`OVERRIDE_UPDATE_TOKEN` to a read-only token so the check and the updater can
+see the releases; `OVERRIDE_NO_UPDATE_CHECK=1` turns the beacon off entirely.
 
 WebSockets (live map updates) work through all of these setups — Cloudflare
 tunnels, Tailscale, Railway, Fly, and Caddy all pass them through by default.

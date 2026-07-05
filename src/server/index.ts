@@ -31,6 +31,7 @@ import { buildDiary } from './diary.js';
 import { enrichUnit } from '../roster/apply.js';
 import { searchLibrary } from '../roster/library.js';
 import { hashPick } from '../core/rng.js';
+import { checkLatestRelease, type AppUpdate } from './update.js';
 import {
   ARTILLERY_RANGE_HEXES, ATMO, CAPITAL_TN_BY_BAND, CAPITAL_WEAPONS, CAREER, CLOCK,
   COMBAT_DROP, FIRES, FLAK, LADDER, NET, RDY, RECON_TRICKS, SENSOR_RANGES, SKYWATCH, SUPPLY,
@@ -123,6 +124,27 @@ function broadcast() {
   drainNotifications();
 }
 
+// ── D-054.1: the update beacon — packaged builds know their version (esbuild
+// bakes __OVERRIDE_VERSION__ in at dist time); dev checkouts skip the check.
+declare const __OVERRIDE_VERSION__: string | undefined;
+const APP_VERSION = typeof __OVERRIDE_VERSION__ !== 'undefined' ? __OVERRIDE_VERSION__ : null;
+const UPDATE_REPO = process.env.OVERRIDE_UPDATE_REPO ?? 'onlinemph/Override-campaign-';
+let appUpdate: AppUpdate | null = null;
+async function updateBeacon() {
+  if (!APP_VERSION || process.env.OVERRIDE_NO_UPDATE_CHECK) return;
+  const found = await checkLatestRelease(
+    UPDATE_REPO, APP_VERSION, process.env.OVERRIDE_UPDATE_TOKEN);
+  if (found && found.latest !== appUpdate?.latest) {
+    appUpdate = found;
+    console.log(`  ⬆ Update available: v${found.latest} (running v${found.current}).`);
+    console.log('    Close the server and run the updater (Update OVERRIDE.bat / ./update.sh),');
+    console.log(`    or download it yourself: ${found.url}`);
+    broadcast();
+  }
+}
+void updateBeacon();
+setInterval(() => void updateBeacon(), 24 * 3600_000).unref?.();
+
 function gmState() {
   const sides = Object.keys(campaign.truth.sides);
   const eng = campaign.pendingEngagement;
@@ -138,6 +160,8 @@ function gmState() {
     autopaceMinutes,
     webhooks: { gm: !!webhookCfg.gm, sides: Object.keys(webhookCfg.sides) },
     campaignName: campaign.truth.config.name,
+    appVersion: APP_VERSION,
+    appUpdate,
     netNodesBySide: Object.fromEntries(sides.map(s => [s,
       netNodesOf(campaign.truth, s).filter(n => !n.theaterWide)
         .map(n => ({ q: n.pos.q, r: n.pos.r, theaterId: n.pos.theaterId, radius: n.radius }))])),

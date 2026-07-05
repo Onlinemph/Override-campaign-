@@ -1377,3 +1377,28 @@ but running it required the developer toolchain. D-054 removes that.
 5. **CI release job**: version tags (v*) and manual dispatch build all four zips
    and publish them as a GitHub Release. HOSTING.md rewritten around the levels:
    LAN → Tailscale (recommended) → tunnels → Railway/Docker → port-forward.
+
+## D-054.1 ✅ Auto-update: the beacon and the in-box updater
+"Can it auto update using the latest version on github?" Yes — in two safe halves,
+never while the server is running (a live campaign is not the moment to swap the
+engine under itself).
+1. **The beacon** (src/server/update.ts): packaged builds know their version
+   (esbuild bakes __OVERRIDE_VERSION__ at dist time; dev checkouts skip the check
+   entirely). On boot and daily after, the server asks GitHub for the latest
+   release and — when newer — prints it to the console and shows a banner on the
+   GM screen with the two ways forward. Offline/rate-limited/private-without-token
+   all fail silently; OVERRIDE_NO_UPDATE_CHECK=1 disables it.
+2. **The updater** (scripts/release-update.mjs, shipped as lib/update.mjs +
+   "Update OVERRIDE.bat"/update.sh): downloads the matching platform zip from the
+   latest release and swaps the app files — lib/, cards/, demo/, docs, start
+   scripts, VERSION — while NEVER touching campaigns/ (saves) or node/ (runtime).
+   Asset download uses the assets API with octet-stream, so it works for public
+   AND private repos (private needs OVERRIDE_UPDATE_TOKEN, a read-only token —
+   the current repo IS private, so either set that or make the repo public).
+   Windows subtlety honored: 'Update OVERRIDE.bat' never overwrites itself (cmd
+   re-reads running batch files by byte offset).
+3. **Proven end-to-end in-session** with a faked GitHub API preload driving the
+   REAL updater: a v0.1.0 install downloaded a locally-built v0.1.1 zip, swapped,
+   kept its campaign log and a marker file, rebooted, resumed the war, and
+   reported appVersion 0.1.1. The 404 path (private repo, no token) prints an
+   actionable hint instead of a stack trace.

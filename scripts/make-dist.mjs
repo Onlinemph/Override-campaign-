@@ -69,6 +69,8 @@ await esbuild.build({
   outfile: bundleOut,
   // ws's optional native accelerators — its own try/catch handles their absence
   external: ['bufferutil', 'utf-8-validate'],
+  // D-054.1: packaged builds know their version — the update beacon keys off this
+  define: { __OVERRIDE_VERSION__: JSON.stringify(VERSION) },
   // CJS deps (ws) require() node builtins at runtime; in ESM output esbuild needs
   // a real require in scope or those calls throw "Dynamic require is not supported".
   banner: { js: [
@@ -127,6 +129,19 @@ cd "$(dirname "$0")"
 mkdir -p campaigns
 exec ./node/bin/node lib/server/override.mjs --log campaigns/campaign.jsonl "$@"
 `;
+const UPDATE_BAT = `@echo off\r
+chcp 65001 >nul\r
+cd /d "%~dp0"\r
+echo Make sure the OVERRIDE server window is CLOSED, then\r
+pause\r
+.\\node\\node.exe lib\\update.mjs %*\r
+pause\r
+`;
+const UPDATE_SH = `#!/bin/sh
+cd "$(dirname "$0")"
+echo "Make sure the OVERRIDE server is stopped first."
+exec ./node/bin/node lib/update.mjs "$@"
+`;
 const README = `OVERRIDE GM Tool v${VERSION}
 =================================
 
@@ -151,6 +166,10 @@ own), open the GM screen and use the campaign picker — or start with:
 
 Playing with friends over the internet: read HOSTING.md.
 The full rules live in the in-app field manual (📘 on every screen).
+
+UPDATING: the GM screen shows a banner when a newer release is on GitHub.
+Close the server, run "Update OVERRIDE.bat" (or ./update.sh) — your saves in
+campaigns\ are kept — then start as usual.
 `;
 
 // ── 4. assemble + zip each target ────────────────────────────────────────────
@@ -171,12 +190,17 @@ for (const target of TARGETS) {
     'replayable war — copy it to back it up, delete it to start fresh.\n');
   cpSync(join(root, 'docs/HOSTING.md'), join(stage, 'HOSTING.md'));
   writeFileSync(join(stage, 'README.txt'), README);
+  writeFileSync(join(stage, 'VERSION'), VERSION + '\n');
+  cpSync(join(root, 'scripts/release-update.mjs'), join(stage, 'lib/update.mjs'));
 
   if (target === 'win-x64') {
     writeFileSync(join(stage, 'Start OVERRIDE.bat'), BAT);
+    writeFileSync(join(stage, 'Update OVERRIDE.bat'), UPDATE_BAT);
   } else {
     writeFileSync(join(stage, 'start.sh'), SH);
     chmodSync(join(stage, 'start.sh'), 0o755);
+    writeFileSync(join(stage, 'update.sh'), UPDATE_SH);
+    chmodSync(join(stage, 'update.sh'), 0o755);
   }
   installRuntime(target, fetchRuntime(target), join(stage, 'node'));
 

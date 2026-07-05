@@ -28,6 +28,7 @@
   <span id="persist" class="kv" style="float:right"></span>
 </div>
 <div id="gm-msg" class="kv" style="min-height:1.2em;margin:-4px 0 8px"></div>
+<div id="update-banner" style="display:none;background:#1d2f3a;border:1px solid var(--accent);border-radius:6px;padding:6px 12px;margin-bottom:10px"></div>
 
 <details class="panel" style="margin-bottom:12px">
   <summary style="cursor:pointer;color:var(--dim)">▸ How to run a turn</summary>
@@ -391,6 +392,16 @@ async function refresh() {
       <div style="margin:4px 0 2px;color:var(--dim)">contacts</div>${contacts}
       <div style="margin:6px 0 2px;color:var(--dim)">recent reports</div>${reports}</details>`;
   }).join('');
+
+  // D-054.1: the update beacon — a newer release exists on GitHub
+  const ub = document.getElementById('update-banner');
+  if (s.appUpdate) {
+    ub.style.display = '';
+    ub.innerHTML = `⬆ <b>OVERRIDE v${esc(s.appUpdate.latest)} is available</b> ` +
+      `(you are running v${esc(s.appUpdate.current)}). Close the server and run ` +
+      `<b>Update OVERRIDE.bat</b> (or <b>./update.sh</b>) — your campaigns are kept — ` +
+      `or <a href="${esc(s.appUpdate.url)}" target="_blank">download it from GitHub</a>.`;
+  } else { ub.style.display = 'none'; }
 
   // persistence indicator
   document.getElementById('persist').innerHTML = s.persist
