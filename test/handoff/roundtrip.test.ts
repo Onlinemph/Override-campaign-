@@ -82,7 +82,7 @@ describe('M2 — handoff export', () => {
       attackerSideId: 'blue', defenderSideId: 'red',
       attackerFormationIds: [], defenderFormationIds: [], status: 'PENDING',
     };
-    // Long Tom (range 30) at distance 10: in range. Arrow IV (range 8) at distance 10: out.
+    // Long Tom (range 15) at distance 10: in range. Arrow IV (range 4) at distance 10: out.
     const lt = addMechFormation(truth, { id: 'blue-lt', sideId: 'blue', pos: gp(15, 5) },
       1, { tags: ['LONG_TOM'], name: 'Long Tom' });
     const arrow = addMechFormation(truth, { id: 'blue-arrow', sideId: 'blue', pos: gp(15, 5) },
@@ -95,7 +95,7 @@ describe('M2 — handoff export', () => {
     expect(artyUnits).toContain('Long Tom');
     expect(artyUnits).not.toContain('Arrow IV');
     expect(blue.offboard.artillery.find(a => truth.units[a.unitId].name === 'Long Tom')!.rangeHexesRemaining)
-      .toBe(20);
+      .toBe(5);
   });
 
   it('on-net friendly reinforcements within range get arrivesTurn = hexes × 5', () => {

@@ -150,6 +150,7 @@ export function capitalBatteriesNear(
   return Object.values(s.facilities)
     .filter(fac => {
       if (fac.sideId === targetSideId || !fac.capitalBattery || fac.pos.kind !== 'ground') return false;
+      if (fac.damage === 'DESTROYED') return false; // D-052: bombardment silences the guns
       const w = CAPITAL_WEAPONS[fac.capitalBattery.weapon];
       if (!w) return false;
       if (!w.energy && fac.capitalBattery.shots <= 0) return false; // magazine dry

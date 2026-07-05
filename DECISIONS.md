@@ -1295,3 +1295,35 @@ buildings don't move.
 The doctrine loop this closes: satellite tripwire → recon sortie develops the track
 → the silo is a map object → the plan writes itself (burn the magazine, route
 around the printed bands, or take the guns with ground troops).
+
+## D-052 ✅ Real artillery: graded tubes, finite shells, and buildings that fall down
+Artillery was half-abstract: every battery hit identically whatever its guns, the
+DRY check existed but nothing ever spent a shell, facilities were unshellable, and
+the ranges were the printed mapsheet values read 1:1 — 500 m tabletop hexes pasted
+onto 18 km operational hexes (the user caught it; same class of scale error D-050.1
+fixed in the other direction).
+1. **Ranges halved** (user ruling, "for now"): Arrow IV 4, Sniper 9, Thumper 10,
+   Long Tom 15 op hexes. A Long Tom still throws 270 km; it just stopped being a
+   continent gun. The riverward generator placed its battery from the constant, so
+   the showcase repositioned itself for free.
+2. **Batteries graded by their real tubes** (mirrors D-050 flak): `unit.arty`
+   derives from the weapons on the card — Long Tom 3, Sniper/Arrow IV 2, Thumper 1,
+   count-prefixed mounts multiply, cap 6. Battery strength = Σ live, ammunitioned
+   tubes; a massed battery (≥ 6) tears an extra damage step out of everything it
+   lands on. A lone Thumper and a Long Tom battalion finally play differently.
+3. **Magazines are finite**: each fire mission rolls depletion (2d6 ≤ 3 walks every
+   tube FULL → PARTIAL → DRY — a dozen-ish missions per state). Strength counts only
+   tubes with shells, so a dry battery falls silent mid-barrage until it REARMs.
+   Sustained harassment is now a logistics decision, and counter-logistics (killing
+   the resupply convoy) starves the guns.
+4. **Shells flatten buildings**: enemy facilities in the target hex take bombardment
+   steps on the unit ladder (FACILITY_DAMAGED). DESTROYED is out of the war — capital
+   battery silenced, radar dark, off the net (node and relay both), runway cratered
+   to VSTOL, supply points zeroed. And a facility your side has SPOTTED (D-051.1)
+   makes its hex a surveyed grid: no intel penalty. The full loop this closes:
+   satellite tripwire → recon photo → the silo is a map object → the Long Tom
+   counter-batteries it from standoff — the fourth answer to landing denial.
+5. Confirmed while we were in here (user question): artillery IS card-derived —
+   extractTags matches the weapon names as printed on the sheet ("Long Tom",
+   "Sniper Artillery/Cannon", "Arrow IV"…), so authoring a Mobile Long Tom by model
+   name gives the formation its tubes, range, and now its strength automatically.

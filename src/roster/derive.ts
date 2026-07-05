@@ -47,6 +47,8 @@ export interface DerivedUnitFields {
   tags: string[];
   /** D-050: flak battery strength from the sheet's real guns (AA-quirked units). */
   flak?: number;
+  /** D-052: artillery battery strength from the tubes actually on the card. */
+  arty?: number;
 }
 
 /**
@@ -71,6 +73,29 @@ export function flakStrengthFromWeapons(parsed: ParsedCardLike): number {
     }
   }
   return Math.min(6, 1 + heavy * 2 + guns);
+}
+
+/**
+ * D-052: grade an artillery unit's punch from the tubes actually on its card.
+ * Weights follow the printed damage ordering (Long Tom 25 > Sniper/Arrow IV 20 >
+ * Thumper 15); count-prefixed labels ("x2 Long Tom") multiply. A unit that earned
+ * an artillery tag but whose weapons list doesn't parse is still one tube.
+ * Capped so one hull can't be a regiment.
+ */
+export function artyStrengthFromWeapons(parsed: ParsedCardLike): number {
+  const list = ((parsed.card as { weapons?: unknown[] }).weapons ?? []) as Array<
+    { label?: string; name?: string }>;
+  let total = 0;
+  for (const w of list) {
+    const label = String(w.label ?? w.name ?? '');
+    const mult = label.match(/^x(\d+)\b/i);
+    const count = mult ? Number(mult[1]) : 1;
+    const n = label.toLowerCase();
+    if (/long\s*tom/.test(n)) total += 3 * count;
+    else if (/sniper\s*(artillery|cannon)|arrow\s*iv/.test(n)) total += 2 * count;
+    else if (/thumper\s*(artillery|cannon)/.test(n)) total += 1 * count;
+  }
+  return Math.min(6, Math.max(1, total));
 }
 
 /** Pull the first up-to-3 integers out of a printed move string ("5 / 8 / 5j"). */
@@ -146,8 +171,12 @@ export function deriveUnitFields(
   const tonnage = c.mass ?? c.tonnage;
   // D-050: a battery's punch comes from its actual guns
   const flak = tags.includes('AA') ? flakStrengthFromWeapons(parsed) : undefined;
+  // D-052: same treatment for artillery — the tubes on the sheet grade the battery
+  const arty = tags.some(t => ['ARROW_IV', 'SNIPER', 'THUMPER', 'LONG_TOM'].includes(t))
+    ? artyStrengthFromWeapons(parsed) : undefined;
   const base = { bv, tags, ...(tonnage !== undefined ? { tonnage } : {}),
-                 ...(flak !== undefined ? { flak } : {}) };
+                 ...(flak !== undefined ? { flak } : {}),
+                 ...(arty !== undefined ? { arty } : {}) };
 
   switch (parsed.kind) {
     case 'mech': {

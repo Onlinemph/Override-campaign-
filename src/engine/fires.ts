@@ -6,6 +6,14 @@
  * every enemy that can range it. Shoot-and-scoot is the whole lifestyle (core §9.2);
  * fire then MOVE and the enemy holds a confident, stale fix on a hex you've left.
  *
+ * D-052 — the guns are real now: battery strength is graded from the tubes on the
+ * cards (a Long Tom battalion is not a lone Thumper), sustained fire DRAINS THE
+ * MAGAZINE (each shot risks walking the tubes FULL → PARTIAL → DRY — REARM from a
+ * depot to refill), fire missions can flatten FACILITIES (the counter-battery answer
+ * to a photographed capital emplacement), and a hex whose enemy facility your side
+ * has spotted is a surveyed grid — no intel penalty. Ranges are halved from the
+ * printed mapsheet values (500 m hexes read 1:1 onto 18 km was generous — D-052).
+ *
  * Set-piece batteries belong on the table; this Quick Resolution only runs when no
  * battle is pending (the engine is frozen during engagements anyway).
  */
@@ -34,6 +42,24 @@ export function batteryRange(s: TruthState, f: Formation): number {
     }
   }
   return best;
+}
+
+/** The unit ids in a formation that actually carry tubes. */
+export function tubeUnits(s: TruthState, f: Formation): Id[] {
+  return f.unitIds.filter(uid =>
+    (s.units[uid]?.tags ?? []).some(tag => ARTILLERY_TAG_RANGE[tag] !== undefined));
+}
+
+/** D-052: the battery's punch — Σ arty strength over live tubes with ammunition. */
+export function batteryStrength(s: TruthState, f: Formation): number {
+  let total = 0;
+  for (const uid of tubeUnits(s, f)) {
+    const u = s.units[uid];
+    if (!u || u.damage === 'DESTROYED' || u.damage === 'SALVAGE') continue;
+    if (u.ammoState === 'DRY') continue;
+    total += u.arty ?? 1;
+  }
+  return total;
 }
 
 function losClear(s: TruthState, a: GroundPos, b: GroundPos): boolean {
@@ -73,20 +99,29 @@ export function firesPass(s: TruthState, emit: (e: GameEvent) => void): void {
     if (s.tick < order.effectiveTick) continue;
     const range = batteryRange(s, battery);
     if (range === 0) continue; // no tubes
-    if (battery.unitIds.every(uid => s.units[uid]?.ammoState === 'DRY')) continue;
+    const strength = batteryStrength(s, battery);
+    if (strength === 0) continue; // every tube dry or dead — REARM before you FIRE
 
     const from = battery.pos as GroundPos;
     const tgt = targetHex(s, order);
     if (!tgt || tgt.theaterId !== from.theaterId || hexDistance(from, tgt) > range) continue;
 
+    // D-052: a spotted enemy facility makes its hex a surveyed grid — buildings hold still
+    const facTargets = Object.values(s.facilities).filter(fac =>
+      fac.sideId !== battery.sideId && fac.pos.kind === 'ground' &&
+      fac.pos.theaterId === tgt.theaterId && fac.pos.q === tgt.q && fac.pos.r === tgt.r &&
+      fac.damage !== 'DESTROYED');
+    const surveyed = facTargets.some(fac => (fac.knownTo ?? []).includes(battery.sideId));
+
     // intel penalty: LOCK clean, CONTACT −2, anything less (or a bare hex) −4 — unless a
-    // friendly forward observer holds LOS to the target (core §9.1 the spotter loop)
+    // friendly forward observer holds LOS to the target (core §9.1 the spotter loop),
+    // or the hex holds a facility this side has photographed (D-052)
     const level = order.targetContactId ? (s.contacts[order.targetContactId]?.level ?? 0) : 0;
     const spotter = Object.values(s.formations).some(o => !o.destroyed &&
       o.sideId === battery.sideId && o.id !== battery.id && o.pos.kind === 'ground' &&
       losClear(s, o.pos as GroundPos, tgt));
     let penalty = 0;
-    if (!spotter) {
+    if (!spotter && !surveyed) {
       penalty = level >= LADDER.ARTY_AIR_TARGETING_MIN_LEVEL ? LADDER.TARGETING_PENALTY_AT_CONTACT
         : (level >= LADDER.MAX_LEVEL ? 0 : LADDER.TARGETING_PENALTY_BELOW_CONTACT);
       if (level >= LADDER.MAX_LEVEL) penalty = 0; // LOCK is clean
@@ -98,18 +133,20 @@ export function firesPass(s: TruthState, emit: (e: GameEvent) => void): void {
     const total = r.result + brBonus + penalty;
     emit({ type: 'DIE_ROLLED', roll: { id: `roll:${s.seedCursor}`, tick: s.tick,
       purpose: `fire mission ${battery.name} → ${tgt.q},${tgt.r} ` +
-        `(2d6 ${r.result} +BR ${brBonus}${penalty ? ` ${penalty} intel` : ''} = ${total} vs ${FIRES.HIT_TN})`,
+        `(2d6 ${r.result} +BR ${brBonus}${penalty ? ` ${penalty} intel` : ''} = ${total} vs ${FIRES.HIT_TN}, strength ${strength})`,
       dice: '2d6', result: r.result, seedCursor: r.nextCursor - 2 } });
     emit({ type: 'FORMATION_FIRED', formationId: battery.id, tick: s.tick });
 
-    // damage whoever is actually in the hex (a stale fix lands on empty ground)
+    // damage whoever is actually in the hex (a stale fix lands on empty ground);
+    // a massed battery (D-052) tears an extra step out of everything it lands on
+    const massed = strength >= FIRES.MASSED_STRENGTH ? 1 : 0;
     if (total >= FIRES.HIT_TN) {
       const victims = Object.values(s.formations).filter(o => !o.destroyed &&
         o.sideId !== battery.sideId && o.pos.kind === 'ground' &&
         (o.pos as GroundPos).theaterId === tgt.theaterId &&
         (o.pos as GroundPos).q === tgt.q && (o.pos as GroundPos).r === tgt.r);
       for (const victim of victims) {
-        const steps = 1 + (total - FIRES.HIT_TN >= FIRES.BIG_MARGIN ? 1 : 0)
+        const steps = 1 + massed + (total - FIRES.HIT_TN >= FIRES.BIG_MARGIN ? 1 : 0)
           + (FIRES.SOFT_DOUBLE && isSoft(s, victim) ? 1 : 0);
         const uid = victim.unitIds.find(u => s.units[u]?.damage !== 'DESTROYED'
           && s.units[u]?.damage !== 'SALVAGE');
@@ -118,6 +155,34 @@ export function firesPass(s: TruthState, emit: (e: GameEvent) => void): void {
             damage: worsen(s.units[uid].damage, steps), ammoState: s.units[uid].ammoState });
         }
       }
+      // D-052: shells flatten buildings too — the standoff answer to a capital battery
+      for (const fac of facTargets) {
+        const steps = 1 + massed + (total - FIRES.HIT_TN >= FIRES.BIG_MARGIN ? 1 : 0);
+        const after = worsen(fac.damage ?? 'OK', steps);
+        emit({ type: 'FACILITY_DAMAGED', facilityId: fac.id, damage: after, tick: s.tick });
+        emit({ type: 'GM_NOTE', tick: s.tick,
+          text: `bombardment: ${battery.name} hits ${fac.name} — ${after}`
+            + (after === 'DESTROYED' ? ' (out of action)' : '') });
+      }
+    }
+
+    // D-052: the magazine is finite — each fire mission risks walking every live
+    // tube one ammo state down. REARM at a depot/convoy is the refill.
+    const dep = rollDice(s.seed, s.seedCursor, '2d6');
+    emit({ type: 'DIE_ROLLED', roll: { id: `roll:${s.seedCursor}`, tick: s.tick,
+      purpose: `ammo depletion ${battery.name} (2d6 ≤ ${FIRES.AMMO_DEPLETION_ON} drains)`,
+      dice: '2d6', result: dep.result, seedCursor: dep.nextCursor - 2 } });
+    if (dep.result <= FIRES.AMMO_DEPLETION_ON) {
+      const NEXT: Record<string, 'PARTIAL' | 'DRY'> = { FULL: 'PARTIAL', PARTIAL: 'DRY' };
+      for (const uid of tubeUnits(s, battery)) {
+        const u = s.units[uid];
+        if (!u || u.damage === 'DESTROYED' || u.damage === 'SALVAGE') continue;
+        const next = NEXT[u.ammoState];
+        if (next) emit({ type: 'UNIT_STATE_CHANGED', unitId: uid,
+                         damage: u.damage, ammoState: next });
+      }
+      emit({ type: 'GM_NOTE', tick: s.tick,
+        text: `${battery.name}: magazines running low (sustained fire)` });
     }
 
     // counter-battery: the firing hex is revealed at CONTACT to every enemy that can
@@ -135,6 +200,7 @@ function counterBattery(
     // a sensor station / mobile HQ that ranges the hex
     for (const fac of Object.values(s.facilities)) {
       if (fac.sideId !== sideId || !fac.sensorStation || fac.pos.kind !== 'ground') continue;
+      if (fac.damage === 'DESTROYED') continue; // D-052: flattened radar ranges nothing
       if (fac.pos.theaterId === from.theaterId &&
           hexDistance(fac.pos, from) <= fac.sensorStation.active) { canRange = true; break; }
     }

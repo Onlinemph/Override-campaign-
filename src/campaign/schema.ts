@@ -152,6 +152,9 @@ export function validateCampaign(j: any): string[] {
     }
     // D-051.1: optionally pre-spotted (public installations on prewar maps)
     for (const sid of f.knownTo ?? []) knownSide(sid, `${at}.knownTo`);
+    if (f.damage !== undefined && !oneOf(f.damage, DAMAGE_STATES)) {
+      err(`${at}.damage: bad state "${f.damage}"`); // D-052: bombardment ladder
+    }
   }
 
   // ── formations & units ──

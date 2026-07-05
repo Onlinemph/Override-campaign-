@@ -331,9 +331,26 @@ or Arrow IV — the battery tags derive from the card) get **FIRE** in their pic
 contact, quick-resolves against whatever is truly there — and reveals the battery's own
 hex at CONTACT to every enemy that can range it. Shoot-and-scoot is the lifestyle.
 Intel matters: LOCK is clean, CONTACT −2, less (or a bare hex) −4 unless a friendly
-spotter holds LOS to the target. A waiting battery explains itself: no tubes, dry
-magazines, no target, or out of range. Ranges: Arrow IV 8 hexes, Sniper 18, Thumper 21,
-Long Tom 30.
+spotter holds LOS to the target — or the hex holds an enemy facility your side has
+**spotted** (D-052: buildings hold still; a photographed base is a surveyed grid).
+A waiting battery explains itself: no tubes, dry magazines, no target, or out of range.
+
+**The guns are real now (D-052):**
+- **Ranges (halved from the 500 m mapsheet printings — D-052):** Arrow IV **4** hexes,
+  Sniper **9**, Thumper **10**, Long Tom **15** (a Long Tom still throws 270 km).
+- **Batteries are graded by their tubes**: each unit's `arty` strength derives from the
+  card (Long Tom 3, Sniper/Arrow IV 2, Thumper 1, counted per mount); a **massed
+  battery (strength ≥ 6) tears an extra damage step** out of everything it lands on.
+- **Magazines are finite**: every fire mission risks (2d6 ≤ 3) walking the battery's
+  tubes one ammo state down — FULL → PARTIAL → DRY, roughly a dozen missions per
+  state. A dry battery falls silent until it REARMs from a depot, factory, or convoy.
+- **Shells flatten buildings**: enemy facilities in the target hex take bombardment
+  damage on the same ladder (OK → DAMAGED → CRIPPLED → DESTROYED). A **DESTROYED**
+  facility is out of the war: its capital battery is silenced, its radar goes dark,
+  it drops off the command net, its runway is cratered (VSTOL only), and its supply
+  points are gone. This is the standoff counter to a photographed capital emplacement —
+  the fourth answer alongside burning its magazine, routing around it, and taking the
+  ground.
 
 ### Air orders (flights, VTOL-carriers excluded — flights are ASF/conventional fighters and DropShips)
 

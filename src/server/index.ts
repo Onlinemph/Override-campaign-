@@ -31,8 +31,8 @@ import { enrichUnit } from '../roster/apply.js';
 import { searchLibrary } from '../roster/library.js';
 import { hashPick } from '../core/rng.js';
 import {
-  ATMO, CAPITAL_TN_BY_BAND, CAPITAL_WEAPONS, CAREER, CLOCK, COMBAT_DROP, FLAK, LADDER, NET,
-  RDY, RECON_TRICKS, SENSOR_RANGES, SKYWATCH, SUPPLY,
+  ARTILLERY_RANGE_HEXES, ATMO, CAPITAL_TN_BY_BAND, CAPITAL_WEAPONS, CAREER, CLOCK,
+  COMBAT_DROP, FIRES, FLAK, LADDER, NET, RDY, RECON_TRICKS, SENSOR_RANGES, SKYWATCH, SUPPLY,
 } from '../rules.js';
 import {
   validateCampaign, TERRAINS, INFRA, NODE_TYPES, UNIT_CLASSES, EMCONS, POSTURES,
@@ -271,7 +271,7 @@ const server = createServer(async (req, res) => {
       // read-only game constants for the manual (numbers stay true to rules.ts)
       return json(res, 200, {
         CLOCK, LADDER, RDY, SUPPLY, CAREER, FLAK, ATMO, RECON_TRICKS, COMBAT_DROP, NET,
-        CAPITAL_WEAPONS, CAPITAL_TN_BY_BAND, SENSOR_RANGES,
+        CAPITAL_WEAPONS, CAPITAL_TN_BY_BAND, SENSOR_RANGES, ARTILLERY_RANGE_HEXES, FIRES,
         SKYWATCH: { TURNAROUND_PULSES: SKYWATCH.TURNAROUND_PULSES,
                     HOT_PIT_PULSES: SKYWATCH.HOT_PIT_PULSES,
                     SPHEROID_ATMO_HEX_PER_TICK: SKYWATCH.SPHEROID_ATMO_HEX_PER_TICK,

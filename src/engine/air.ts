@@ -125,6 +125,7 @@ function baseHasRunway(s: TruthState, f: Formation): boolean {
   const here = f.pos;
   return Object.values(s.facilities).some(fac =>
     fac.sideId === f.sideId && fac.pos.kind === 'ground' &&
+    fac.damage !== 'DESTROYED' && // D-052: a cratered runway is VSTOL-only
     fac.pos.theaterId === here.theaterId && fac.pos.q === here.q && fac.pos.r === here.r &&
     (fac.tags.includes('AIRSTRIP') || fac.tags.includes('SPACEPORT')));
 }
@@ -787,6 +788,7 @@ export function airDetectionPass(s: TruthState, emit: (e: GameEvent) => void): v
   // ground-based radar horizon: searchers project to their theater's air hex
   for (const fac of Object.values(s.facilities)) {
     if (fac.pos.kind !== 'ground' || !fac.sensorStation) continue;
+    if (fac.damage === 'DESTROYED') continue; // D-052: bombed-out radar is off the air
     searchers.push({ id: fac.id, sideId: fac.sideId, name: fac.name,
       airHex: airHexOver(s, fac.pos),
       range: SKYWATCH.RADAR_HORIZON.HIGH_BAND_AIR_HEXES +

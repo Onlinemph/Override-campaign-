@@ -208,12 +208,15 @@ export const COMBAT = {
 } as const;
 
 // ── Artillery (core §9, App. A) ─────────────────────────────────────────────
+// D-052 (user ruling): the printed BT artillery ranges are in 500 m low-altitude
+// mapsheet hexes — reading them 1:1 onto 18 km operational hexes was generous.
+// Halved for now (a Long Tom still throws 270 km; it just isn't a continent gun).
 export const ARTILLERY_RANGE_HEXES = {
-  ARROW_IV: 8,
-  SNIPER: 18,
-  THUMPER: 21,
-  LONG_TOM: 30,
-  CRUISE_50: 50, CRUISE_70: 70, CRUISE_90: 90, CRUISE_120: 120,
+  ARROW_IV: 4,
+  SNIPER: 9,
+  THUMPER: 10,
+  LONG_TOM: 15,
+  CRUISE_50: 25, CRUISE_70: 35, CRUISE_90: 45, CRUISE_120: 60, // still unwired (no tag)
 } as const;
 /** Unit tags that mark an artillery piece, mapped to its operational range key. */
 export const ARTILLERY_TAG_RANGE: Record<string, number> = {
@@ -237,6 +240,11 @@ export const FIRES = {
   BIG_MARGIN: 4,           // ⚙ a margin ≥ this steps damage an extra notch
   SOFT_DOUBLE: true,       // infantry & soft vehicles suffer double (core §9.1)
   HARASSMENT_PER_PULSE: true,
+  // D-052: batteries graded by their real tubes (Σ unit arty strength, like flak)
+  MASSED_STRENGTH: 6,      // strength ≥ this tears an extra damage step per hit
+  // D-052: sustained fire drains the magazine — after each shot, 2d6 ≤ this walks
+  // every firing tube one ammo state down (FULL → PARTIAL → DRY; ~12-shot states)
+  AMMO_DEPLETION_ON: 3,
 } as const;
 
 // ── Engineers & minefields (core §9.3) — parked for M2 ─────────────────────

@@ -231,6 +231,7 @@
       case 'POSTURE_CHANGED': return { cls: 'noise', icon: '·', msg: `${F(e.formationId)} → ${e.posture}` };
       case 'HEXES_SCOUTED': return { cls: 'noise', icon: '·', msg: `${up(e.sideId)} scouts ${e.keys.length} hex(es)` };
       case 'FACILITY_SPOTTED': return { cls: '', icon: '📸', msg: `${up(e.sideId)} spots enemy installation ${FAC(e.facilityId)}` };
+      case 'FACILITY_DAMAGED': return { cls: 'warn', icon: '💥', msg: `${FAC(e.facilityId)} hit by bombardment — ${e.damage}` };
       case 'SAT_PASS': return { cls: 'noise', icon: '🛰', msg: `satellite ${e.satelliteId} sweeps overhead` };
       case 'FORMATION_FIRED': return { cls: 'noise', icon: '✸', msg: `${F(e.formationId)} fires (gives away its hex)` };
 

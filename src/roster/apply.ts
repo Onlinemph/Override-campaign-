@@ -53,6 +53,7 @@ export function buildUnitFromModel(opts: AuthorOptions): Unit | null {
     ammoState: opts.ammoState ?? 'FULL',
     tags,
     ...(d.flak != null ? { flak: d.flak } : {}),
+    ...(d.arty != null ? { arty: d.arty } : {}),
   };
 }
 
@@ -80,6 +81,7 @@ export function enrichUnit(u: Unit): string[] {
   if (!u.fuel && d.fuel) { u.fuel = d.fuel; changed.push('fuel'); }
   // D-050: battery strength from the real guns — authored values win
   if (u.flak == null && d.flak != null) { u.flak = d.flak; changed.push('flak'); }
+  if (u.arty == null && d.arty != null) { u.arty = d.arty; changed.push('arty'); }
 
   // Tags: union — keep every hand-authored tag, add the derived ones.
   const have = new Set(u.tags);

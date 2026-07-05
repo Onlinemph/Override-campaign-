@@ -112,6 +112,8 @@ export interface Unit {
    * the card's weapons when it carries the Anti-Aircraft Targeting quirk; authored
    * values win). A bare AA tag without it counts as an improvised battery of 1. */
   flak?: number;
+  /** D-052: artillery battery strength graded from the tubes on the card. */
+  arty?: number;
   pilotIds: Id[]; ammoState: 'FULL' | 'PARTIAL' | 'DRY';
   tags: string[]; // 'ECM','ANGEL_ECM','BEAGLE','AA','C3M','MASH','HQ','ENGINEER',
                   // 'DECOY','SKYEYE','LF_BATTERY','SAIL','STEALTH','RECON','WHEELED'...
@@ -198,6 +200,9 @@ export interface Facility {
   /** D-051.1: sides that have spotted this facility (recon photo, ground scout,
    * or its own launch plume). Buildings don't move — knowledge is permanent. */
   knownTo?: Id[];
+  /** D-052: bombardment damage. DESTROYED silences the battery, darkens the
+   * sensors, drops it off the net, flattens the runway, and zeroes its SP. */
+  damage?: DamageState;
 }
 export interface SalvageToken { id: Id; hex: GroundPos; sourceUnitId: Id; heldBy?: Id }
 

@@ -36,6 +36,7 @@ export type GameEvent =
       netNodeId: Id | null; renetAtTick: Tick | null }
   | { type: 'HEXES_SCOUTED'; sideId: Id; keys: string[] }
   | { type: 'FACILITY_SPOTTED'; facilityId: Id; sideId: Id; tick: Tick } // D-051.1
+  | { type: 'FACILITY_DAMAGED'; facilityId: Id; damage: DamageState; tick: Tick } // D-052
   | { type: 'SAT_PASS'; satelliteId: Id; tick: Tick; nextPassTick: Tick }
   | { type: 'FORMATION_DESTROYED'; formationId: Id; reason: string; tick: Tick }
   | { type: 'GM_NOTE'; text: string; tick: Tick }
@@ -300,6 +301,15 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
       const fac = s.facilities[e.facilityId];
       if (fac && !(fac.knownTo ?? []).includes(e.sideId)) {
         fac.knownTo = [...(fac.knownTo ?? []), e.sideId];
+      }
+      break;
+    }
+
+    case 'FACILITY_DAMAGED': {
+      const fac = s.facilities[e.facilityId];
+      if (fac) {
+        fac.damage = e.damage;
+        if (e.damage === 'DESTROYED') fac.supplyPoints = 0; // rubble stores nothing
       }
       break;
     }
@@ -856,6 +866,7 @@ export function isInterestingEvent(e: GameEvent): boolean {
     case 'CONTACT_REMOVED':
     case 'REPORT_DELIVERED':
     case 'FACILITY_SPOTTED':     // D-051.1: an enemy installation on the map is news
+    case 'FACILITY_DAMAGED':     // D-052: shells landing on a base is very much news
     case 'ORDER_COMPLETED':
     case 'FORMATION_DESTROYED':
     case 'TRIGGER_FIRED':

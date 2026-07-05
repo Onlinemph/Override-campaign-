@@ -98,7 +98,8 @@
              : fc.tags.includes('SENSOR_STATION') ? '⌖'
              : fc.tags.includes('COMM_RELAY') ? '📡' : 'F',
         title: `${fc.name}${fc.fuelFarmTons ? ' · farm ' + fc.fuelFarmTons.toFixed(1) + 't' : ''}` +
-               `${fc.supplyPoints ? ' · ' + fc.supplyPoints + ' SP' : ''}` });
+               `${fc.supplyPoints ? ' · ' + fc.supplyPoints + ' SP' : ''}` +
+               `${fc.damage ? ' · ' + fc.damage : ''}` });
     });
     // D-051.1: enemy installations your side has photographed — drawn in their color
     (v.knownFacilities || []).forEach(fc => {
@@ -109,7 +110,8 @@
              : fc.tags.includes('SENSOR_STATION') ? '⌖'
              : fc.tags.includes('COMM_RELAY') ? '📡' : 'F',
         title: `${fc.name} · ENEMY` +
-               (fc.capitalBattery ? ` · capital battery [${fc.capitalBattery.weapon}]` : '') });
+               (fc.capitalBattery ? ` · capital battery [${fc.capitalBattery.weapon}]` : '') +
+               (fc.damage ? ` · ${fc.damage}` : '') });
     });
     (v.contacts || []).forEach(c => {
       // air contacts draw on the hex their estimate sits over (D-037 congruent sky)

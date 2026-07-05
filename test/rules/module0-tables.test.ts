@@ -170,15 +170,15 @@ describe('A9 — command nets (core §4.2)', () => {
 });
 
 describe('A10 — remaining Appendix A rows parked for later milestones', () => {
-  it('artillery ranges: Arrow IV 8, Sniper 18, Thumper 21, Long Tom 30, cruise 50–120', () => {
-    expect(ARTILLERY_RANGE_HEXES.ARROW_IV).toBe(8);
-    expect(ARTILLERY_RANGE_HEXES.SNIPER).toBe(18);
-    expect(ARTILLERY_RANGE_HEXES.THUMPER).toBe(21);
-    expect(ARTILLERY_RANGE_HEXES.LONG_TOM).toBe(30);
-    expect(ARTILLERY_RANGE_HEXES.CRUISE_50).toBe(50);
-    expect(ARTILLERY_RANGE_HEXES.CRUISE_70).toBe(70);
-    expect(ARTILLERY_RANGE_HEXES.CRUISE_90).toBe(90);
-    expect(ARTILLERY_RANGE_HEXES.CRUISE_120).toBe(120);
+  it('artillery ranges (D-052, halved from 500 m mapsheet values): Arrow IV 4 … Long Tom 15', () => {
+    expect(ARTILLERY_RANGE_HEXES.ARROW_IV).toBe(4);
+    expect(ARTILLERY_RANGE_HEXES.SNIPER).toBe(9);
+    expect(ARTILLERY_RANGE_HEXES.THUMPER).toBe(10);
+    expect(ARTILLERY_RANGE_HEXES.LONG_TOM).toBe(15);
+    expect(ARTILLERY_RANGE_HEXES.CRUISE_50).toBe(25);
+    expect(ARTILLERY_RANGE_HEXES.CRUISE_70).toBe(35);
+    expect(ARTILLERY_RANGE_HEXES.CRUISE_90).toBe(45);
+    expect(ARTILLERY_RANGE_HEXES.CRUISE_120).toBe(60);
   });
   it('RDY bands (core §3.2): 8–10 clean, 5–7 +1, 2–4 +2 & attack on 8+, 0–1 rout', () => {
     expect(RDY.START).toBe(10);

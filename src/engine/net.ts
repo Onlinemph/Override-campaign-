@@ -31,7 +31,8 @@ export function commandNodesOf(s: TruthState, sideId: Id): NetNode[] {
       out.push({ id: f.id, pos: f.pos, radius: isDropship ? baseR : groundR, theaterWide: false });
     }
     const fac = s.facilities[nodeId];
-    if (fac && fac.isCommandNode && fac.pos.kind === 'ground') {
+    if (fac && fac.isCommandNode && fac.pos.kind === 'ground' &&
+        fac.damage !== 'DESTROYED') { // D-052: a flattened HQ commands nothing
       const big = fac.tags.includes('SPACEPORT') || fac.tags.includes('FORT');
       out.push({ id: fac.id, pos: fac.pos, radius: big ? baseR : groundR, theaterWide: false });
     }
@@ -60,6 +61,7 @@ function relayCandidates(s: TruthState, sideId: Id): NetNode[] {
   for (const fac of Object.values(s.facilities)) {
     if (fac.sideId !== sideId || fac.pos.kind !== 'ground') continue;
     if (!fac.tags.includes('COMM_RELAY')) continue;
+    if (fac.damage === 'DESTROYED') continue; // D-052: a downed mast relays nothing
     out.push({ id: fac.id, pos: fac.pos, radius: NET.GROUND_NODE_RADIUS,
                theaterWide: false, relay: true });
   }

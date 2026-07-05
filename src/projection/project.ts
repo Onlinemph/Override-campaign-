@@ -217,7 +217,8 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
                  supplyPoints: f.supplyPoints, isCommandNode: f.isCommandNode,
                  ...(f.sensorStation ? { sensor: { passive: f.sensorStation.passive,
                                                    active: f.sensorStation.active } } : {}),
-                 ...(f.capitalBattery ? { capitalBattery: { ...f.capitalBattery } } : {}) }));
+                 ...(f.capitalBattery ? { capitalBattery: { ...f.capitalBattery } } : {}),
+                 ...(f.damage ? { damage: f.damage } : {}) }));
   // D-051.1: enemy installations this side has spotted — permanent once photographed.
   // The weapon on the pad is visible; the remaining magazine is not.
   const knownFacilities: KnownFacilityView[] = Object.values(truth.facilities)
@@ -226,7 +227,8 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
     .map(f => ({ id: f.id, sideId: f.sideId, name: f.name,
                  pos: { ...(f.pos as GroundPos) }, tags: [...f.tags],
                  ...(f.capitalBattery ? { capitalBattery:
-                   { weapon: f.capitalBattery.weapon } } : {}) }));
+                   { weapon: f.capitalBattery.weapon } } : {}),
+                 ...(f.damage ? { damage: f.damage } : {}) }));
   // own satellites plus any whose launch was witnessed (core §8.6: schedule around them)
   const ownSatellites: OwnSatelliteView[] = Object.values(truth.satellites)
     .filter(s => s.sideId === sideId || s.knownTo.includes(sideId))

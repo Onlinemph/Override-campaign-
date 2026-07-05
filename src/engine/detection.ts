@@ -74,6 +74,7 @@ function gatherSearchers(s: TruthState): Searcher[] {
   }
   for (const fac of Object.values(s.facilities)) {
     if (!fac.sensorStation || fac.pos.kind !== 'ground') continue;
+    if (fac.damage === 'DESTROYED') continue; // D-052: bombed-out radar sees nothing
     out.push({
       kind: 'facility', id: fac.id, sideId: fac.sideId, name: fac.name, pos: fac.pos,
       passive: fac.sensorStation.passive, active: fac.sensorStation.active,

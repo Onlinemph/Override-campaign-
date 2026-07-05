@@ -164,6 +164,7 @@ export function buildCampaign(j: FixtureJson, source = 'campaign', enrich = true
         weapon: f.capitalBattery.weapon, shots: f.capitalBattery.shots ?? 0 } } : {}),
       // D-051.1: pre-spotted installations (public spaceports, prewar maps…)
       ...(f.knownTo ? { knownTo: [...f.knownTo] } : {}),
+      ...(f.damage ? { damage: f.damage } : {}), // D-052: author a half-wrecked base
     });
   }
   for (const sat of j.satellites ?? []) {
