@@ -35,6 +35,7 @@ export type GameEvent =
   | { type: 'NET_CHANGED'; formationId: Id; onNet: boolean;
       netNodeId: Id | null; renetAtTick: Tick | null }
   | { type: 'HEXES_SCOUTED'; sideId: Id; keys: string[] }
+  | { type: 'FACILITY_SPOTTED'; facilityId: Id; sideId: Id; tick: Tick } // D-051.1
   | { type: 'SAT_PASS'; satelliteId: Id; tick: Tick; nextPassTick: Tick }
   | { type: 'FORMATION_DESTROYED'; formationId: Id; reason: string; tick: Tick }
   | { type: 'GM_NOTE'; text: string; tick: Tick }
@@ -292,6 +293,14 @@ export function applyEvent(s: TruthState, e: GameEvent): void {
       const set = new Set(s.scoutedHexes[e.sideId] ?? []);
       for (const k of e.keys) set.add(k);
       s.scoutedHexes[e.sideId] = [...set];
+      break;
+    }
+
+    case 'FACILITY_SPOTTED': {
+      const fac = s.facilities[e.facilityId];
+      if (fac && !(fac.knownTo ?? []).includes(e.sideId)) {
+        fac.knownTo = [...(fac.knownTo ?? []), e.sideId];
+      }
       break;
     }
 
@@ -846,6 +855,7 @@ export function isInterestingEvent(e: GameEvent): boolean {
     case 'CONTACT_FADED':
     case 'CONTACT_REMOVED':
     case 'REPORT_DELIVERED':
+    case 'FACILITY_SPOTTED':     // D-051.1: an enemy installation on the map is news
     case 'ORDER_COMPLETED':
     case 'FORMATION_DESTROYED':
     case 'TRIGGER_FIRED':

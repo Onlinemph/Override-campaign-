@@ -150,6 +150,8 @@ export function validateCampaign(j: any): string[] {
         err(`${at}.capitalBattery.shots: must be a number`);
       }
     }
+    // D-051.1: optionally pre-spotted (public installations on prewar maps)
+    for (const sid of f.knownTo ?? []) knownSide(sid, `${at}.knownTo`);
   }
 
   // ── formations & units ──

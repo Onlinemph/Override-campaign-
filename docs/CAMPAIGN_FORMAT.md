@@ -121,7 +121,10 @@ band). Sub-capitals and the Barracuda also track fighters. It fires on
 capital hulls transitioning or flying inside its range — landing denial — with a
 finite magazine (`shots`; energy mounts — naval lasers/PPCs, sub-capital lasers,
 mass drivers — ignore it), and it is
-silenced while an enemy ground formation stands in its hex. Units: an optional
+silenced while an enemy ground formation stands in its hex. An optional
+`"knownTo": ["blue"]` pre-spots the facility for those sides (public spaceports,
+prewar maps — D-051.1); otherwise enemies learn it from recon photos, ground scouts,
+or its own launch plume. Units: an optional
 `"flak": N` on any unit overrides the derived flak battery strength (D-050 —
 normally graded automatically from the card's guns when it carries the
 Anti-Aircraft Targeting quirk).

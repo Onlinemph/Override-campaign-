@@ -1264,3 +1264,34 @@ in rules.ts referenced by exactly one table test. D-051 makes it real.
 5. **Scoped to the RECON order**: a CAP or STRIKE flight is not a camera — tasking
    is a real choice. Satellites stay the tripwire (instant delivery, fades between
    passes); the sortie is the developer you send when the tripwire fires.
+
+## D-051.1 ✅ Facility intel: enemy installations become map objects you can learn
+The seam D-051 exposed: facilities were strictly owner-visible — the projection's
+"own infrastructure, never to others" rule had no counterpart, so even a capital
+battery that had been shooting at you never appeared on your map. Now there is a
+per-side facility intel layer (`facility.knownTo`), permanent once earned, because
+buildings don't move.
+1. **Three ways to learn a site**, one helper (`spotFacility` in engine/net.ts):
+   a recon sortie photographs every enemy facility under its corridor OUTRIGHT (no
+   roll — fixed installations can't dodge a camera); a ground formation logs bases
+   inside its passive sensor envelope during scoutPass; and a capital battery that
+   fires marks itself — the target's crew sees the plume (shoot-and-be-seen, the
+   same bargain tactical flak and artillery already pay).
+2. **The knowledge still has to travel.** A spot is not a telepathic reveal: it
+   rides the normal report pipeline. On-net sources develop the film immediately
+   (REPORT_DELIVERED + FACILITY_SPOTTED in one breath); off-net sources — recon
+   flights are ALWAYS off-net while airborne — carry it home, deliverReportsPass
+   emits the FACILITY_SPOTTED when the courier reaches the net, and REPORTS_LOST
+   buries the photo with a dead courier. One report per (facility, side, source):
+   the first courier home is the one that matters.
+3. **What the player sees** (`knownFacilities` in the projection): position, name,
+   tags, and the weapon on the pad — `capitalBattery: { weapon }` with the shots
+   count deliberately withheld (a photo shows launchers, not magazines). Drawn on
+   the player map in the enemy's color with the same glyphs as own facilities
+   (☄/A/P/⌖/📡/F), plus a 📸 war-diary line on the spot.
+4. **Authoring**: `"knownTo": ["blue"]` on a facility pre-spots it — the right call
+   for public spaceports and prewar-survey targets, which is presumably how an
+   invasion knows where the capital's port is before anyone flies a sortie.
+The doctrine loop this closes: satellite tripwire → recon sortie develops the track
+→ the silo is a map object → the plan writes itself (burn the magazine, route
+around the printed bands, or take the guns with ground troops).

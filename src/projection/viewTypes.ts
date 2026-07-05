@@ -72,6 +72,12 @@ export interface OwnFacilityView {
   capitalBattery?: { weapon: string; shots: number };
   sensor?: { passive: number; active: number };
 }
+/** D-051.1: an enemy installation your side has spotted — position, kind, and the
+ * weapon on the pad (a photo shows the launchers, never the magazine count). */
+export interface KnownFacilityView {
+  id: Id; sideId: Id; name: string; pos: GroundPos; tags: string[];
+  capitalBattery?: { weapon: string };
+}
 export interface OwnSatelliteView {
   id: Id; kind: 'RECON' | 'COMM'; theaterId: Id;
   corridor: Array<{ q: number; r: number }>;
@@ -123,6 +129,7 @@ export interface ViewState {
   scoutedTerrain: ScoutedHexView[];
   system?: SystemView;
   ownFacilities: OwnFacilityView[];
+  knownFacilities: KnownFacilityView[];
   ownSatellites: OwnSatelliteView[];
   netNodes: Array<{ q: number; r: number; theaterId: Id; radius: number; relay?: boolean }>;
   netTheaterWide: boolean;

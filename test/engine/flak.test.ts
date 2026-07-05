@@ -103,9 +103,12 @@ describe('D-050 — anti-capital emplacements deny the sky', () => {
   it('a DropShip inside the umbrella eats real weapon damage; the magazine drains', () => {
     const truth = withBase('CAP-1', 'KILLER_WHALE', 2); // 3 steps, bands 7/14/21/28
     const ds = dropship(truth, 'ds1', 12, 10); // 2 air hexes from the silo
+    ds.onNet = true; // radio the plume home immediately (D-051.1)
     const before = truth.facilities['base'].capitalBattery!.shots;
     run(truth, emit => capitalGauntlet(truth, emit, ds, { q: 12, r: 10 }, 'overflight'));
     expect(truth.facilities['base'].capitalBattery!.shots).toBe(before - 1); // missiles are finite
+    // shoot and be seen (D-051.1): the launch plume marks the silo for the target's side
+    expect(truth.facilities['base'].knownTo).toContain('blue');
     const dmg = truth.units[ds.unitIds[0]].damage;
     // seeded roll: hit ⇒ THREE steps (OK → DESTROYED — a Killer Whale can gut a ship)
     expect(['OK', 'DESTROYED']).toContain(dmg);

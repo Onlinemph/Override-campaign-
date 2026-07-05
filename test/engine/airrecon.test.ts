@@ -6,10 +6,11 @@
 import { describe, expect, it } from 'vitest';
 import { Campaign, replay } from '../../src/core/truth.js';
 import { reconSweep } from '../../src/engine/air.js';
-import { deliverReportsPass } from '../../src/engine/net.js';
+import { deliverReportsPass, scoutPass } from '../../src/engine/net.js';
 import { applyEvent, type GameEvent } from '../../src/core/events.js';
 import { SENSOR_RANGES } from '../../src/rules.js';
 import { hexLine } from '../../src/hex/axial.js';
+import { project } from '../../src/projection/project.js';
 import { addFlight, addMechFormation, baseTruth, gp, mkFacility } from '../helpers.js';
 import type { Order, TruthState } from '../../src/core/types.js';
 
@@ -75,6 +76,9 @@ describe('the recon corridor (D-051)', () => {
     // a battalion sitting in the open under the route: TN 7 at night — easy film
     addMechFormation(truth, { id: 'column', sideId: 'red', pos: gp(8, 10) }, 4)
       .sigBase = 5;
+    // D-051.1: a silo just off the track — the camera can't miss a building
+    truth.facilities['silo'] = mkFacility({ id: 'silo', sideId: 'red', name: 'Silo Hill',
+      pos: gp(10, 11), capitalBattery: { weapon: 'WHITE_SHARK', shots: 8 } });
 
     const c = Campaign.create(truth);
     c.inject({ type: 'ORDER_ISSUED', order: {
@@ -101,7 +105,40 @@ describe('the recon corridor (D-051)', () => {
     const delivered = Object.values(c.truth.reports).filter(r =>
       r.sourceFormationId === 'photo' && r.deliveredTick !== null);
     expect(delivered.length).toBeGreaterThan(0);
+    // D-051.1: the silo is on the film — photographed outright, spotted on touchdown,
+    // and on the player's map (weapon visible, magazine count withheld)
+    expect(c.truth.facilities['silo'].knownTo).toContain('blue');
+    const view = project(c.truth, 'blue', c.truth.tick);
+    const known = view.knownFacilities.find(k => k.id === 'silo');
+    expect(known?.capitalBattery).toEqual({ weapon: 'WHITE_SHARK' });
+    expect(project(c.truth, 'red', c.truth.tick).knownFacilities).toHaveLength(0); // red spots nothing
     expect(replay(log)).toEqual(c.truth);
+  });
+
+  it('ground eyes log the base too — and a dead courier takes the photo with it', () => {
+    const truth = baseTruth('ARC-5', [], 30, 20);
+    truth.facilities['depot'] = mkFacility({ id: 'depot', sideId: 'red', name: 'Depot',
+      pos: gp(11, 10) });
+    // an on-net scout inside passive range (2): spotted immediately via scoutPass
+    const scout = addMechFormation(truth, { id: 'scout', sideId: 'blue', pos: gp(9, 10) });
+    scout.onNet = true;
+    run(truth, emit => scoutPass(truth, emit));
+    expect(truth.facilities['depot'].knownTo).toContain('blue');
+
+    // an OFF-net flight photographs a second base, then dies: the film is lost
+    const truth2 = baseTruth('ARC-6', [], 30, 20);
+    truth2.facilities['depot'] = mkFacility({ id: 'depot', sideId: 'red', name: 'Depot',
+      pos: gp(11, 10) });
+    const flt = addFlight(truth2, { id: 'photo', sideId: 'blue', airPos: { q: 11, r: 10 } });
+    run(truth2, emit => reconSweep(truth2, emit, flt, [{ q: 11, r: 10 }]));
+    expect(truth2.facilities['depot'].knownTo ?? []).not.toContain('blue'); // queued only
+    run(truth2, emit => {
+      emit({ type: 'FORMATION_DESTROYED', formationId: 'photo', reason: 'test', tick: 0 });
+      deliverReportsPass(truth2, emit);
+    });
+    expect(truth2.facilities['depot'].knownTo ?? []).not.toContain('blue'); // lost with it
+    expect(Object.values(truth2.reports).some(r => r.facilityId === 'depot' && r.lost))
+      .toBe(true);
   });
 
   it('a CAP flight is not a camera: no recon sweep without the RECON order', () => {

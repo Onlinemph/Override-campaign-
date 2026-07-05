@@ -10,7 +10,7 @@
  * A relaying formation is a big radio: SIG_MODS.RELAYING makes it easier to DF.
  */
 import { CLOCK, NET } from '../rules.js';
-import type { Formation, GroundPos, Id, TruthState } from '../core/types.js';
+import type { ContactReport, Facility, Formation, GroundPos, Id, TruthState } from '../core/types.js';
 import type { GameEvent } from '../core/events.js';
 import { hexDistance } from '../hex/axial.js';
 
@@ -181,6 +181,45 @@ export function netPass(s: TruthState, emit: (e: GameEvent) => void): void {
  * Deliver held reports whose source is back on-net (core §4.2: off-net reports arrive
  * when the formation returns to net). Sources that died en route never deliver.
  */
+/**
+ * D-051.1: log an enemy installation. Buildings don't move, so a spot is permanent —
+ * but the KNOWLEDGE still has to travel: the sighting rides the normal report
+ * pipeline. An on-net source develops the film immediately (FACILITY_SPOTTED); an
+ * off-net one (a recon flight, a deep scout) carries it home, and if the source dies
+ * first the photo is lost with it. One report per (facility, side, source): the
+ * first courier to make it back is the one that matters.
+ */
+export function spotFacility(
+  s: TruthState, emit: (e: GameEvent) => void,
+  sideId: Id, fac: Facility, source: { id: Id; name: string; alwaysOnNet: boolean },
+): void {
+  if (fac.sideId === sideId || fac.pos.kind !== 'ground') return;
+  if ((fac.knownTo ?? []).includes(sideId)) return;
+  if (Object.values(s.reports).some(r =>
+    r.sideId === sideId && r.facilityId === fac.id &&
+    r.sourceFormationId === source.id && !r.lost)) return; // this source already filed
+
+  let n = 0;
+  while (s.reports[`report:${s.tick}:fac:${fac.id}:${sideId}:${n}`]) n++;
+  const pos = fac.pos;
+  const kind = fac.capitalBattery ? `capital battery [${fac.capitalBattery.weapon}]`
+    : fac.tags.length ? fac.tags.join('/') : 'installation';
+  const report: ContactReport = {
+    id: `report:${s.tick}:fac:${fac.id}:${sideId}:${n}`,
+    sideId, generatedTick: s.tick, deliveredTick: null,
+    sourceFormationId: source.id, contactId: '', facilityId: fac.id,
+    text: `T+${s.tick} — ${source.name}: enemy ${kind} "${fac.name}" at hex ${pos.q},${pos.r}`,
+    snapshot: { level: 4, estPos: { ...pos }, posErrorHexes: 0, asOfTick: s.tick },
+  };
+  emit({ type: 'REPORT_QUEUED', report });
+  const onNet = source.alwaysOnNet ||
+    (s.formations[source.id] ? isFormationOnNet(s, s.formations[source.id]) : false);
+  if (onNet) {
+    emit({ type: 'REPORT_DELIVERED', reportId: report.id, tick: s.tick });
+    emit({ type: 'FACILITY_SPOTTED', facilityId: fac.id, sideId, tick: s.tick });
+  }
+}
+
 export function deliverReportsPass(s: TruthState, emit: (e: GameEvent) => void): void {
   for (const r of Object.values(s.reports)) {
     if (r.deliveredTick !== null || r.lost) continue;
@@ -192,6 +231,12 @@ export function deliverReportsPass(s: TruthState, emit: (e: GameEvent) => void):
     }
     if (isFormationOnNet(s, src)) {
       emit({ type: 'REPORT_DELIVERED', reportId: r.id, tick: s.tick });
+      // D-051.1: a facility photo develops the moment its courier reaches the net
+      if (r.facilityId && s.facilities[r.facilityId] &&
+          !(s.facilities[r.facilityId].knownTo ?? []).includes(r.sideId)) {
+        emit({ type: 'FACILITY_SPOTTED', facilityId: r.facilityId,
+               sideId: r.sideId, tick: s.tick });
+      }
     }
   }
 }
@@ -213,6 +258,13 @@ export function scoutPass(s: TruthState, emit: (e: GameEvent) => void): void {
           const key = `${f.pos.theaterId}:${q},${r}`;
           if (!known.has(key)) { known.add(key); fresh.push(key); }
         }
+      }
+      // D-051.1: eyes that scout the ground also log the base sitting on it
+      for (const fac of Object.values(s.facilities)) {
+        if (fac.sideId === sideId || fac.pos.kind !== 'ground') continue;
+        if (fac.pos.theaterId !== f.pos.theaterId) continue;
+        if (hexDistance(fac.pos, f.pos) > range) continue;
+        spotFacility(s, emit, sideId, fac, { id: f.id, name: f.name, alwaysOnNet: false });
       }
     }
     if (fresh.length) emit({ type: 'HEXES_SCOUTED', sideId, keys: fresh });

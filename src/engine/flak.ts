@@ -29,6 +29,7 @@ import type { GameEvent } from '../core/events.js';
 import { hexDistance } from '../hex/axial.js';
 import { rollDice } from '../core/rng.js';
 import { registerDetection } from './detection.js';
+import { spotFacility } from './net.js';
 import { airHexOver } from './air.js';
 
 /** Enemy formations with a live AA unit whose umbrella covers `hex`. Deterministic order. */
@@ -189,6 +190,10 @@ export function capitalGauntlet(
       emit({ type: 'CAPITAL_BATTERY_FIRED', facilityId: fac.id,
              shotsLeft: fac.capitalBattery!.shots - 1, tick: s.tick });
     }
+    // shoot and be seen (D-051.1): a capital launch plume is unmissable — the target's
+    // crew logs the site, and the knowledge reaches their side when THEY reach the net
+    spotFacility(s, emit, target.sideId, fac,
+      { id: target.id, name: target.name, alwaysOnNet: false });
 
     if (r.result >= tn) {
       const uid = target.unitIds.find(id => {

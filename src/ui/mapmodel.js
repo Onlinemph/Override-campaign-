@@ -100,6 +100,17 @@
         title: `${fc.name}${fc.fuelFarmTons ? ' · farm ' + fc.fuelFarmTons.toFixed(1) + 't' : ''}` +
                `${fc.supplyPoints ? ' · ' + fc.supplyPoints + ' SP' : ''}` });
     });
+    // D-051.1: enemy installations your side has photographed — drawn in their color
+    (v.knownFacilities || []).forEach(fc => {
+      if (fc.pos.theaterId !== th.id) return;
+      markers.push({ q: fc.pos.q, r: fc.pos.r, kind: 'facility', side: fc.sideId,
+        label: fc.capitalBattery ? '☄'
+             : fc.tags.includes('AIRSTRIP') ? 'A' : fc.tags.includes('SPACEPORT') ? 'P'
+             : fc.tags.includes('SENSOR_STATION') ? '⌖'
+             : fc.tags.includes('COMM_RELAY') ? '📡' : 'F',
+        title: `${fc.name} · ENEMY` +
+               (fc.capitalBattery ? ` · capital battery [${fc.capitalBattery.weapon}]` : '') });
+    });
     (v.contacts || []).forEach(c => {
       // air contacts draw on the hex their estimate sits over (D-037 congruent sky)
       if (c.estPos.kind === 'air' && c.overhead && c.overhead.theaterId === th.id) {

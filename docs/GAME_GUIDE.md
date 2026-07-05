@@ -199,6 +199,12 @@ trees at night is nearly invisible). An airborne flight is **never on the net**,
 the photos ride home with the plane: reports deliver when it lands back inside the
 net — and are **lost with the aircraft** if it doesn't. Flak, capital batteries, and
 interceptors are already waiting along the corridor; that's the price of the picture.
+**Buildings can't dodge the camera** (D-051.1): every enemy facility under the corridor
+is photographed outright — no roll — and appears on your map permanently once the photo
+comes home (the weapon on the pad is visible; the remaining magazine is not). Ground
+scouts log bases inside their passive sensor range the same way, and a capital battery
+that fires marks itself: the target's crew sees the launch plume, and their side learns
+the site when *they* reach the net.
 
 **Deception**: a `DECOY` unit makes its formation read one size class *bigger* to
 everything below LOCK. A false transponder squawk in space holds until inspected

@@ -17,7 +17,7 @@ import { formationSensors } from '../engine/detection.js';
 import { groundHexUnder, isFlight, jokerBingo, minFp } from '../engine/air.js';
 import { stallReason } from '../engine/stall.js';
 import { burnDaysRemaining, transitDays } from '../engine/space.js';
-import type { ContactView, OwnFacilityView, OwnFormationView, OwnSatelliteView,
+import type { ContactView, KnownFacilityView, OwnFacilityView, OwnFormationView, OwnSatelliteView,
               ReportView, ScoutedHexView, SystemView, TheaterBoundsView,
               ViewState } from './viewTypes.js';
 
@@ -218,6 +218,15 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
                  ...(f.sensorStation ? { sensor: { passive: f.sensorStation.passive,
                                                    active: f.sensorStation.active } } : {}),
                  ...(f.capitalBattery ? { capitalBattery: { ...f.capitalBattery } } : {}) }));
+  // D-051.1: enemy installations this side has spotted — permanent once photographed.
+  // The weapon on the pad is visible; the remaining magazine is not.
+  const knownFacilities: KnownFacilityView[] = Object.values(truth.facilities)
+    .filter(f => f.sideId !== sideId && f.pos.kind === 'ground' &&
+                 (f.knownTo ?? []).includes(sideId))
+    .map(f => ({ id: f.id, sideId: f.sideId, name: f.name,
+                 pos: { ...(f.pos as GroundPos) }, tags: [...f.tags],
+                 ...(f.capitalBattery ? { capitalBattery:
+                   { weapon: f.capitalBattery.weapon } } : {}) }));
   // own satellites plus any whose launch was witnessed (core §8.6: schedule around them)
   const ownSatellites: OwnSatelliteView[] = Object.values(truth.satellites)
     .filter(s => s.sideId === sideId || s.knownTo.includes(sideId))
@@ -263,6 +272,7 @@ export function project(truth: TruthState, sideId: Id, now: Tick): ViewState {
     scoutedTerrain,
     ...(system ? { system } : {}),
     ownFacilities,
+    knownFacilities,
     ownSatellites,
     netNodes,
     netTheaterWide,

@@ -162,6 +162,8 @@ export function buildCampaign(j: FixtureJson, source = 'campaign', enrich = true
       // D-050: an anti-capital emplacement — { weapon: 'WHITE_SHARK', shots: 8 }
       ...(f.capitalBattery ? { capitalBattery: {
         weapon: f.capitalBattery.weapon, shots: f.capitalBattery.shots ?? 0 } } : {}),
+      // D-051.1: pre-spotted installations (public spaceports, prewar maps…)
+      ...(f.knownTo ? { knownTo: [...f.knownTo] } : {}),
     });
   }
   for (const sat of j.satellites ?? []) {

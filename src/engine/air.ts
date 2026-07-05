@@ -16,6 +16,7 @@ import type { GameEvent } from '../core/events.js';
 import { distanceToPath, hexDistance, hexLine, headingDeg } from '../hex/axial.js';
 import { isNight } from './clock.js';
 import { computeDetectionTN, registerDetection } from './detection.js';
+import { spotFacility } from './net.js';
 import { capitalGauntlet, flakGauntlet } from './flak.js';
 import { hashPick, rollDice } from '../core/rng.js';
 
@@ -431,6 +432,16 @@ export function reconSweep(
       registerDetection(s, emit, f.sideId, target, LADDER.CLIMB_PER_SUCCESS,
         { id: f.id, name: f.name, alwaysOnNet: false });
     }
+  }
+
+  // D-051.1: fixed installations can't dodge the camera — every enemy facility
+  // under the corridor is photographed outright, no roll. The photo still rides
+  // home with the plane (spotFacility queues it through the report pipeline).
+  for (const fac of Object.values(s.facilities)) {
+    if (fac.sideId === f.sideId || fac.pos.kind !== 'ground') continue;
+    if (!theaters.has(fac.pos.theaterId)) continue;
+    if (distanceToPath(airHexOver(s, fac.pos), track) > half) continue;
+    spotFacility(s, emit, f.sideId, fac, { id: f.id, name: f.name, alwaysOnNet: false });
   }
 }
 

@@ -195,6 +195,9 @@ export interface Facility {
    * its air-hex range; `shots` is the missile magazine (energy mounts ignore it);
    * silenced while an enemy ground formation stands in its hex. */
   capitalBattery?: { weapon: string; shots: number };
+  /** D-051.1: sides that have spotted this facility (recon photo, ground scout,
+   * or its own launch plume). Buildings don't move — knowledge is permanent. */
+  knownTo?: Id[];
 }
 export interface SalvageToken { id: Id; hex: GroundPos; sourceUnitId: Id; heldBy?: Id }
 
@@ -254,6 +257,8 @@ export interface ContactReport {
   contactId: Id; text: string;        // GM-editable before delivery (noise injection)
   snapshot: ContactSnapshot;          // ext (D-008.5): what gets merged on delivery
   lost?: boolean;                     // ext: courier killed — never deliverable
+  /** D-051.1: a facility photo — delivering this report also spots the facility. */
+  facilityId?: Id;
 }
 
 // ── §2.6 Orders ──────────────────────────────────────────────────────────────
