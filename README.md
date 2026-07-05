@@ -26,7 +26,14 @@ Event-sourced fog-of-war engine:
 
 ## Run it
 
-First time, one command sets up everything (campaign + the embedded battle tracker):
+**Just want to host a game?** Grab a release zip (or build one with `npm run dist`
+— Windows/macOS/Linux) and double-click `Start OVERRIDE.bat` / run `./start.sh`:
+no Node, no npm, the runtime ships in the box. The startup banner prints the GM
+link and one tokenized link per side to hand to your players — they only need a
+browser. `docs/HOSTING.md` covers playing over the internet (Tailscale, tunnels)
+and running the slow war.
+
+For development, one command sets up everything (campaign + the embedded battle tracker):
 
 ```sh
 npm run setup    # installs deps and builds the battle tracker

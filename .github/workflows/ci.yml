@@ -3,7 +3,9 @@ name: CI
 on:
   push:
     branches: [main, "claude/**"]
+    tags: ["v*"]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
@@ -46,3 +48,32 @@ jobs:
 
       - name: Check the build produced a servable app
         run: test -f cards/dist-web/index.html && test -f cards/dist-web/units-index.json
+
+  # D-054: unzip-and-run release zips (server bundle + node runtime + unit library).
+  # Runs on version tags and on demand; artifacts appear on the workflow run page,
+  # and a tag push also publishes them as a GitHub Release.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm --prefix cards ci
+      - run: npm --prefix cards run build:web
+      - run: npm run dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: override-release-zips
+          path: release/*.zip
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" release/*.zip --generate-notes

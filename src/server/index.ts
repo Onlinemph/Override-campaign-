@@ -8,6 +8,7 @@
  * state change. Nothing player-facing is ever persisted (spec §4).
  */
 import { createServer } from 'node:http';
+import { networkInterfaces } from 'node:os';
 import { timingSafeEqual } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, extname, join, resolve, sep } from 'node:path';
@@ -879,12 +880,29 @@ server.on('upgrade', (req, socket, head) => {
 
 const PORT = Number(process.env.PORT ?? 8420);
 server.listen(PORT, () => {
+  // D-054: the shareable-links banner — hosting for friends means handing out URLs
+  // that work from THEIR machines, so lead with the LAN address, not localhost.
+  const lanIps = Object.values(networkInterfaces()).flat()
+    .filter((i): i is NonNullable<typeof i> => !!i && i.family === 'IPv4' && !i.internal)
+    .map(i => i.address);
+  const host = lanIps[0] ?? 'localhost';
   const sides = Object.keys(campaign.truth.sides);
-  console.log(`OVERRIDE GM Tool — http://localhost:${PORT}/gm`);
-  console.log(gmKey
-    ? '  GM screen is passphrase-protected (--gm-key set) ✓'
-    : '  ⚠ GM screen is OPEN — anyone with the URL sees the truth. Pass --gm-key <phrase> before exposing it to the internet.');
+  console.log('');
+  console.log('  ┌─ OVERRIDE GM Tool ──────────────────────────────────────────');
+  console.log(`  │ GM screen   http://${host}:${PORT}/gm`);
   for (const s of sides) {
-    console.log(`  ${campaign.truth.sides[s].name}: http://localhost:${PORT}/player/${s}/${tokenFor(s)}`);
+    console.log(`  │ ${(campaign.truth.sides[s].name + ' '.repeat(11)).slice(0, 11)} http://${host}:${PORT}/player/${s}/${tokenFor(s)}`);
   }
+  console.log('  │');
+  console.log(`  │ ${gmKey
+    ? 'GM screen is passphrase-protected (--gm-key set) ✓'
+    : '⚠ GM screen is OPEN — fine on your own wifi; set a --gm-key'}`);
+  if (!gmKey) console.log('  │   (or OVERRIDE_GM_KEY) before exposing it to the internet.');
+  console.log(`  │ Player links carry their own access tokens — share each side's`);
+  console.log(`  │ link with that side ONLY. See HOSTING.md for playing over the`);
+  console.log(`  │ internet (Tailscale / tunnels / port forwarding).`);
+  if (lanIps.length > 1) {
+    console.log(`  │ Other addresses on this machine: ${lanIps.slice(1).join(', ')}`);
+  }
+  console.log('  └─────────────────────────────────────────────────────────────');
 });

@@ -1350,3 +1350,30 @@ scale is to slow and rattle, with even direct hits being very rare.
    weight 4 per bird — the biggest tag on the sheet wins.
 5. Player surface: 💥 suppressed line on own forces (with the half-pace explanation),
    war-diary lines for pinned formations, FIRES.DIRECT_HIT_TN live in the manual.
+
+## D-054 ✅ The box copy: unzip-and-run releases for hosting your own war
+"How do we turn this into an actual executable that I can host and have people
+join?" The product was already the right shape — a web server; joining is a URL —
+but running it required the developer toolchain. D-054 removes that.
+1. **`npm run dist`** (scripts/make-dist.mjs) builds portable zips per platform
+   (win-x64 first-class, linux/darwin too): the whole TypeScript server bundled
+   by esbuild into ONE plain-JS file (only runtime dep `ws` baked in; a
+   createRequire banner keeps its CJS requires working in ESM), the UI pages,
+   the demo campaigns, the built card app carrying the 64 MB unit library, and
+   the official pinned Node runtime — plus `Start OVERRIDE.bat` / `start.sh`.
+2. **Zero source path changes**: the bundle is staged at `lib/server/` so every
+   `join(here, '../ui')` / `'../../demo'` / `'../../cards/dist-web'` in the code
+   resolves in the release layout exactly as it does in the repo. A deliberate
+   single-file .exe was rejected: the unit library must ship as files anyway, so
+   a folder with a bundled runtime is the honest deliverable.
+3. **The banner is the onboarding**: on boot the server now prints the LAN
+   address (not localhost), one tokenized player link per side, the GM link,
+   and a warning if no GM key is set. Handing out URLs IS the multiplayer flow.
+4. **Start scripts default to persistence** (`--log campaigns/campaign.jsonl`):
+   double-click, play, close, double-click next week — the war resumes. Verified
+   end-to-end in this session: unzip → boot on the bundled runtime → GM/player/
+   manual/battle pages 200, wrong token 403, library search finds Partisans,
+   GM advance appends events → restart → "Resumed campaign (54 events, tick 10)".
+5. **CI release job**: version tags (v*) and manual dispatch build all four zips
+   and publish them as a GitHub Release. HOSTING.md rewritten around the levels:
+   LAN → Tailscale (recommended) → tunnels → Railway/Docker → port-forward.

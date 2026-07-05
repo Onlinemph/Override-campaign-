@@ -15,15 +15,17 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "build:battle": "npm --prefix cards install && npm --prefix cards run build:web",
-    "start": "node scripts/ensure-battle.mjs && tsx src/server/index.ts"
+    "start": "node scripts/ensure-battle.mjs && tsx src/server/index.ts",
+    "dist": "node scripts/make-dist.mjs"
   },
   "dependencies": {
-    "ws": "^8.18.0",
-    "tsx": "^4.19.0"
+    "tsx": "^4.19.0",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
     "@types/ws": "^8.5.13",
+    "esbuild": "^0.28.1",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   }
