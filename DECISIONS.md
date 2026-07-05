@@ -1479,3 +1479,31 @@ reproduced live on RIVERWARD.
    the ferrying carrier's deck, flies the route, and blue's scouted terrain grew
    19 → 280 hexes. (That 19 also explains the perception — RIVERWARD starts you
    nearly blind, so with recon dead the map simply stayed dark.)
+
+## D-058 ✅ Live-play fix pack #4: the page that quietly dies
+User report: "recon works but I had to refresh to see the new hexes… something
+gets overloaded and it doesn't accept new commands until you refresh. I'll click
+ferry with the dropship and no route will appear." All three symptoms traced to
+client fragility, not the engine — the war kept moving; the browser stopped
+listening.
+1. **The one-shot WebSocket** (root cause of "had to refresh"): both the player
+   and GM pages opened a single WebSocket with no onclose/onerror. Any drop —
+   laptop sleep, a wifi blip, the server restarting on a scenario switch, a home
+   router timing out an idle NAT entry — killed live updates silently and
+   forever. Fix on both pages: a reconnecting socket with exponential backoff
+   (1s → 15s cap), a full re-sync on every reconnect, and a refresh whenever the
+   tab returns to the foreground. Server side, a 30-second protocol-ping
+   heartbeat keeps NAT paths warm and terminates half-open peers so browsers get
+   a real close event (and their reconnect logic) instead of a zombie socket.
+2. **The refresh loop with no seatbelt** (root cause of "doesn't accept new
+   commands"): refresh() was unguarded — one exception mid-render (or one fetch
+   rejection) permanently killed every subsequent update on the page. Both pages
+   now guard it (log-and-continue) and coalesce overlapping calls into a single
+   trailing run, so a burst of ws pushes can't stampede the renderer either.
+3. **The DropShip that "has no route"** (root cause of "click ferry, no route
+   appears"): the ✨ auto-route feature is ON by default and only knows GROUND
+   movement — clicking the map with a DropShip, flight, vessel, or embarked
+   formation selected asked the ground router for a route a spaceship can't
+   have, then printed "✗ no route there for this formation". Air-domain
+   formations fly straight lines: for them a click now plots the raw waypoint
+   directly, exactly what FERRY/RECON expect.

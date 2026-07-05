@@ -924,9 +924,24 @@ const server = createServer(async (req, res) => {
 server.on('upgrade', (req, socket, head) => {
   wss.handleUpgrade(req, socket, head, ws => {
     sockets.add(ws);
+    (ws as WebSocket & { isAlive?: boolean }).isAlive = true;
+    ws.on('pong', () => { (ws as WebSocket & { isAlive?: boolean }).isAlive = true; });
     ws.on('close', () => sockets.delete(ws));
   });
 });
+
+// D-058: heartbeat — home routers silently drop idle NAT entries, leaving sockets
+// half-open: the client thinks it's connected but hears nothing, so live updates
+// stop until F5. Protocol pings keep the path warm; a peer that misses a pong is
+// terminated, which fires 'close' on the browser and its reconnect logic takes over.
+setInterval(() => {
+  for (const ws of sockets) {
+    const w = ws as WebSocket & { isAlive?: boolean };
+    if (w.isAlive === false) { w.terminate(); sockets.delete(ws); continue; }
+    w.isAlive = false;
+    try { w.ping(); } catch { /* mid-close race — the close handler cleans up */ }
+  }
+}, 30_000).unref?.();
 
 const PORT = Number(process.env.PORT ?? 8420);
 function printLinks() {

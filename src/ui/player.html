@@ -236,7 +236,21 @@ function notifyIntel(nReports, nContacts) {
     }
   }
 }
+// D-058: refresh() never lets one bad fetch or render kill the update loop —
+// an exception here used to leave the page frozen until F5. It also coalesces:
+// overlapping calls (ws burst + click handlers) collapse into one trailing run.
+let refreshing = false, refreshQueued = false;
 async function refresh() {
+  if (refreshing) { refreshQueued = true; return; }
+  refreshing = true;
+  try { await refreshInner(); }
+  catch (e) { console.error('OVERRIDE refresh failed:', e); }
+  finally {
+    refreshing = false;
+    if (refreshQueued) { refreshQueued = false; refresh(); }
+  }
+}
+async function refreshInner() {
   const v = await (await fetch(`/api/side/${sideId}/view?${q}`)).json();
   if (v.error) {
     document.getElementById('title').textContent = 'OVERRIDE — ' + v.error;
@@ -449,7 +463,12 @@ function clearPath() { plotted = []; document.getElementById('o-path').value = '
 async function plotHex(q, r) {
   const selId = document.getElementById('o-formation').value;
   const auto = document.getElementById('o-autoroute').checked;
-  if (auto && selId) {
+  // D-058: the auto-router knows GROUND movement only. Flights, DropShips, and
+  // embarked cargo fly straight lines — for them a click is the waypoint itself,
+  // not a ground-route request (which used to fail with "✗ no route there").
+  const selF = lastView && (lastView.ownFormations || []).find(f => f.id === selId);
+  const isAir = selF && (selF.flight || selF.carrier || selF.vessel || selF.mountedOn);
+  if (auto && selId && !isAir) {
     // D-049: while building a plan, later steps route from where the PREVIOUS
     // step ends, not from where the unit stands now
     const from = planSteps.length ? planDest(planSteps[planSteps.length - 1]) : null;
@@ -823,8 +842,20 @@ for (const id of ['o-formation', 'o-kind', 'o-path', 'o-emcon', 'o-target',
   if (el) { el.addEventListener('input', previewOrder); el.addEventListener('change', previewOrder); }
 }
 
-const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
-ws.onmessage = refresh;
+// D-058: self-healing live feed. The old one-shot WebSocket died silently on any
+// drop (laptop sleep, wifi blip, server restart on a scenario switch) and the page
+// froze until F5. Now it reconnects with backoff and re-syncs on every reconnect
+// and whenever the tab comes back to the foreground.
+let wsRetry = 0;
+function connectWs() {
+  const sock = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
+  sock.onopen = () => { wsRetry = 0; refresh(); };
+  sock.onmessage = () => refresh();
+  sock.onclose = () => setTimeout(connectWs, Math.min(15000, 1000 * 2 ** wsRetry++));
+  sock.onerror = () => { try { sock.close(); } catch (e) {} };
+}
+connectWs();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 refresh();
 </script>
 </body>

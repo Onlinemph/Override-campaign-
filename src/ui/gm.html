@@ -207,7 +207,20 @@ async function loadLinks(seed) {
   linksFor = seed;
 }
 
+// D-058: one bad fetch or render exception must not freeze the GM screen until
+// F5 — refresh() is guarded, and overlapping calls coalesce into a trailing run.
+let refreshing = false, refreshQueued = false;
 async function refresh() {
+  if (refreshing) { refreshQueued = true; return; }
+  refreshing = true;
+  try { await refreshInner(); }
+  catch (e) { console.error('OVERRIDE refresh failed:', e); }
+  finally {
+    refreshing = false;
+    if (refreshQueued) { refreshQueued = false; refresh(); }
+  }
+}
+async function refreshInner() {
   const s = await (await fetch('/api/gm/state')).json();
   if (linksFor !== s.truth.seed) loadLinks(s.truth.seed);
   lastState = s;
@@ -753,8 +766,18 @@ async function doSpawn() {
   refresh();
 }
 
-const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
-ws.onmessage = refresh;
+// D-058: self-healing live feed — reconnects with backoff after any drop and
+// re-syncs on reconnect and when the tab returns to the foreground.
+let wsRetry = 0;
+function connectWs() {
+  const sock = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`);
+  sock.onopen = () => { wsRetry = 0; refresh(); };
+  sock.onmessage = () => refresh();
+  sock.onclose = () => setTimeout(connectWs, Math.min(15000, 1000 * 2 ** wsRetry++));
+  sock.onerror = () => { try { sock.close(); } catch (e) {} };
+}
+connectWs();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 refresh();
 loadCampaignList();
 
