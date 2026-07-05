@@ -71,7 +71,18 @@ if (!latest || cmpVersions(latest, current) <= 0) {
 }
 const asset = (rel.assets ?? []).find(a => a.name.endsWith(`-${target}.zip`));
 if (!asset) {
-  console.error(`v${latest} has no ${target} zip — download manually: ${rel.html_url}`);
+  // The release exists but its zips aren't attached (yet): publishing a release
+  // starts a ~3-minute CI build that uploads them when it finishes. Freshly
+  // published releases hit this window all the time — it's patience, not breakage.
+  const ageMin = (Date.now() - Date.parse(rel.published_at ?? 0)) / 60000;
+  if (ageMin < 15) {
+    console.log(`v${latest} was published ${Math.max(1, Math.round(ageMin))} min ago and its`);
+    console.log(`${target} zip isn't attached yet — the release build is likely still running.`);
+    console.log('Wait a few minutes and run the updater again.');
+    process.exit(0);
+  }
+  console.error(`v${latest} has no ${target} zip (build failed?) — check the Actions tab,`);
+  console.error(`or download manually: ${rel.html_url}`);
   process.exit(1);
 }
 
