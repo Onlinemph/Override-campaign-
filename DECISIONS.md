@@ -1455,3 +1455,27 @@ Three user reports from the first real hosted session.
    carrier lines (🚢 aboard: …) the chain DropShip → embarked formation → units
    is fully visible. The full record sheets live in the battle tracker's
    library (/battle → unit search), which ships in the box.
+
+## D-057 ✅ Live-play fix pack #3: the 2-hour silent launch, the ghost aura, the dark map
+Three symptoms from the user's session — "auras moving but not the actual unit",
+"recon still isn't working", "DropShips don't ferry well" — and all three
+reproduced live on RIVERWARD.
+1. **The 2-hour silent launch** (root cause of both "recon broken" and "ferry
+   broken"): the fighter scramble-alert ladder applied to EVERY ground launch,
+   and formations with no authored alertState default to STAND_DOWN — 20 ticks
+   (2 game hours) of nothing, with no feedback. Ruling: the ladder is for
+   SCRAMBLES. A planned mission (no targetContactId) briefs and preflights in
+   SKYWATCH.MISSION_PREP_TICKS (5 ticks = 30 min) whatever the alert state;
+   intercepts against a live track keep the full ladder — reacting fast is what
+   alert states are for. launchTickFor() is the single source of truth.
+2. **The wait is visible**: stallReason now covers grounded flights with air
+   missions — "briefing & preflight — launches in ~24 min", "scrambling —
+   launches in ~6 min (alert ALERT15)", "rearming & refueling — ready in ~".
+3. **The ghost aura**: the GM map skipped every non-ground formation, so an
+   airborne DropShip had a moving D-055 net circle and NO marker. The GM map now
+   draws ✈ at the hex the formation is directly over (air-origin aware).
+4. Verified end-to-end on RIVERWARD via the player API: FERRY lifts inside 5
+   ticks and tracks across the map; an EMBARKED flight given RECON scrambles off
+   the ferrying carrier's deck, flies the route, and blue's scouted terrain grew
+   19 → 280 hexes. (That 19 also explains the perception — RIVERWARD starts you
+   nearly blind, so with recon dead the map simply stayed dark.)

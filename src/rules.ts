@@ -487,6 +487,11 @@ export const SKYWATCH = {
     STAND_DOWN: { launchDelayTicks: 20, fatiguePerPulse: 0,   idleFpPerPulse: 0 },
   } as Record<string, { launchDelayTicks: number; fatiguePerPulse: number; idleFpPerPulse: number }>,
   ORBITAL_STANDBY_RESPONSE_TICKS: 3,
+  // D-057: a PLANNED mission (no live intercept target) launches after brief +
+  // preflight — 30 min — whatever the alert state; the ladder's long waits are
+  // about SCRAMBLE readiness, and a 2-hour silent stand-down before an ordered
+  // ferry/recon read as "the game is broken" in live play.
+  MISSION_PREP_TICKS: 5,
 
   // ── §5 seeing the sky ──
   AIR_SIG: { FLIGHT_3_6: 6, PAIR: 8, SINGLE: 9, DROPSHIP_THRUST: 3, SKYEYE: 5 },

@@ -234,6 +234,18 @@ function alertUpkeep(s: TruthState, f: Formation, dt: number, emit: (e: GameEven
   }
 }
 
+/**
+ * D-057: when will a grounded flight lift for this order? A planned mission caps
+ * the alert ladder at MISSION_PREP_TICKS (brief + preflight, ~30 min); an
+ * INTERCEPT (targetContactId) keeps the full ladder — reacting fast to a live
+ * bandit is exactly what the alert states are for.
+ */
+export function launchTickFor(f: Formation, order: Order): number {
+  const ladder = SKYWATCH.ALERT[f.alertState ?? 'STAND_DOWN']?.launchDelayTicks ?? 20;
+  const delay = order.targetContactId ? ladder : Math.min(ladder, SKYWATCH.MISSION_PREP_TICKS);
+  return order.issuedTick + delay;
+}
+
 function tryLaunch(s: TruthState, f: Formation, order: Order, emit: (e: GameEvent) => void): void {
   // turnaround crews still working?
   if (f.air?.turnaroundReadyTick != null && s.tick < f.air.turnaroundReadyTick) return;
@@ -249,8 +261,7 @@ function tryLaunch(s: TruthState, f: Formation, order: Order, emit: (e: GameEven
 
   let launchAt = f.air?.launchAtTick;
   if (launchAt == null) {
-    const delay = SKYWATCH.ALERT[f.alertState ?? 'STAND_DOWN']?.launchDelayTicks ?? 20;
-    launchAt = order.issuedTick + delay;
+    launchAt = launchTickFor(f, order); // D-057: missions prep in ~30 min, intercepts scramble
     emit({ type: 'FORMATION_BOOKKEEPING', formationId: f.id,
            patch: { air: { launchAtTick: launchAt } } });
   }

@@ -514,7 +514,12 @@ it has moved**.
 
 **Alert states** (grounded flights): ALERT-5 launches instantly but burns fuel and
 fatigues crews every pulse; ALERT-15 in 1 tick; ALERT-60 in an hour; STAND_DOWN in 2
-hours but recovers fatigue.
+hours but recovers fatigue. **The ladder is for scrambles** (D-057): a *planned*
+mission — RECON, FERRY, a strike with no live intercept target — briefs and preflights
+in **30 minutes** whatever the alert state; only intercepts against a tracked bandit
+pay the full ladder, which is exactly what the alert states are for. A grounded
+flight preparing to launch says so on your panel ("⏳ briefing & preflight — launches
+in ~24 min") instead of sitting silent.
 
 **Turnaround** (rearm + refuel): 2 pulses per flight (≤ 6 aircraft per crew) from a
 facility's fuel farm — or **hot pit** in 1 pulse with a mishap chance (2d6 ≤ 3: burn

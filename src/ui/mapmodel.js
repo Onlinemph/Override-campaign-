@@ -195,6 +195,17 @@
 
     const markers = [];
     Object.values(t.formations).forEach(f => {
+      // D-057: airborne formations draw ✈ on the hex they are directly over —
+      // before this, a flying DropShip had a moving net aura and NO marker
+      if (f.pos.kind === 'air') {
+        const o = (((t.config || {}).airHexByTheater) || {})[th.id] || { q: 0, r: 0 };
+        const q = f.pos.gridQ - o.q, r = f.pos.gridR - o.r;
+        if (q < 0 || r < 0 || q >= cols || r >= rows) return; // over open sky / another theater
+        markers.push({ q, r, kind: 'formation', side: f.sideId,
+          label: '✈', sub: f.name, dead: f.destroyed, dark: f.emcon === 'DARK',
+          title: `${f.name} [${f.sideId}] · airborne ${f.pos.band}` });
+        return;
+      }
       if (f.pos.kind !== 'ground' || f.pos.theaterId !== th.id) return;
       const units = f.unitIds.map(id => t.units[id]).filter(Boolean);
       markers.push({ q: f.pos.q, r: f.pos.r, kind: 'formation', side: f.sideId,

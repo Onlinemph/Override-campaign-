@@ -11,6 +11,7 @@ import type { Formation, GroundPos, TruthState } from '../core/types.js';
 import { hexKey } from '../core/types.js';
 import { hexDistance } from '../hex/axial.js';
 import { hexEntryCost, strikeTargetHex } from './movement.js';
+import { AIR_MISSIONS, launchTickFor } from './air.js';
 import { batteryRange } from './fires.js';
 
 function repairSourceHere(s: TruthState, f: Formation): 'facility' | 'carrier' | null {
@@ -33,6 +34,20 @@ function repairSourceHere(s: TruthState, f: Formation): 'facility' | 'carrier' |
 export function stallReason(s: TruthState, f: Formation): string | undefined {
   const order = f.currentOrderId ? s.orders[f.currentOrderId] : undefined;
   if (!order || order.completed) return undefined;
+
+  // D-057: a grounded flight with an air mission is PREPARING, not stuck — say so
+  if (AIR_MISSIONS.has(order.kind) && f.pos.kind === 'ground' && f.air &&
+      !['LAND', 'LIFT_OFF'].includes(order.kind)) {
+    if (f.air.turnaroundReadyTick != null && s.tick < f.air.turnaroundReadyTick) {
+      return `rearming & refueling — ready in ~${(f.air.turnaroundReadyTick - s.tick) * 6} min`;
+    }
+    const at = f.air.launchAtTick ?? launchTickFor(f, order);
+    if (s.tick < at) {
+      return order.targetContactId
+        ? `scrambling — launches in ~${(at - s.tick) * 6} min (alert ${f.alertState ?? 'STAND_DOWN'})`
+        : `briefing & preflight — launches in ~${(at - s.tick) * 6} min`;
+    }
+  }
 
   switch (order.kind) {
     case 'STRIKE': {
