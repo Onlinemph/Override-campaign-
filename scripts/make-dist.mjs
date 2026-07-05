@@ -32,7 +32,15 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
-const VERSION = pkg.version;
+// D-054.3: THE TAG IS THE VERSION. Releases are created by tagging in the GitHub
+// UI, and package.json will never be bumped in lockstep — so a tag build derives
+// the version from the tag itself (v0.1.2 → 0.1.2). That keeps the zip's baked
+// version, VERSION file, and asset names in agreement with the release tag, which
+// is what the update beacon and the updater compare against. package.json is the
+// fallback for local/branch builds only.
+const VERSION = process.env.OVERRIDE_DIST_VERSION
+  ?? (/^v\d/.test(process.env.GITHUB_REF_NAME ?? '') ? process.env.GITHUB_REF_NAME.slice(1) : null)
+  ?? pkg.version;
 
 // Pinned runtime (LTS). Override with OVERRIDE_DIST_NODE=22.x.y if you need to.
 const NODE_VERSION = process.env.OVERRIDE_DIST_NODE ?? '22.12.0';

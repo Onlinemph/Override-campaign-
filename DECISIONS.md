@@ -1424,3 +1424,15 @@ broken because it was.
    operationally sane distances. Deep space stays dark.
 4. EMCON DARK and hostile ECM still cut everything (the gates run before
    reachability); relays stay a ground-chain mechanic.
+
+## D-054.3 ✅ The tag IS the version
+Live-play bug: "the updater seems to work but the game still says I need an
+update." The user's release was tagged v0.1.2 but carried zips built as 0.1.1 —
+package.json hadn't been bumped in lockstep with the UI-created tag, so every
+update installed files that self-identified as OLDER than the release tag, and
+the beacon re-fired forever. The design error was splitting version truth
+between package.json and the tag. Fixed: a CI tag build derives VERSION from
+GITHUB_REF_NAME (v0.1.2 → 0.1.2), so the baked bundle version, the VERSION
+file, and the asset names always agree with the release tag — whatever the tag
+says, the zips say. package.json remains only the fallback for local and
+branch-artifact builds; OVERRIDE_DIST_VERSION overrides everything.
