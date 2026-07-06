@@ -24,8 +24,8 @@
  *     campaigns/       ← saves land here (git-nothing, user data)
  */
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, chmodSync,
-         readdirSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync,
+         chmodSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -100,8 +100,15 @@ function fetchRuntime(target) {
   const cached = join(cacheDir, archive);
   if (!existsSync(cached)) {
     console.log(`downloading ${archive}…`);
-    execFileSync('curl', ['-fsSL', '-o', cached,
+    // One reset connection killed release v0.1.6 with three of four zips already
+    // built: retry hard, and download to a temp name so a cut mid-transfer can't
+    // leave a truncated archive in the cache to poison every later build.
+    const part = `${cached}.part`;
+    rmSync(part, { force: true });
+    execFileSync('curl', ['-fsSL', '--retry', '4', '--retry-delay', '2',
+      '--retry-all-errors', '-o', part,
       `https://nodejs.org/dist/v${NODE_VERSION}/${archive}`], { stdio: 'inherit' });
+    renameSync(part, cached);
   }
   return cached;
 }
